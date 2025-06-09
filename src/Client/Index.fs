@@ -112,7 +112,7 @@ let themeSelector (currentTheme: SharedWebAppModels.Theme) (dispatch: WebAppMsg 
         prop.children [
             Html.label [
                 prop.tabIndex 0
-                prop.className "btn m-1"
+                prop.className "btn m-1 font-sans text-base-content"
                 prop.text "Theme"
             ]
             Html.ul [
@@ -133,6 +133,77 @@ let themeSelector (currentTheme: SharedWebAppModels.Theme) (dispatch: WebAppMsg 
     ]
 
 
+// let animatedButton name isActive dispatch =
+//     let hoveredIndex, setHoveredIndex = React.useState<int option>(None)
+
+//     Html.button [
+//         prop.className (
+//             if isActive then
+//                 "btn btn-md btn-ghost btn-active text-3xl font-sans text-base-content"
+//             else
+//                 "btn btn-md btn-ghost hover:btn-accent text-xl font-sans text-base-content group"
+//         )
+//         prop.onMouseLeave (fun _ -> setHoveredIndex None)
+//         prop.children [
+//             name
+//             |> Seq.mapi (fun i c ->
+//                 let baseClasses = "inline-block transition-transform duration-300 ease-in-out"
+
+//                 let scaleClass =
+//                     if isActive then
+//                         ""
+//                     else
+//                         match hoveredIndex with
+//                         | Some index when index = i -> " scale-125"
+//                         | Some _ -> " scale-90"
+//                         | None -> ""
+
+//                 Html.span [
+//                     prop.className (baseClasses + scaleClass)
+//                     prop.onMouseEnter (fun _ -> setHoveredIndex (Some i))
+//                     prop.text (string c)
+//                 ])
+//             |> Seq.toList
+//             |> React.fragment
+//         ]
+//         prop.onClick (fun _ -> dispatch (SwitchToOtherApp (areaStringToAppSection name)))
+//     ]
+
+let heroBanner dispatch =
+    Html.section [
+        prop.className "relative bg-hero-gradient text-white overflow-hidden"
+        prop.children [
+            Html.canvas [
+                prop.id "ferrofluid-canvas"
+                prop.className "absolute inset-0 w-full h-full z-0 pointer-events-none"
+            ]
+            Html.div [
+                prop.className "relative z-10 max-w-4xl mx-auto py-32 px-6 text-center"
+                prop.children [
+                    Html.h1 [
+                        prop.className "text-5xl font-heading font-bold tracking-tight"
+                        prop.text "Sean Wilken"
+                    ]
+                    Html.p [
+                        prop.className "mt-4 text-xl font-sans text-white/90"
+                        prop.text "Web Developer and ethusiast, crafting unique and problem facing solutions via technology since 2015"
+                    ]
+                    Html.button [
+                        prop.className "mt-8 btn btn-primary btn-lg transition hover:scale-105"
+                        prop.text "Explore Projects"
+                        prop.onClick (fun _ -> dispatch (SwitchToOtherApp SharedWebAppViewSections.AppSection.PortfolioAppLandingView))
+                    ]
+                ]
+            ]
+            FerroFluidWrapper.view()
+        ]
+    ]
+
+
+
+
+
+
 // Web App Header Nav content using Feliz + DaisyUI classes
 let headerContent (model: SharedWebAppModels.WebAppModel) dispatch =
     Html.header [
@@ -145,11 +216,35 @@ let headerContent (model: SharedWebAppModels.WebAppModel) dispatch =
                 prop.onClick (fun _ -> dispatch (SwitchToOtherApp SharedWebAppViewSections.AppSection.WelcomeAppView))
                 prop.children [
                     Html.span [
-                        prop.className "text-md font-medium text-base-content tracking-wide"
+                        prop.className "font-heading text-3xl font-light text-base-content tracking-wide"
                         prop.text "Sean Wilken"
                     ]
                 ]
             ]
+
+
+            let animatedButton name isActive dispatch =
+                Html.button [
+                    prop.className (
+                        if isActive then
+                            "btn btn-secondary btn-md btn-ghost btn-active text-3xl font-sans text-base-content"
+                        else
+                            "btn btn-secondary btn-md btn-ghost hover:btn-accent text-xl font-sans text-base-content group"
+                    )
+                    prop.children [
+                        name
+                        |> Seq.map (fun c ->
+                            Html.span [
+                                prop.className "inline-block transition-transform duration-600 group-hover:scale-125"
+                                prop.text (string c)
+                            ])
+                        |> Seq.toList
+                        |> React.fragment
+
+                    ]
+                    prop.onClick (fun _ -> dispatch (SwitchToOtherApp (areaStringToAppSection name)))
+                ]
+
 
             // Center/Right: Navigation Buttons
             Html.nav [
@@ -160,14 +255,16 @@ let headerContent (model: SharedWebAppModels.WebAppModel) dispatch =
                         let name = contentArea.Name
                         let section = areaStringToAppSection name
                         let isActive = currentWebAppSection model.CurrentAreaModel = section
-                        Html.button [
-                            prop.className (
-                                if isActive then "btn btn-sm btn-ghost btn-active"
-                                else "btn btn-sm btn-ghost hover:btn-accent"
-                            )
-                            prop.text name
-                            prop.onClick (fun _ -> dispatch (SwitchToOtherApp section))
-                        ])
+                        animatedButton name isActive dispatch
+                    )
+                        // Html.button [
+                        //     prop.className (
+                        //         if isActive then "btn btn-sm btn-ghost btn-active text-3xl font-sans text-base-content"
+                        //         else "btn btn-sm btn-ghost hover:btn-accent text-xl font-sans text-base-content"
+                        //     )
+                        //     prop.text name
+                        //     prop.onClick (fun _ -> dispatch (SwitchToOtherApp section))
+                        // ])
                     |> Array.toList
                     |> React.fragment
                 ]
@@ -196,14 +293,16 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
     Html.div [
         headerContent model dispatch
 
-        Html.h1 [
-            prop.className "font-heading text-3xl font-bold text-red-500"
-            prop.text "Heading using Space grotesk"
-        ]
-        Html.p [
-            prop.className "font-sans text-base"
-            prop.text "Body content using DM Sans"
-        ]
+        heroBanner dispatch
+
+        // Html.h1 [
+        //     prop.className "font-heading text-3xl font-bold text-red-500"
+        //     prop.text "Heading using Space grotesk"
+        // ]
+        // Html.p [
+        //     prop.className "font-sans text-base"
+        //     prop.text "Body content using DM Sans"
+        // ]
 
 
         // Html.div [

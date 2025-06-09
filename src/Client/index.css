@@ -5,3 +5,20 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Target spans inside active buttons on hover */
+.btn-active:hover span {
+  transform: scale(1.25);
+}
+
+.bg-hero-gradient {
+  background: linear-gradient(135deg, #6EE7B7 0%, #3B82F6 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}

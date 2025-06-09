@@ -219,7 +219,7 @@ let sharedViewModal (isActive: bool) (header: ReactElement) (content: ReactEleme
 // Shared split header (title + blurbs)
 let sharedSplitHeader (title: string) contentBlurb =
     Html.div [
-        prop.className "generalViewTitleCard p-4 bg-base-200 rounded-md shadow-md"
+        prop.className "p-4 bg-base-200 rounded-md shadow-md"
         prop.children [
             Html.h1 [ prop.className "text-3xl font-bold mb-2"; prop.text title ]
             yield! contentBlurb |> List.map (fun (blurb: string) -> Html.h2 [ prop.className "text-xl"; prop.text blurb ])
@@ -229,7 +229,7 @@ let sharedSplitHeader (title: string) contentBlurb =
 // Shared split view layout (header + two columns)
 let sharedSplitView header childLeft childRight =
     Html.div [
-        prop.className "paddedContainerHeader p-4"
+        prop.className "p-4"
         prop.children [
             header
             Html.div [

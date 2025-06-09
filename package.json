@@ -3,5 +3,9 @@
 		"Client": "link:src\\Client",
 		"daisyui": "^5.0.43",
 		"tailwindcss": "^4.1.8"
+	},
+	"devDependencies": {
+		"@types/react": "18",
+		"@types/react-dom": "18"
 	}
 }
