@@ -2,6 +2,7 @@
 	"dependencies": {
 		"Client": "link:src\\Client",
 		"daisyui": "^5.0.43",
+		"matter-js": "^0.20.0",
 		"tailwindcss": "^4.1.8"
 	},
 	"devDependencies": {

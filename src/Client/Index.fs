@@ -196,6 +196,7 @@ let heroBanner dispatch =
                 ]
             ]
             FerroFluidWrapper.view()
+            PhysicsPlayground.view()
         ]
     ]
 
