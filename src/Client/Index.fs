@@ -135,63 +135,87 @@ let themeSelector (currentTheme: SharedWebAppModels.Theme) (dispatch: WebAppMsg 
 
 // Web App Header Nav content using Feliz + DaisyUI classes
 let headerContent (model: SharedWebAppModels.WebAppModel) dispatch =
-    Html.div [
-        prop.className "flex items-center justify-between p-4 bg-base-200 shadow-md"
+    Html.header [
+        prop.className "w-full bg-base-200 shadow-md px-6 py-3 flex items-center justify-between"
         prop.children [
+
+            // Left: Logo and Name - link to linked in or other professional websites?
             Html.div [
-                prop.className "flex items-center space-x-4 cursor-pointer"
+                prop.className "flex items-center gap-4 cursor-pointer select-none"
                 prop.onClick (fun _ -> dispatch (SwitchToOtherApp SharedWebAppViewSections.AppSection.WelcomeAppView))
                 prop.children [
-                    Html.img [ prop.src "./imgs/icons/Flat logo backless.png"; prop.className "w-16 h-16" ]
-                    Html.p [ prop.className "text-xl font-bold"; prop.text "Sean Wilken" ]
+                    Html.span [
+                        prop.className "text-md font-medium text-base-content tracking-wide"
+                        prop.text "Sean Wilken"
+                    ]
                 ]
             ]
 
-            Html.div [
-                prop.className "flex space-x-4"
-                let currentSection = currentWebAppSection model.CurrentAreaModel
+            // Center/Right: Navigation Buttons
+            Html.nav [
+                prop.className "flex gap-4"
                 prop.children [
-
                     contentAreas
                     |> Array.map (fun contentArea ->
-                        let areaName = contentArea.Name
-                        let areaAppSection = areaStringToAppSection areaName
-                        let classes =
-                            if currentSection = areaAppSection then
-                                "btn btn-ghost btn-active"
-                            else
-                                "btn btn-ghost"
+                        let name = contentArea.Name
+                        let section = areaStringToAppSection name
+                        let isActive = currentWebAppSection model.CurrentAreaModel = section
                         Html.button [
-                            prop.className classes
-                            prop.text areaName
-                            prop.onClick (fun _ -> dispatch (SwitchToOtherApp areaAppSection))
+                            prop.className (
+                                if isActive then "btn btn-sm btn-ghost btn-active"
+                                else "btn btn-sm btn-ghost hover:btn-accent"
+                            )
+                            prop.text name
+                            prop.onClick (fun _ -> dispatch (SwitchToOtherApp section))
                         ])
                     |> Array.toList
                     |> React.fragment
                 ]
             ]
+
+            // Right: Theme selector + GitHub
             Html.div [
-                prop.className "flex space-x-4 cursor-pointer"
+                prop.className "flex items-center gap-4"
                 prop.children [
                     themeSelector model.Theme dispatch
+
+                    Html.a [
+                        prop.href "https://github.com/seanwilken"
+                        prop.target "_blank"
+                        prop.className "btn btn-sm btn-square btn-ghost hover:text-primary"
+                    ]
                 ]
             ]
         ]
     ]
 
+
+
+
 let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
     Html.div [
         headerContent model dispatch
-        Html.div [
-            prop.className "container mx-auto p-4"
-            prop.children [
-                match model.CurrentAreaModel with
-                | SharedWebAppModels.About aboutModel -> AboutSection.view aboutModel (AboutMsg >> dispatch)
-                | SharedWebAppModels.Welcome -> Welcome.view (WelcomeMsg >> dispatch)
-                | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery -> Portfolio.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
-                | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) -> Portfolio.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
-                | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) -> Portfolio.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
-                | SharedWebAppModels.Contact -> Contact.view
-            ]
+
+        Html.h1 [
+            prop.className "font-heading text-3xl font-bold text-red-500"
+            prop.text "Heading using Space grotesk"
         ]
+        Html.p [
+            prop.className "font-sans text-base"
+            prop.text "Body content using DM Sans"
+        ]
+
+
+        // Html.div [
+        //     prop.className "container mx-auto p-4"
+        //     prop.children [
+        //         match model.CurrentAreaModel with
+        //         | SharedWebAppModels.About aboutModel -> AboutSection.view aboutModel (AboutMsg >> dispatch)
+        //         | SharedWebAppModels.Welcome -> Welcome.view (WelcomeMsg >> dispatch)
+        //         | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery -> Portfolio.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
+        //         | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) -> Portfolio.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
+        //         | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) -> Portfolio.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
+        //         | SharedWebAppModels.Contact -> Contact.view
+        //     ]
+        // ]
     ]

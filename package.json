@@ -1,6 +1,5 @@
 {
 	"dependencies": {
-		"@tailwindcss/vite": "^4.1.8",
 		"Client": "link:src\\Client",
 		"daisyui": "^5.0.43",
 		"tailwindcss": "^4.1.8"
