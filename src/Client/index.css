@@ -1,0 +1,6 @@
+@plugin "daisyui" {
+    themes: all;
+}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
