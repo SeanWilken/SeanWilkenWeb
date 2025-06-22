@@ -195,8 +195,13 @@ let heroBanner dispatch =
                     ]
                 ]
             ]
-            FerroFluidWrapper.view()
-            PhysicsPlayground.view()
+            TSXHeaderCanvasWrapper.TSXHeaderCanvasComponent 
+                {|
+                    text = "TypeScript Components"
+                    textColor = "255, 255, 255"
+                |}
+            TSXNavBarWrapper.Gallery () 
+            // PhysicsPlayground.view()
         ]
     ]
 

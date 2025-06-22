@@ -10,7 +10,8 @@
         <None Include="index.html" />
         <None Include="paket.references" />
         <Compile Include="Modules\JS.Wrapper\PhysicsSimulation.fs" />
-        <Compile Include="Modules\JS.Wrapper\FerroFluid.fs" />
+        <Compile Include="Modules\JS.Wrapper\TSXHeaderCanvas.fs" />
+        <Compile Include="Modules\JS.Wrapper\TSXNavbar.fs" />
         <Compile Include="Modules\Shared\Index.fs" />
         <Compile Include="Modules\About\Index.fs" />
         <Compile Include="Modules\Portfolio\Games\GoalRoll\Index.fs" />

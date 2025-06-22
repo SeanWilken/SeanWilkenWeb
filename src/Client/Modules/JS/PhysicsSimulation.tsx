@@ -87,7 +87,8 @@ const PhysicsSimulation: React.FC = () => {
                     restitution: 0.3,
                     render: { fillStyle: "rgba(200, 200, 200, 0.5)" },
                     density: 0.1,
-                    isStatic: false
+                    isStatic: false,
+                    shapeType: type
                 };
                 break;
 
@@ -97,6 +98,7 @@ const PhysicsSimulation: React.FC = () => {
                     restitution: 0.2,
                     render: { fillStyle: "blue" },
                     density: 0.8,
+                    shapeType: type
                 };
                 break;
 
@@ -106,6 +108,7 @@ const PhysicsSimulation: React.FC = () => {
                     restitution: 0.6,
                     render: { fillStyle: "green" },
                     frictionAir: 0.2,
+                    shapeType: type
                 };
                 break;
 
@@ -115,6 +118,7 @@ const PhysicsSimulation: React.FC = () => {
                     ...options,
                     restitution: 0.8,
                     render: { fillStyle: "red" },
+                    shapeType: type
                 };
         }
 
@@ -132,63 +136,53 @@ const PhysicsSimulation: React.FC = () => {
         World.add(engine.world, shape);
     };
 
-    // Apply upward force to smoke
+    // Remove smoke when gravity is negative
     useEffect(() => {
         Events.on(engine, "afterUpdate", () => {
             engine.world.bodies.forEach((body) => {
-                if (body.render.fillStyle === "rgba(200, 200, 200, 0.5)") {
-                    Body.applyForce(body, body.position, { x: 0, y: -0.002 });
-                }
-            });
-        });
-    }, [engine]);
-
-    // Remove smoke when gravity is negative
-    useEffect(() => {
-        if (gravity < 0) {
-            engine.world.bodies.forEach((body) => {
-                if (body.render.fillStyle.startsWith("rgba")) {
-                    // Gradually fade before removal
-                    let opacity = parseFloat(body.render.fillStyle.split(",")[3]);
-                    opacity -= 0.02; // Reduce opacity step-by-step
-                    
-                    if (opacity <= 0) {
-                        World.remove(engine.world, body);
+                if (body.render.shapeType === "smoke") { //rgba(200, 200, 200, 0.5)") {
+                    if (gravity >= 0) {
+                        // Ensure smoke always rises
+                        Body.applyForce(body, body.position, { x: 0, y: -0.01 }); // Stronger lift
                     } else {
-                        body.render.fillStyle = `rgba(200, 200, 200, ${opacity})`;
+                        // When gravity is negative, disperse in all directions
+                        Body.applyForce(body, body.position, { 
+                            x: Math.random() * 0.02 - 0.01, 
+                            y: Math.random() * 0.02 - 0.01 
+                        });
                     }
                 }
             });
-        }
+        });
     }, [gravity, engine]);
 
     return (
-        <div className="w-full h-screen flex flex-col items-center justify-center bg-gray-900 text-white">
-            <div ref={sceneRef} onMouseMove={handleMouseMove} className="w-full h-full cursor-crosshair shadow-lg rounded-lg" />
+        <div className="grid grid-cols-3 h-screen w-full bg-gray-900 text-white p-4">
+            {/* Left Column: Particle Selection */}
+            <div className="flex flex-col items-center space-y-4">
+                <h2 className="text-lg font-bold">Particles:</h2>
+                {["ball", "water", "smoke", "slime"].map((type) => (
+                    <button
+                        key={type}
+                        className={`px-6 py-3 rounded-lg shadow-md ${currentType === type ? "bg-yellow-400" : "bg-gray-600"} hover:bg-gray-500 transition-all`}
+                        onClick={() => setCurrentType(type as ElementType)}
+                    >
+                        {type.toUpperCase()}
+                    </button>
+                ))}
+            </div>
 
-            {/* UI controls: one row, two columns */}
-            <div className="absolute bottom-5 w-full flex justify-center">
-                <div className="grid grid-cols-2 gap-8 bg-gray-800/80 p-5 rounded-lg shadow-lg backdrop-blur-lg">
-                    {/* Gravity Controls */}
-                    <div className="flex flex-col items-center space-y-4">
-                        <button className="px-6 py-3 bg-blue-600 rounded-lg shadow-md hover:bg-blue-500 transition-all duration-200" onClick={() => setGravity(gravity + 0.5)}>Increase Gravity</button>
-                        <button className="px-6 py-3 bg-red-600 rounded-lg shadow-md hover:bg-red-500 transition-all duration-200" onClick={() => setGravity(gravity - 0.5)}>Decrease Gravity</button>
-                        <p className="px-6 py-3 bg-gray-700 rounded-lg shadow-md text-lg font-semibold">Gravity: {gravity.toFixed(1)}</p>
-                    </div>
+            {/* Center: Canvas */}
+            <div className="flex items-center justify-center">
+                <div ref={sceneRef} onMouseMove={handleMouseMove} className="w-full h-full shadow-lg rounded-lg" />
+            </div>
 
-                    {/* Element Selection */}
-                    <div className="flex flex-col items-center space-y-4">
-                        {["ball", "water", "smoke", "slime"].map((type) => (
-                            <button
-                                key={type}
-                                className={`px-6 py-3 rounded-lg shadow-md ${currentType === type ? "bg-yellow-400" : "bg-gray-600"} hover:bg-gray-500 transition-all`}
-                                onClick={() => setCurrentType(type as ElementType)}
-                            >
-                                {type.toUpperCase()}
-                            </button>
-                        ))}
-                    </div>
-                </div>
+            {/* Right Column: Gravity Controls */}
+            <div className="flex flex-col items-center space-y-4">
+                <h2 className="text-lg font-bold">Current Gravity</h2>
+                <p className="px-6 py-3 bg-gray-700 rounded-lg shadow-md text-lg font-semibold">{gravity.toFixed(1)}</p>
+                <button className="px-6 py-3 bg-blue-600 rounded-lg shadow-md hover:bg-blue-500 transition-all duration-200" onClick={() => setGravity(gravity + 0.5)}>Increase</button>
+                <button className="px-6 py-3 bg-red-600 rounded-lg shadow-md hover:bg-red-500 transition-all duration-200" onClick={() => setGravity(gravity - 0.5)}>Decrease</button>
             </div>
         </div>
     );
