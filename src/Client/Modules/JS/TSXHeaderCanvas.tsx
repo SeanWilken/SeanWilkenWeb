@@ -5,6 +5,65 @@ interface TSXHeaderCanvasProps {
   textColor?: string; // Base color for the text fill (will pulse alpha)
 }
 
+function wrapAndDrawStyledText(canvas, ctx, text, centerX, centerY, maxWidth, initialFontSize, minFontSize, textColor, tick) {
+  let fontSize = initialFontSize;
+  let lines = [];
+  let lineHeight;
+
+  // Fit text block by adjusting font size down if needed
+  do {
+    ctx.font = `bold ${fontSize}px 'DM Sans', sans-serif`;
+    const words = text.split(' ');
+    lines = [];
+    let line = '';
+
+    for (let i = 0; i < words.length; i++) {
+      const testLine = line + words[i] + ' ';
+      const width = ctx.measureText(testLine).width;
+      if (width > maxWidth && line !== '') {
+        lines.push(line.trim());
+        line = words[i] + ' ';
+      } else {
+        line = testLine;
+      }
+    }
+    lines.push(line.trim());
+
+    lineHeight = fontSize * 1.25;
+    const totalHeight = lines.length * lineHeight;
+    if (totalHeight > canvas.height * 0.6) {
+      fontSize -= 2;
+    } else {
+      break;
+    }
+  } while (fontSize > minFontSize);
+
+  ctx.font = `bold ${fontSize}px 'DM Sans', sans-serif`;
+
+  const pulse = Math.sin(tick * 0.05) * 0.25 + 0.75;
+  const totalHeight = lines.length * lineHeight;
+  const startY = centerY - totalHeight / 2 + lineHeight / 2;
+
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.lineWidth = fontSize * 0.08;
+
+  for (let i = 0; i < lines.length; i++) {
+    const y = startY + i * lineHeight;
+
+    // Fill text with pulsing alpha
+    ctx.fillStyle = `rgba(${textColor}, ${pulse})`;
+    ctx.fillText(lines[i], centerX, y);
+
+    // Blue glowing stroke
+    ctx.strokeStyle = `rgba(0, 200, 255, ${pulse * 0.6})`;
+    ctx.strokeText(lines[i], centerX, y);
+  }
+
+  return fontSize; // if you want to reuse it for halo later
+}
+
+
 const TSXHeaderCanvas: React.FC<TSXHeaderCanvasProps> = ({
   text = "TypeScript Components",
   textColor = "255, 255, 255", // white as RGB string for easier rgba usage
@@ -16,12 +75,12 @@ const TSXHeaderCanvas: React.FC<TSXHeaderCanvasProps> = ({
     if (!canvas) return;
 
     canvas.width = window.innerWidth;
-    canvas.height = 300;
+    canvas.height = window.innerHeight * 0.1; // 10% of viewport height
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
     const allParticles = [];
-    const TOTAL_PARTICLES = 150;
+    const TOTAL_PARTICLES = 60;
 
     for (let i = 0; i < TOTAL_PARTICLES; i++) {
       allParticles.push({
@@ -41,26 +100,34 @@ const TSXHeaderCanvas: React.FC<TSXHeaderCanvasProps> = ({
       tick += 1;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Step 1: Draw text with pulsing fill and blue glow stroke
-      const pulse = Math.sin(tick * 0.05) * 0.25 + 0.75; // 0.5 - 1.0
+      // Responsive font size based on canvas width, clamped between 48 and 120 px
+      const minFontSize = 32;
+      const maxFontSize = 120;
+      // Let's say font size scales with canvas width at about 10% of width
+      const baseFontSize = canvas.width * 0.1;
+      const fontSize = Math.min(maxFontSize, Math.max(minFontSize, baseFontSize));
+
+      // Vertical position roughly 30% from the top
       const textX = canvas.width / 2;
-      const textY = 200;
-      ctx.font = "bold 120px 'DM Sans', sans-serif";
-      ctx.textAlign = "center";
+      const textY = canvas.height / 2;
 
-      // Fill with pulsing alpha based on provided textColor (expects "r, g, b")
+      ctx.font = `bold ${fontSize}px 'DM Sans', sans-serif`;
+
+      // Pulsing alpha for fill color
+      const pulse = Math.sin(tick * 0.05) * 0.25 + 0.75; // ranges 0.5 - 1.0
+
+      // Fill text with pulsing alpha
       ctx.fillStyle = `rgba(${textColor}, ${pulse})`;
-      ctx.fillText(text, textX, textY);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      const maxTextWidth = canvas.width * 0.85;
+      const initialFontSize = canvas.width * 0.1;
 
-      // Blue glowing stroke (fixed color)
-      ctx.lineWidth = 10;
-      ctx.strokeStyle = `rgba(0, 200, 255, ${pulse * 0.6})`;
-      ctx.strokeText(text, textX, textY);
+      wrapAndDrawStyledText(canvas, ctx, text, textX, textY, maxTextWidth, initialFontSize, minFontSize, textColor, tick);
 
       // Step 3: Punch blue holes in mask with particles
       ctx.globalCompositeOperation = "destination-out";
       for (const p of allParticles) {
-        // Move & bounce
         p.x += p.vx;
         p.y += p.vy;
 
@@ -99,6 +166,7 @@ const TSXHeaderCanvas: React.FC<TSXHeaderCanvasProps> = ({
       animationFrameId = requestAnimationFrame(draw);
     };
 
+
     draw();
 
     return () => {
@@ -111,7 +179,7 @@ const TSXHeaderCanvas: React.FC<TSXHeaderCanvasProps> = ({
       ref={canvasRef}
       style={{
         width: "100%",
-        height: "300px",
+        height: "10vh",
         display: "block",
         backgroundColor: "#0f172a",
       }}

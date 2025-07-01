@@ -14,7 +14,7 @@ Program.mkProgram Index.init Index.update Index.view
 #if DEBUG
 |> Program.withConsoleTrace
 #endif
-|> Program.withReactSynchronous "elmish-app"
+|> Program.withReactSynchronous "wilken-website"
 // #if DEBUG
 // // |> Program.withDebugger
 // #endif

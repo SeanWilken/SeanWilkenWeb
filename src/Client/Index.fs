@@ -37,16 +37,16 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
     // PORTFOLIO PAGE
     | PortfolioMsg msg, SharedWebAppModels.Portfolio pm ->
         match msg, pm with
-        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppSection.PortfolioAppLandingView ), _ ->
-            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.Landing ) )
-        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppSection.PortfolioAppCodeView ), _ ->
-           { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.Code ( SharedPage.CodeSection.Landing ) ) ) )
+        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppView.PortfolioAppLandingView ), _ ->
+            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
+        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppView.PortfolioAppCodeView ), _ ->
+           { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.Code ( SharedPage.CodeSection.CodeLanding ) ) ) )
         | SharedPortfolioGallery.CodeGalleryMsg SharedCodeGallery.Msg.BackToPortfolio, _ -> 
-            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.Landing ) )
-        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppSection.PortfolioAppDesignView ), _ ->
+            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
+        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppView.PortfolioAppDesignView ), _ ->
            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.Design ) ) )
         | SharedPortfolioGallery.ArtGalleryMsg SharedDesignGallery.Msg.BackToPortfolio, _ -> 
-            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.Landing ) )
+            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
         | msg, m ->
             let portfolioModel, com = Portfolio.update msg m
             { model with CurrentAreaModel = SharedWebAppModels.Portfolio portfolioModel }, Cmd.map PortfolioMsg com
@@ -54,13 +54,14 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
     // Page Routing
     | SwitchToOtherApp section, _ ->
         match section with
-        | SharedWebAppViewSections.AppSection.AboutAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.About )
-        | SharedWebAppViewSections.AppSection.PortfolioAppLandingView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.Landing ) ) )
-        | SharedWebAppViewSections.AppSection.PortfolioAppCodeView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Code ( SharedPage.CodeSection.Landing ) ) ) )
-        | SharedWebAppViewSections.AppSection.PortfolioAppDesignView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Design ) ) )
-        | SharedWebAppViewSections.AppSection.ContactAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Contact )
-        | SharedWebAppViewSections.AppSection.WelcomeAppView
-        | _ ->
+        | SharedWebAppViewSections.AppView.AboutAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.About )
+        | SharedWebAppViewSections.AppView.ContactAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Contact )
+        | SharedWebAppViewSections.AppView.LandingAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Landing )
+        | SharedWebAppViewSections.AppView.PortfolioAppCodeView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Code ( SharedPage.CodeSection.CodeLanding ) ) ) )
+        | SharedWebAppViewSections.AppView.PortfolioAppDesignView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Design ) ) )
+        | SharedWebAppViewSections.AppView.PortfolioAppLandingView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.PortfolioLanding ) ) )
+        | SharedWebAppViewSections.AppView.ResumeAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Resume )
+        | SharedWebAppViewSections.AppView.WelcomeAppView ->
             model, Cmd.ofMsg ( LoadPage SharedPage.Welcome )
 
     | LoadPage page, _ ->
@@ -78,19 +79,19 @@ open FSharp.Reflection
 // takes union case string, returns an app section
 let areaStringToAppSection string =
     match string with
-    | "About" -> SharedWebAppViewSections.AppSection.AboutAppView
-    | "Portfolio" ->  SharedWebAppViewSections.AppSection.PortfolioAppLandingView
-    | "Contact" -> SharedWebAppViewSections.AppSection.ContactAppView
+    | "About" -> SharedWebAppViewSections.AppView.AboutAppView
+    | "Portfolio" ->  SharedWebAppViewSections.AppView.PortfolioAppLandingView
+    | "Contact" -> SharedWebAppViewSections.AppView.ContactAppView
     | "Welcome"
-    | _ -> SharedWebAppViewSections.AppSection.WelcomeAppView
+    | _ -> SharedWebAppViewSections.AppView.WelcomeAppView
 
 // returns the current model as an area
 let currentWebAppSection model = 
     match model with
-    | SharedWebAppModels.Welcome -> SharedWebAppViewSections.AppSection.WelcomeAppView
-    | SharedWebAppModels.About _ -> SharedWebAppViewSections.AppSection.AboutAppView
-    | SharedWebAppModels.Portfolio _ -> SharedWebAppViewSections.AppSection.PortfolioAppLandingView
-    | SharedWebAppModels.Contact -> SharedWebAppViewSections.AppSection.ContactAppView
+    | SharedWebAppModels.Welcome -> SharedWebAppViewSections.AppView.WelcomeAppView
+    | SharedWebAppModels.About _ -> SharedWebAppViewSections.AppView.AboutAppView
+    | SharedWebAppModels.Portfolio _ -> SharedWebAppViewSections.AppView.PortfolioAppLandingView
+    | SharedWebAppModels.Contact -> SharedWebAppViewSections.AppView.ContactAppView
 
 // Union cases of the different web app sub modules, in order to create elements
 // and reference the union type in code.
@@ -191,7 +192,7 @@ let heroBanner dispatch =
                     Html.button [
                         prop.className "mt-8 btn btn-primary btn-lg transition hover:scale-105"
                         prop.text "Explore Projects"
-                        prop.onClick (fun _ -> dispatch (SwitchToOtherApp SharedWebAppViewSections.AppSection.PortfolioAppLandingView))
+                        prop.onClick (fun _ -> dispatch (SwitchToOtherApp SharedWebAppViewSections.AppView.PortfolioAppLandingView))
                     ]
                 ]
             ]
@@ -200,106 +201,166 @@ let heroBanner dispatch =
                     text = "TypeScript Components"
                     textColor = "255, 255, 255"
                 |}
-            TSXNavBarWrapper.Gallery () 
+            // TSXNavBarWrapper.Gallery () 
             // PhysicsPlayground.view()
+            MyApp.Components.ProgrammingExamplesPage.view()
         ]
     ]
-
-
-
-
-
 
 // Web App Header Nav content using Feliz + DaisyUI classes
 let headerContent (model: SharedWebAppModels.WebAppModel) dispatch =
-    Html.header [
-        prop.className "w-full bg-base-200 shadow-md px-6 py-3 flex items-center justify-between"
+    Html.div [
+        prop.className "drawer drawer-end"
         prop.children [
 
-            // Left: Logo and Name - link to linked in or other professional websites?
+            // Hidden checkbox toggles the drawer
+            Html.input [
+                prop.type' "checkbox"
+                prop.id "mobile-nav-drawer"
+                prop.className "drawer-toggle"
+            ]
+
+            // Page content
             Html.div [
-                prop.className "flex items-center gap-4 cursor-pointer select-none"
-                prop.onClick (fun _ -> dispatch (SwitchToOtherApp SharedWebAppViewSections.AppSection.WelcomeAppView))
+                prop.className "drawer-content w-full"
                 prop.children [
-                    Html.span [
-                        prop.className "font-heading text-3xl font-light text-base-content tracking-wide"
-                        prop.text "Sean Wilken"
+                    Html.header [
+                        prop.className "navbar bg-base-200 px-4 py-2 shadow-md"
+
+
+                        prop.children [
+
+                            // Left: Logo
+                            Html.div [
+                                prop.className "navbar-start"
+                                prop.children [
+                                    Html.a [
+                                        prop.className "text-2xl font-heading font-light text-base-content cursor-pointer"
+                                        prop.onClick (fun _ -> dispatch (SwitchToOtherApp SharedWebAppViewSections.AppView.WelcomeAppView))
+                                        prop.text "Sean Wilken"
+                                    ]
+                                ]
+                            ]
+
+                            // Center: Nav for desktop
+                            Html.div [
+                                prop.className "navbar-center hidden lg:flex"
+                                prop.children [
+                                    Html.div [
+                                        prop.className "flex gap-3"
+                                        prop.children [
+                                            contentAreas
+                                            |> Array.map (fun contentArea ->
+                                                let name = contentArea.Name
+                                                let section = areaStringToAppSection name
+                                                let isActive = currentWebAppSection model.CurrentAreaModel = section
+                                                Html.button [
+                                                    prop.className (
+                                                        "btn btn-ghost text-xl font-sans transition-all duration-300 group " +
+                                                        (if isActive then "bg-secondary text-base-100 shadow-md scale-105" else "hover:bg-accent hover:text-base-100")
+                                                    )
+                                                    prop.onClick (fun _ -> dispatch (SwitchToOtherApp section))
+                                                    prop.children [
+                                                        name
+                                                        |> Seq.map (fun c ->
+                                                            Html.span [
+                                                                prop.className "inline-block transition-transform duration-300 group-hover:scale-125"
+                                                                prop.text (string c)
+                                                            ])
+                                                        |> Seq.toList
+                                                        |> React.fragment
+                                                    ]
+                                                ]
+                                            )
+                                            |> Array.toList
+                                            |> React.fragment
+                                        ]
+                                    ]
+                                ]
+                            ]
+
+                            // Right: Theme selector + GitHub + Mobile menu trigger
+                            Html.div [
+                                prop.className "navbar-end flex items-center gap-2"
+                                prop.children [
+                                    themeSelector model.Theme dispatch
+                                    Html.a [
+                                        prop.href "https://github.com/seanwilken"
+                                        prop.target "_blank"
+                                        prop.className "btn btn-sm btn-square btn-ghost hover:text-primary"
+                                        prop.children [
+                                            Html.i [ prop.className "fa fa-github text-lg" ]
+                                        ]
+                                    ]
+
+                                    // Drawer trigger for mobile
+                                    Html.label [
+                                        prop.htmlFor "mobile-nav-drawer"
+                                        prop.className "btn btn-ghost btn-circle lg:hidden"
+                                        prop.children [
+                                            Html.i [ prop.className "fa fa-bars text-xl" ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
                     ]
                 ]
             ]
 
-
-            let animatedButton name isActive dispatch =
-                Html.button [
-                    prop.className (
-                        if isActive then
-                            "btn btn-secondary btn-md btn-ghost btn-active text-3xl font-sans text-base-content"
-                        else
-                            "btn btn-secondary btn-md btn-ghost hover:btn-accent text-xl font-sans text-base-content group"
-                    )
-                    prop.children [
-                        name
-                        |> Seq.map (fun c ->
-                            Html.span [
-                                prop.className "inline-block transition-transform duration-600 group-hover:scale-125"
-                                prop.text (string c)
-                            ])
-                        |> Seq.toList
-                        |> React.fragment
-
-                    ]
-                    prop.onClick (fun _ -> dispatch (SwitchToOtherApp (areaStringToAppSection name)))
-                ]
-
-
-            // Center/Right: Navigation Buttons
-            Html.nav [
-                prop.className "flex gap-4"
-                prop.children [
-                    contentAreas
-                    |> Array.map (fun contentArea ->
-                        let name = contentArea.Name
-                        let section = areaStringToAppSection name
-                        let isActive = currentWebAppSection model.CurrentAreaModel = section
-                        animatedButton name isActive dispatch
-                    )
-                        // Html.button [
-                        //     prop.className (
-                        //         if isActive then "btn btn-sm btn-ghost btn-active text-3xl font-sans text-base-content"
-                        //         else "btn btn-sm btn-ghost hover:btn-accent text-xl font-sans text-base-content"
-                        //     )
-                        //     prop.text name
-                        //     prop.onClick (fun _ -> dispatch (SwitchToOtherApp section))
-                        // ])
-                    |> Array.toList
-                    |> React.fragment
-                ]
-            ]
-
-            // Right: Theme selector + GitHub
+            // Drawer sidebar
             Html.div [
-                prop.className "flex items-center gap-4"
+                prop.className "drawer-side z-50"
                 prop.children [
-                    themeSelector model.Theme dispatch
-
-                    Html.a [
-                        prop.href "https://github.com/seanwilken"
-                        prop.target "_blank"
-                        prop.className "btn btn-sm btn-square btn-ghost hover:text-primary"
+                    Html.label [
+                        prop.htmlFor "mobile-nav-drawer"
+                        prop.className "drawer-overlay"
+                    ]
+                    Html.ul [
+                        prop.className "menu p-4 w-64 min-h-full bg-base-100 text-base-content"
+                        prop.children [
+                            Html.li [ 
+                                Html.h2 [ 
+                                    prop.className "text-xl mb-4 font-heading text-base-content"
+                                    prop.text "Navigate"
+                                ]
+                            ]
+                            contentAreas
+                            |> Array.map (fun contentArea ->
+                                let name = contentArea.Name
+                                let section = areaStringToAppSection name
+                                let isActive = currentWebAppSection model.CurrentAreaModel = section
+                                Html.li [
+                                    Html.button [
+                                        prop.className (
+                                            "w-full text-left py-2 px-4 rounded transition-all duration-300 " +
+                                            (if isActive then "bg-secondary text-base-100 font-semibold" else "hover:bg-base-300")
+                                        )
+                                        prop.onClick (fun _ -> dispatch (SwitchToOtherApp section))
+                                        prop.text name
+                                    ]
+                                ]
+                            )
+                            |> Array.toList
+                            |> React.fragment
+                        ]
                     ]
                 ]
             ]
         ]
     ]
 
-
-
+open ResumeBindings
 
 let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
+    printfn $"STATE AREA: {(model.CurrentAreaModel.ToString())}"
     Html.div [
-        headerContent model dispatch
 
-        heroBanner dispatch
+
+        
+        // headerContent model dispatch
+
+        // heroBanner dispatch
 
         // Html.h1 [
         //     prop.className "font-heading text-3xl font-bold text-red-500"
@@ -311,16 +372,19 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
         // ]
 
 
-        // Html.div [
-        //     prop.className "container mx-auto p-4"
-        //     prop.children [
-        //         match model.CurrentAreaModel with
-        //         | SharedWebAppModels.About aboutModel -> AboutSection.view aboutModel (AboutMsg >> dispatch)
-        //         | SharedWebAppModels.Welcome -> Welcome.view (WelcomeMsg >> dispatch)
-        //         | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery -> Portfolio.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
-        //         | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) -> Portfolio.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
-        //         | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) -> Portfolio.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
-        //         | SharedWebAppModels.Contact -> Contact.view
-        //     ]
-        // ]
+        Html.div [
+            prop.className "container mx-auto p-4"
+            prop.children [
+                match model.CurrentAreaModel with
+                | SharedWebAppModels.About aboutModel -> AboutSection.view aboutModel (AboutMsg >> dispatch)
+                | SharedWebAppModels.Contact -> Contact.view
+                | SharedWebAppModels.Index -> Html.div "This is the index page, which should not be used."
+                | SharedWebAppModels.Landing -> Html.div "Welcome to the Landing Page"
+                | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery -> Portfolio.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
+                | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) -> Portfolio.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
+                | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) -> Portfolio.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
+                | SharedWebAppModels.Resume -> Pages.Resume.ResumePage ()
+                | SharedWebAppModels.Welcome -> Welcome.view (WelcomeMsg >> dispatch)
+            ]
+        ]
     ]

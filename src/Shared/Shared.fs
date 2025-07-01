@@ -789,22 +789,26 @@ module SharedTileSort =
         }
 
 module SharedWebAppViewSections =
-    type AppSection =
-    | WelcomeAppView
-    | AboutAppView
-    | PortfolioAppLandingView
-    | PortfolioAppCodeView
-    | PortfolioAppDesignView
-    | ContactAppView
+    type AppView =
+        | AboutAppView
+        | ContactAppView
+        | LandingAppView
+        | PortfolioAppLandingView
+        | PortfolioAppCodeView
+        | PortfolioAppDesignView
+        | ResumeAppView
+        | WelcomeAppView
 
     let appSectionStringTitle appSection =
         match appSection with
-        | WelcomeAppView -> "Welcome"
         | AboutAppView -> "About"
-        | PortfolioAppLandingView -> "Portfolio"
         | PortfolioAppCodeView -> "Code"
-        | PortfolioAppDesignView -> "Design"
         | ContactAppView -> "Contact"
+        | PortfolioAppDesignView -> "Design"
+        | LandingAppView -> "Landing"
+        | PortfolioAppLandingView -> "Portfolio"
+        | ResumeAppView -> "Resume"
+        | WelcomeAppView -> "Welcome"
 
 module SharedCodeGallery =
     
@@ -854,7 +858,7 @@ module SharedPortfolioGallery =
     open SharedDesignGallery
 
     type Msg =
-        | LoadSection of SharedWebAppViewSections.AppSection
+        | LoadSection of SharedWebAppViewSections.AppView
         | ArtGalleryMsg of SharedDesignGallery.Msg
         | CodeGalleryMsg of SharedCodeGallery.Msg
 
@@ -867,11 +871,10 @@ module SharedPortfolioGallery =
 
 module SharedAboutSection =
 
-
     type Msg =
         | ToggleModal of int
         | SwitchModal of int
-        | SwitchSection of SharedWebAppViewSections.AppSection
+        | SwitchSection of SharedWebAppViewSections.AppView
 
     type Model = {
         ActiveModalIndex : int
@@ -893,27 +896,29 @@ module SharedAboutSection =
 
 module SharedWelcome = 
     type Msg =
-        | SwitchSection of SharedWebAppViewSections.AppSection
+        | SwitchSection of SharedWebAppViewSections.AppView
 
 module SharedPage =
     
     type CodeSection =
-        | Landing
+        | CodeLanding
         | GoalRoll
         | TileTap
         | TileSort
 
     type PortfolioSection =
-        | Landing
+        | PortfolioLanding
         | Code of CodeSection
         | Design //of int // load a design index
 
     type Page =
-        | Welcome
         | About
-        | Portfolio of PortfolioSection
         | Contact
-
+        | Index
+        | Landing
+        | Portfolio of PortfolioSection
+        | Resume
+        | Welcome
 
 module SharedWebAppModels =
 
@@ -994,10 +999,13 @@ module SharedWebAppModels =
     // Portfolio -> Split view landing page to separate categories from one another at a high level
     // Contact -> How to get in touch with the entity the web app represents
     type Model =
-        | Welcome
         | About of SharedAboutSection.Model
-        | Portfolio of SharedPortfolioGallery.Model
+        | Index
         | Contact
+        | Landing
+        | Portfolio of SharedPortfolioGallery.Model
+        | Resume
+        | Welcome
 
     type WebAppModel = {
         CurrentAreaModel: Model
@@ -1008,7 +1016,7 @@ module SharedWebAppModels =
         | WelcomeMsg of SharedWelcome.Msg
         | AboutMsg of SharedAboutSection.Msg
         | PortfolioMsg of SharedPortfolioGallery.Msg
-        | SwitchToOtherApp of SharedWebAppViewSections.AppSection
+        | SwitchToOtherApp of SharedWebAppViewSections.AppView
         | LoadPage of SharedPage.Page
         | ErrorMsg of exn // WIP?
         | ChangeTheme of Theme

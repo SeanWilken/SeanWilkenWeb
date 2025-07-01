@@ -10,17 +10,17 @@ let init (): SharedPortfolioGallery.Model * Cmd<SharedWebAppModels.WebAppMsg> =
 
 let update (msg: SharedPortfolioGallery.Msg) (model: SharedPortfolioGallery.Model): SharedPortfolioGallery.Model * Cmd<SharedPortfolioGallery.Msg> =
     match msg, model with
-    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppSection.PortfolioAppLandingView, _ ->
+    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppLandingView, _ ->
         SharedPortfolioGallery.PortfolioGallery, Cmd.none
 
-    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppSection.PortfolioAppDesignView, _ ->
+    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppDesignView, _ ->
         SharedPortfolioGallery.DesignGallery (SharedDesignGallery.getInitialModel), Cmd.none
 
     | SharedPortfolioGallery.ArtGalleryMsg subMsg, SharedPortfolioGallery.DesignGallery m ->
         let updated, cmd = ArtGallery.update subMsg m
         SharedPortfolioGallery.DesignGallery updated, Cmd.map SharedPortfolioGallery.ArtGalleryMsg cmd
 
-    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppSection.PortfolioAppCodeView, _ ->
+    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppCodeView, _ ->
         SharedPortfolioGallery.CodeGallery (SharedCodeGallery.getInitialModel), Cmd.none
 
     | SharedPortfolioGallery.CodeGalleryMsg subMsg, SharedPortfolioGallery.CodeGallery m ->
@@ -91,14 +91,14 @@ let view model dispatch =
                         portfolioTile 
                             "Code" 
                             "Play some games & link to read their github gists." 
-                            (SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppSection.PortfolioAppCodeView) 
+                            (SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppCodeView) 
                             dispatch 
                             "primary"
 
                         portfolioTile 
                             "Design" 
                             "Some drawings and designs I've done, or making." 
-                            (SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppSection.PortfolioAppDesignView) 
+                            (SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppDesignView) 
                             dispatch 
                             "secondary"
                     ]

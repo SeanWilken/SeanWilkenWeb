@@ -6,6 +6,7 @@
 @tailwind components;
 @tailwind utilities;
 
+
 /* Target spans inside active buttons on hover */
 .btn-active:hover span {
   transform: scale(1.25);

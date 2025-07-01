@@ -8,28 +8,37 @@ interface TSXNavBarProps {
 
 const TSXNavBar: React.FC<TSXNavBarProps> = ({ items, activeItem, onSelect }) => {
   return (
-    <nav className="bg-[#0f172a] border-t border-cyan-600 shadow-inner w-full z-10">
-      <ul className="flex justify-center items-center py-3 space-x-4">
-        {items.map(item => {
-          const isActive = item === activeItem;
-          return (
-            <li key={item}>
-              <button
-                onClick={() => onSelect(item)}
-                className={`
-                  px-4 py-2 rounded-full transition duration-200 text-base font-semibold
-                  focus:outline-none focus:ring-2 focus:ring-cyan-400
-                  ${isActive
-                    ? "bg-cyan-600 text-white shadow-md"
-                    : "bg-[#1e293b] text-cyan-300 hover:bg-cyan-500 hover:text-white"}
-                `}
-              >
-                {item}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+    <nav className="bg-base-100 px-6 py-4 shadow-sm z-10 w-full">
+      <div className="flex justify-between items-center w-full max-w-7xl mx-auto">
+        {/* Logo / Brand */}
+        {/* <span className="text-xl font-bold tracking-wide text-primary">MySite</span> */}
+
+        {/* Navigation Items */}
+        <ul > {/* className="flex flex-1 justify-between items-center ml-10"> */}
+          {items.map((item) => {
+            const isActive = item === activeItem;
+
+            return (
+              <li key={item} className="relative">
+                <button
+                  onClick={() => onSelect(item)}
+                  className={`relative w-full px-4 py-2 text-lg transition-all duration-200
+                    ${isActive
+                      ? "font-bold text-base-100"
+                      : "text-primary/50 hover:text-primary"}
+                  `}
+                >
+                  {/* Parallelogram background for active */}
+                  {isActive && (
+                    <span className="absolute inset-0 bg-primary skew-x-[-12deg] rounded-md -z-10"></span>
+                  )}
+                  <span className="relative z-10">{item}</span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </nav>
   );
 };

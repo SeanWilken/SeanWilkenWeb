@@ -4,7 +4,7 @@ open Feliz
 open Shared
 open SharedWelcome
 
-let indexTile (imgSrc: string) (webAppSection: SharedWebAppViewSections.AppSection) (descrip: string) (dispatch: Msg -> unit) =
+let indexTile (imgSrc: string) (webAppSection: SharedWebAppViewSections.AppView) (descrip: string) (dispatch: Msg -> unit) =
     let sectionButtonTitle = SharedWebAppViewSections.appSectionStringTitle webAppSection
     Html.div [
         prop.className "card w-72 bg-base-100 shadow-xl m-4 flex flex-col items-center"
