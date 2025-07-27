@@ -792,6 +792,7 @@ module SharedWebAppViewSections =
     type AppView =
         | AboutAppView
         | ContactAppView
+        | IndexAppView
         | LandingAppView
         | PortfolioAppLandingView
         | PortfolioAppCodeView
@@ -804,9 +805,10 @@ module SharedWebAppViewSections =
         | AboutAppView -> "About"
         | PortfolioAppCodeView -> "Code"
         | ContactAppView -> "Contact"
-        | PortfolioAppDesignView -> "Design"
+        | IndexAppView -> "Index"
         | LandingAppView -> "Landing"
-        | PortfolioAppLandingView -> "Portfolio"
+        | PortfolioAppDesignView -> "Design"
+        | PortfolioAppLandingView -> "Projects"
         | ResumeAppView -> "Resume"
         | WelcomeAppView -> "Welcome"
 
@@ -885,7 +887,8 @@ module SharedAboutSection =
     // revert back to string list for bullet points?
     type ModalContent = {
         Title: string
-        MainContent: string //list
+        Image: string option
+        MainContent: string
         PreviousLabel: string
         NextLabel: string
     }

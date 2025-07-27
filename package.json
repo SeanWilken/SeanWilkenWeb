@@ -3,10 +3,12 @@
 		"Client": "link:src\\Client",
 		"daisyui": "^5.0.43",
 		"framer-motion": "^12.18.1",
+		"lucide-react": "^0.525.0",
 		"matter-js": "^0.20.0",
-		"tailwindcss": "^4.1.8"
+		"tailwindcss": "^4.1.11"
 	},
 	"devDependencies": {
+		"@tailwindcss/vite": "^4.1.11",
 		"@types/react": "18",
 		"@types/react-dom": "18"
 	}

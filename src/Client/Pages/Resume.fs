@@ -6,26 +6,6 @@ open ResumeBindings
 let resumeSections : ResumeSection array =
     [|
         {|
-            id = "summary"
-            label = "Summary"
-            items = [|
-                "Experienced Full Stack Developer with 9+ years in healthcare, e-commerce, and emerging tech."
-                "Built and led development of an AI-powered EMR platform in use across multiple states."
-                "Skilled in backend-first architecture with strong frontend capabilities."
-            |]
-        |}
-        {|
-            id = "experience"
-            label = "Experience"
-            items = [|
-                "Co-Founder at Antidote AI: Led AI-driven diagnostic tools and integrated EMR workflows (2021-Present)"
-                "Contract Developer at Scully Leather: Upgraded Magento, created CI/CD playbooks, handled payment and shipping modules (2017-2019)"
-                "Developer at Supotsu: Built real-time betting engine with live data integration and optimized UX under load (2018-2019)"
-                "Developer at RepSpark: Delivered rule-based logic for retail platforms and improved DevOps stability (2016-2018)"
-            |]
-        |}
-        {|
-            id = "skills"
             label = "Skills"
             items = [|
                 "Full-stack development"; "API integration and design"; "Microservices"; "SaaS platforms"; "Agile (Scrum, Kanban)";
@@ -36,7 +16,23 @@ let resumeSections : ResumeSection array =
             |]
         |}
         {|
-            id = "projects"
+            label = "Summary"
+            items = [|
+                "Experienced Full Stack Developer with 9+ years in healthcare, e-commerce, and emerging tech."
+                "Built and led development of an AI-powered EMR platform in use across multiple states."
+                "Skilled in backend-first architecture with strong frontend capabilities."
+            |]
+        |}
+        {|
+            label = "Experience"
+            items = [|
+                "Co-Founder at Antidote AI: Led AI-driven diagnostic tools and integrated EMR workflows (2021-Present)"
+                "Contract Developer at Scully Leather: Upgraded Magento, created CI/CD playbooks, handled payment and shipping modules (2017-2019)"
+                "Developer at Supotsu: Built real-time betting engine with live data integration and optimized UX under load (2018-2019)"
+                "Developer at RepSpark: Delivered rule-based logic for retail platforms and improved DevOps stability (2016-2018)"
+            |]
+        |}
+        {|
             label = "Projects"
             items = [|
                 "Healthcare EMR: Built secure AI-based EMR for hospitals with dynamic forms and telehealth support."
@@ -48,7 +44,6 @@ let resumeSections : ResumeSection array =
             |]
         |}
         {|
-            id = "education"
             label = "Education"
             items = [|
                 "SUNY Orange, Middletown NY - AAS in Computer Science (2014)"

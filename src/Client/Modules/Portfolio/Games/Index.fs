@@ -5,19 +5,15 @@ open Feliz
 open Shared
 open SharedCodeGallery
 
+let init(): Model * Cmd<Msg> = CodeGallery, Cmd.none
 
-let init(): SharedCodeGallery.Model * Cmd<SharedCodeGallery.Msg> =
-    SharedCodeGallery.CodeGallery, Cmd.none
-
-let update (msg: SharedCodeGallery.Msg) (model: SharedCodeGallery.Model): SharedCodeGallery.Model * Cmd<SharedCodeGallery.Msg> =
+let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg, model with
-    | LoadSection Gallery, _ ->
-        SharedCodeGallery.CodeGallery, Cmd.none
+    | LoadSection Gallery, _ -> CodeGallery, Cmd.none
     | LoadSection GallerySection.GoalRoll, _ ->
         let m, cmd = GoalRoll.init()
         GoalRoll m, Cmd.map GoalRollMsg cmd
-    | GoalRollMsg SharedGoalRoll.Msg.QuitGame, GoalRoll _ ->
-        CodeGallery, Cmd.none
+    | GoalRollMsg SharedGoalRoll.Msg.QuitGame, GoalRoll _ -> CodeGallery, Cmd.none
     | GoalRollMsg msg, GoalRoll m ->
         let m', cmd = GoalRoll.update msg m
         GoalRoll m', Cmd.map GoalRollMsg cmd
@@ -25,63 +21,67 @@ let update (msg: SharedCodeGallery.Msg) (model: SharedCodeGallery.Model): Shared
     | LoadSection GallerySection.TileSort, _ ->
         let m, cmd = TileSort.init()
         TileSort m, Cmd.map TileSortMsg cmd
-    | TileSortMsg SharedTileSort.Msg.QuitGame, TileSort _ ->
-        SharedCodeGallery.CodeGallery, Cmd.none
+    | TileSortMsg SharedTileSort.Msg.QuitGame, TileSort _ -> CodeGallery, Cmd.none
     | TileSortMsg msg, TileSort m ->
         let m', cmd = TileSort.update msg m
         TileSort m', Cmd.map TileSortMsg cmd
 
-    | SharedCodeGallery.LoadSection GallerySection.TileTap, _ ->
+    | LoadSection GallerySection.TileTap, _ ->
         let m, cmd = TileTap.init()
         TileTap m, Cmd.map TileTapMsg cmd
-    | SharedCodeGallery.TileTapMsg SharedTileTap.Msg.QuitGame, TileTap _ ->
+    | TileTapMsg SharedTileTap.Msg.QuitGame, TileTap _ ->
         TileTap.update SharedTileTap.Msg.ExitGameLoop |> ignore
-        SharedCodeGallery.CodeGallery, Cmd.none
-    | SharedCodeGallery.TileTapMsg msg, TileTap m ->
+        CodeGallery, Cmd.none
+    | TileTapMsg msg, TileTap m ->
         let m', cmd = TileTap.update msg m
         TileTap m', Cmd.map TileTapMsg cmd
 
-    | SharedCodeGallery.LoadSection GallerySection.PivotPoint, _ ->
-        printfn $"SHOULD LOAD PIVOT POINT"
+    | LoadSection GallerySection.PivotPoint, _ ->
         let m, cmd = PivotPoints.init()
         PivotPoint m, Cmd.map PivotPointMsg cmd
-    | SharedCodeGallery.PivotPointMsg SharedPivotPoint.Msg.QuitGame, PivotPoint m ->
+    | PivotPointMsg SharedPivotPoint.Msg.QuitGame, PivotPoint _ ->
         PivotPoints.update SharedPivotPoint.Msg.ExitGameLoop |> ignore
-        SharedCodeGallery.CodeGallery, Cmd.none
-    | SharedCodeGallery.PivotPointMsg msg, PivotPoint m ->
+        CodeGallery, Cmd.none
+    | PivotPointMsg msg, PivotPoint m ->
         let m', cmd = PivotPoints.update msg m
         PivotPoint m', Cmd.map PivotPointMsg cmd
 
-    | _, _ -> model, Cmd.none
+    | _ -> model, Cmd.none
 
 
-let codeGalleryHeader dispatch =
+// HEADER
+let codeGalleryHeader =
     Html.div [
-        prop.className "text-center mb-6"
+        prop.className "text-center mb-12"
         prop.children [
-            Html.h1 [ prop.className "text-4xl font-bold"; prop.text "Code Gallery" ]
+            Html.h1 [
+                prop.className "text-5xl font-bold text-primary"
+                prop.text "Code Experiments"
+            ]
             Html.p [
                 prop.className "text-lg text-base-content mt-2"
-                prop.text "Select a game module to try out, and configure your round in settings."
+                prop.text "Choose an interactive code demo. Each game highlights a different UI or logic challenge."
             ]
         ]
     ]
 
+
+// CARD
 let codeGalleryCard (title: string) (description: string) msg dispatch =
     Html.div [
-        prop.className "card bg-base-100 shadow-md hover:shadow-xl transition w-full md:w-2/3 mx-auto mb-4"
+        prop.className "card bg-base-200 hover:bg-base-300 shadow-xl transition duration-300 ease-in-out hover:scale-[1.01]"
         prop.children [
             Html.div [
-                prop.className "card-body"
+                prop.className "card-body space-y-3"
                 prop.children [
-                    Html.h2 [ prop.className "card-title"; prop.text title ]
-                    Html.p [ prop.text description ]
+                    Html.h2 [ prop.className "card-title text-2xl text-primary"; prop.text title ]
+                    Html.p [ prop.className "text-base-content"; prop.text description ]
                     Html.div [
                         prop.className "card-actions justify-end"
                         prop.children [
                             Html.button [
-                                prop.className "btn btn-primary"
-                                prop.text "Play"
+                                prop.className "btn btn-sm btn-primary"
+                                prop.text "Launch"
                                 prop.onClick (fun _ -> dispatch msg)
                             ]
                         ]
@@ -92,49 +92,37 @@ let codeGalleryCard (title: string) (description: string) msg dispatch =
     ]
 
 
-let tileSortSelection dispatch =
-    codeGalleryCard 
-        "Tile Sort"
-        "Arrange the tiles in the correct order, with the empty space being the missing number."
-        (SharedCodeGallery.LoadSection SharedCodeGallery.TileSort)
-        dispatch
-
-let tileTapSelection dispatch =
-    codeGalleryCard 
-        "Tile Tap"
-        "Tap to smash as many tiles as you can while avoiding bombs."
-        (SharedCodeGallery.LoadSection SharedCodeGallery.TileTap)
-        dispatch
-
-let goalRollSelection dispatch =
-    codeGalleryCard 
-        "Goal Roll"
-        "Roll the ball in straight line movements to the goal."
-        (SharedCodeGallery.LoadSection SharedCodeGallery.GoalRoll)
-        dispatch
-
-let pivotPointsSelection dispatch =
-    codeGalleryCard 
-        "Pivot Points"
-        "Pivot the ball across lanes to collect coins."
-        (SharedCodeGallery.LoadSection SharedCodeGallery.PivotPoint)
-        dispatch
-
-
+// MAIN VIEW
 let view model dispatch =
     match model with
     | CodeGallery ->
         Html.div [
-            prop.className "max-w-4xl mx-auto px-4 py-8"
+            prop.className "max-w-6xl mx-auto px-6 py-12"
             prop.children [
-                SharedViewModule.galleryHeaderControls "" "" BackToPortfolio dispatch
-                codeGalleryHeader dispatch
-                codeGalleryCard "Goal Roll" "Roll the ball in straight lines to the goal." (LoadSection SharedCodeGallery.GoalRoll) dispatch
-                codeGalleryCard "Tile Sort" "Arrange the tiles in the correct order." (LoadSection SharedCodeGallery.TileSort) dispatch
-                codeGalleryCard "Tile Tap" "Tap to smash tiles while avoiding bombs." (LoadSection SharedCodeGallery.TileTap) dispatch
-                codeGalleryCard "Pivot Points" "Pivot the ball to collect coins across lanes." (LoadSection SharedCodeGallery.PivotPoint) dispatch
+                SharedViewModule.galleryHeaderControls {
+                    onClose = fun () -> BackToPortfolio |> dispatch
+                    rightIcon = Some (
+                        {
+                            icon = Bindings.LucideIcon.LucideIcon.Github "w-6 h-6"
+                            label = "Github"
+                            externalLink = Some "https://github.com/seanwilken"
+                            externalAlt = Some "Go to Github"
+                        }
+                    )
+                }
+                codeGalleryHeader
+                Html.div [
+                    prop.className "grid gap-8 sm:grid-cols-1 md:grid-cols-2"
+                    prop.children [
+                        codeGalleryCard "Goal Roll" "Roll the ball in straight lines to the goal." (LoadSection SharedCodeGallery.GoalRoll) dispatch
+                        codeGalleryCard "Tile Sort" "Arrange the tiles in the correct order." (LoadSection SharedCodeGallery.TileSort) dispatch
+                        codeGalleryCard "Tile Tap" "Tap to smash tiles while avoiding bombs." (LoadSection SharedCodeGallery.TileTap) dispatch
+                        codeGalleryCard "Pivot Points" "Pivot the ball to collect coins across lanes." (LoadSection SharedCodeGallery.PivotPoint) dispatch
+                    ]
+                ]
             ]
         ]
+
     | GoalRoll m -> GoalRoll.view m (GoalRollMsg >> dispatch)
     | TileSort m -> TileSort.view m (TileSortMsg >> dispatch)
     | TileTap m  -> TileTap.view m (TileTapMsg >> dispatch)

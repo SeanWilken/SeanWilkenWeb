@@ -1,11 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap');
+@import "tailwindcss";
 @plugin "daisyui" {
-    themes: all;
+  themes: light --default, dark --prefersdark, cupcake, bumblebee,
+  emerald, corporate, synthwave, retro, cyberpunk, valentine,
+  halloween, garden, forest, aqua, lofi, pastel, fantasy, wireframe,
+  black, luxury, dracula, cmyk, autumn, business, acid, lemonade,
+  night, coffee, winter, dim, nord, sunset;
 }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
 
 /* Target spans inside active buttons on hover */
 .btn-active:hover span {
@@ -22,4 +27,134 @@
   0% { background-position: 0% 50%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 50%; }
+}
+@keyframes typingClear {
+  from { width: 0 }
+  to { width: 6ch }
+}
+
+@keyframes typingCommand {
+  from { width: 0 }
+  to { width: 22ch } /* adjust based on command */
+}
+
+@keyframes blink {
+  0%, 50%, 100% { opacity: 1; }
+  25%, 75% { opacity: 0; }
+}
+
+@keyframes fadeInOutput {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.25rem;
+  background-color: #22c55e;
+  animation: blink 1.2s step-end infinite;
+  margin-left: 4px;
+  vertical-align: bottom;
+}
+
+.terminal-line {
+  overflow: hidden;
+  white-space: pre;
+  border-right: 2px solid #22c55e;
+  animation-timing-function: steps(30, end);
+  animation-fill-mode: forwards;
+}
+
+.terminal-clear {
+  animation: typingClear 1s steps(6, end) forwards;
+}
+
+.terminal-command {
+  animation: typingCommand 2s steps(22, end) forwards;
+}
+
+.terminal-output {
+  opacity: 0;
+  animation: fadeInOutput 0.4s ease-in forwards;
+  animation-delay: 2.2s;
+}
+
+.terminal-hidden {
+  display: none;
+}
+
+.powerline-prompt {
+  white-space: pre;
+  color: #22c55e;
+  font-weight: 600;
+}
+
+.glass-card {
+  backdrop-filter: blur(16px);
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.25),
+    rgba(16, 185, 129, 0.25)
+  );
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.glass-card:hover {
+  transform: scale(1.02);
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.35),
+    rgba(16, 185, 129, 0.35)
+  );
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.design-word {
+  background: linear-gradient(
+    -45deg,
+    #ec4899,
+    #6366f1,
+    #06b6d4,
+    #10b981,
+    #f59e0b,
+    #ec4899
+  );
+  background-size: 400% 400%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: gradientShift 8s ease-in-out infinite;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.2);
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation-name: fadeInUp;
+  animation-fill-mode: forwards;
+  animation-timing-function: ease-out;
 }

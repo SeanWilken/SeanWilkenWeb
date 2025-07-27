@@ -4,7 +4,6 @@ open Feliz
 open Fable.Core.JsInterop
 
 type ResumeSection = {|
-    id: string
     label: string
     items: string array
 |}

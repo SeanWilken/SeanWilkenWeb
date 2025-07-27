@@ -1,13 +1,13 @@
-// ClientApp
 module Index
 
 open Elmish
 open Shared
 open PageRouter
 open SharedWebAppModels
+open Components.PageLayout
 
 // Section Items
-open Welcome
+// open Welcome
 // open AboutSection
 // open Portfolio
 // open Contact
@@ -31,8 +31,7 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
     | AboutMsg ( SharedAboutSection.SwitchSection appSection ), SharedWebAppModels.About m ->
         { model with CurrentAreaModel = SharedWebAppModels.About m }, Cmd.ofMsg (SwitchToOtherApp appSection)
     | AboutMsg msg, SharedWebAppModels.Model.About ( m ) ->
-        let updateModel, com = AboutSection.update msg m
-        { model with CurrentAreaModel = SharedWebAppModels.About updateModel }, Cmd.none
+        model, Cmd.none
 
     // PORTFOLIO PAGE
     | PortfolioMsg msg, SharedWebAppModels.Portfolio pm ->
@@ -79,10 +78,13 @@ open FSharp.Reflection
 // takes union case string, returns an app section
 let areaStringToAppSection string =
     match string with
+    | "Index" ->  SharedWebAppViewSections.AppView.IndexAppView
+    | "Landing" ->  SharedWebAppViewSections.AppView.LandingAppView
     | "About" -> SharedWebAppViewSections.AppView.AboutAppView
-    | "Portfolio" ->  SharedWebAppViewSections.AppView.PortfolioAppLandingView
     | "Contact" -> SharedWebAppViewSections.AppView.ContactAppView
-    | "Welcome"
+    | "Projects" ->  SharedWebAppViewSections.AppView.PortfolioAppLandingView
+    | "Resume" ->  SharedWebAppViewSections.AppView.ResumeAppView
+    | "Welcome" ->  SharedWebAppViewSections.AppView.WelcomeAppView
     | _ -> SharedWebAppViewSections.AppView.WelcomeAppView
 
 // returns the current model as an area
@@ -92,83 +94,13 @@ let currentWebAppSection model =
     | SharedWebAppModels.About _ -> SharedWebAppViewSections.AppView.AboutAppView
     | SharedWebAppModels.Portfolio _ -> SharedWebAppViewSections.AppView.PortfolioAppLandingView
     | SharedWebAppModels.Contact -> SharedWebAppViewSections.AppView.ContactAppView
+    | SharedWebAppModels.Resume -> SharedWebAppViewSections.AppView.ResumeAppView
+    | SharedWebAppModels.Landing -> SharedWebAppViewSections.AppView.LandingAppView
+    | SharedWebAppModels.Index -> SharedWebAppViewSections.AppView.IndexAppView
 
 // Union cases of the different web app sub modules, in order to create elements
 // and reference the union type in code.
 let contentAreas = FSharpType.GetUnionCases typeof<SharedWebAppModels.Model>
-
-let availableThemes = [ 
-    Light; Dark; Cyberpunk; Retro; Cupcake
-    Bumblebee; Emerald; Corporate; Synthwave
-    Retro; Cyberpunk; Valentine; Halloween
-    Garden; Forest; Aqua; Lofi; Pastel; Fantasy
-    Wireframe; Black; Luxury; Dracula; Cmyk
-    Autumn; Business; Acid; Lemonade; Night
-    Coffee; Winter; Dim; Nord; Sunset;
-]
-
-let themeSelector (currentTheme: SharedWebAppModels.Theme) (dispatch: WebAppMsg -> unit) =
-    Html.div [
-        prop.className "dropdown dropdown-end"
-        prop.children [
-            Html.label [
-                prop.tabIndex 0
-                prop.className "btn m-1 font-sans text-base-content"
-                prop.text "Theme"
-            ]
-            Html.ul [
-                prop.tabIndex 0
-                prop.className "dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52"
-                prop.children [
-                    for theme in availableThemes ->
-                        Html.li [
-                            Html.a [
-                                prop.text theme.AsString
-                                prop.onClick (fun _ -> dispatch (ChangeTheme theme))
-                                if currentTheme = theme then prop.className "active"
-                            ]
-                        ]
-                ]
-            ]
-        ]
-    ]
-
-
-// let animatedButton name isActive dispatch =
-//     let hoveredIndex, setHoveredIndex = React.useState<int option>(None)
-
-//     Html.button [
-//         prop.className (
-//             if isActive then
-//                 "btn btn-md btn-ghost btn-active text-3xl font-sans text-base-content"
-//             else
-//                 "btn btn-md btn-ghost hover:btn-accent text-xl font-sans text-base-content group"
-//         )
-//         prop.onMouseLeave (fun _ -> setHoveredIndex None)
-//         prop.children [
-//             name
-//             |> Seq.mapi (fun i c ->
-//                 let baseClasses = "inline-block transition-transform duration-300 ease-in-out"
-
-//                 let scaleClass =
-//                     if isActive then
-//                         ""
-//                     else
-//                         match hoveredIndex with
-//                         | Some index when index = i -> " scale-125"
-//                         | Some _ -> " scale-90"
-//                         | None -> ""
-
-//                 Html.span [
-//                     prop.className (baseClasses + scaleClass)
-//                     prop.onMouseEnter (fun _ -> setHoveredIndex (Some i))
-//                     prop.text (string c)
-//                 ])
-//             |> Seq.toList
-//             |> React.fragment
-//         ]
-//         prop.onClick (fun _ -> dispatch (SwitchToOtherApp (areaStringToAppSection name)))
-//     ]
 
 let heroBanner dispatch =
     Html.section [
@@ -283,7 +215,6 @@ let headerContent (model: SharedWebAppModels.WebAppModel) dispatch =
                             Html.div [
                                 prop.className "navbar-end flex items-center gap-2"
                                 prop.children [
-                                    themeSelector model.Theme dispatch
                                     Html.a [
                                         prop.href "https://github.com/seanwilken"
                                         prop.target "_blank"
@@ -350,41 +281,39 @@ let headerContent (model: SharedWebAppModels.WebAppModel) dispatch =
         ]
     ]
 
-open ResumeBindings
+//     // headerContent model dispatch
+//     // heroBanner dispatch
+    // Html.h1 [
+    //     prop.className "font-heading text-3xl font-bold text-red-500"
+    //     prop.text "Heading using Space grotesk"
+    // ]
+    // Html.p [
+    //     prop.className "font-sans text-base"
+    //     prop.text "Body content using DM Sans"
+    // ]
 
+[<ReactComponent>]
 let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
-    printfn $"STATE AREA: {(model.CurrentAreaModel.ToString())}"
-    Html.div [
-
-
-        
-        // headerContent model dispatch
-
-        // heroBanner dispatch
-
-        // Html.h1 [
-        //     prop.className "font-heading text-3xl font-bold text-red-500"
-        //     prop.text "Heading using Space grotesk"
-        // ]
-        // Html.p [
-        //     prop.className "font-sans text-base"
-        //     prop.text "Body content using DM Sans"
-        // ]
-
-
-        Html.div [
-            prop.className "container mx-auto p-4"
-            prop.children [
-                match model.CurrentAreaModel with
-                | SharedWebAppModels.About aboutModel -> AboutSection.view aboutModel (AboutMsg >> dispatch)
-                | SharedWebAppModels.Contact -> Contact.view
-                | SharedWebAppModels.Index -> Html.div "This is the index page, which should not be used."
-                | SharedWebAppModels.Landing -> Html.div "Welcome to the Landing Page"
-                | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery -> Portfolio.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
-                | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) -> Portfolio.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
-                | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) -> Portfolio.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
-                | SharedWebAppModels.Resume -> Pages.Resume.ResumePage ()
-                | SharedWebAppModels.Welcome -> Welcome.view (WelcomeMsg >> dispatch)
+    PageLayout {|
+        model = model
+        dispatch = dispatch
+        children =
+            Html.div [
+                prop.className "container mx-auto p-4"
+                prop.children [
+                    match model.CurrentAreaModel with
+                    | SharedWebAppModels.About aboutModel -> AboutSection.view aboutModel dispatch
+                    | SharedWebAppModels.Contact -> Contact.view
+                    | SharedWebAppModels.Index -> Html.div "This is the index page, which should not be used."
+                    | SharedWebAppModels.Landing -> Html.div "Welcome to the Landing Page"
+                    | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery ->
+                        Portfolio.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
+                    | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) ->
+                        Portfolio.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
+                    | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) ->
+                        Portfolio.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
+                    | SharedWebAppModels.Resume -> Pages.Resume.ResumePage ()
+                    | SharedWebAppModels.Welcome -> Welcome.view (WelcomeMsg >> dispatch)
+                ]
             ]
-        ]
-    ]
+    |}

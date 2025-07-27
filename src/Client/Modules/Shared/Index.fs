@@ -2,6 +2,7 @@ module SharedViewModule
 
 open Feliz
 open Browser
+open Bindings.LucideIcon
 
 module GamePieceIcons =
     open Shared.GridGame
@@ -77,54 +78,57 @@ let gameModalContent content =
     ]
 
 // Modal header with close button and title
+open Bindings.LucideIcon
+
 let sharedModalHeader (gameTitle: string) msg dispatch =
     Html.div [
-        prop.className "flex justify-between items-center p-3 border-b border-gray-300"
+        prop.className "flex items-center justify-between px-6 py-4 border-b border-base-300 bg-base-100"
         prop.children [
-            Html.div [] // Placeholder for possible left-side content
 
+            // Left content placeholder (e.g. breadcrumbs or icons)
             Html.div [
-                prop.className "headerTitle text-xl font-bold"
-                prop.children [ Html.h1 [ prop.text gameTitle ] ]
+                prop.className "w-16 h-16"
+                prop.children [ Html.none ]
             ]
 
-            Html.a [
-                prop.className "cursor-pointer"
-                prop.onClick (fun _ -> msg |> dispatch)
+            // Centered Title
+            Html.h1 [
+                prop.className "text-2xl font-bold text-primary text-center flex-1"
+                prop.text gameTitle
+            ]
+
+            // Right-side close button
+            Html.button [
+                prop.className "btn btn-square btn-ghost tooltip"
+                prop.custom("data-tip", "Close")
+                prop.onClick (fun _ -> dispatch msg)
                 prop.children [
-                    Html.img [
-                        prop.src "./imgs/icons/X-it.png"
-                        prop.className "w-16 h-16"
-                        prop.alt "Close"
-                    ]
+                    LucideIcon.X "w-6 h-6 text-base-content"
                 ]
             ]
         ]
     ]
 
-// Helper for code modal control selections
-let codeModalControlSelections controlActions dispatch =
+// Renders each modal control action as a nicely styled link button
+let codeModalControlSelections (controlActions: (string * 'msg) list) (dispatch: 'msg -> unit) =
     Html.div [
+        prop.className "flex flex-col gap-3"
         prop.children (
             controlActions
-            |> List.map (fun (label: string, msg) ->
-                Html.div [
-                    prop.children [
-                        Html.a [
-                            prop.className "cursor-pointer text-primary hover:underline"
-                            prop.text label
-                            prop.onClick (fun _ -> msg |> dispatch)
-                        ]
-                    ]
+            |> List.map (fun (label, msg) ->
+                Html.button [
+                    prop.className "text-primary hover:text-accent hover:underline text-lg font-medium transition-colors"
+                    prop.text label
+                    prop.onClick (fun _ -> dispatch msg)
                 ]
             )
         )
     ]
 
-// Modal controls content container
-let codeModalControlsContent controlList dispatch =
+// Container wrapper for modal controls with consistent layout
+let codeModalControlsContent (controlList: (string * 'msg) list) (dispatch: 'msg -> unit) =
     Html.div [
-        prop.className "modalAltContent p-4"
+        prop.className "modalAltContent p-6 bg-base-100 rounded-lg shadow-inner"
         prop.children [
             codeModalControlSelections controlList dispatch
         ]
@@ -133,16 +137,25 @@ let codeModalControlsContent controlList dispatch =
 // Round complete content card
 let roundCompleteContent (gameStatDetails: string list) =
     Html.div [
-        prop.className "levelCompletedCard p-6 bg-base-200 rounded-lg shadow-md text-white"
+        prop.className "bg-base-200 text-center rounded-xl shadow-lg p-6 text-base-content space-y-4"
         prop.children [
-            Html.div [ prop.className "mb-2"; prop.text "Round Over!" ]
-            Html.div [
-                prop.className "text-xl font-semibold mb-2"
-                prop.text "Details:"
+            Html.h2 [
+                prop.className "text-2xl font-bold text-success"
+                prop.text "🎉 Round Complete!"
             ]
-            yield! gameStatDetails |> List.map (fun stat ->
-                Html.p [ prop.className "mb-1"; prop.text stat ]
-            )
+            Html.div [
+                prop.className "text-lg font-semibold text-base-content/80"
+                prop.text "Stats Summary:"
+            ]
+            Html.ul [
+                prop.className "list-disc list-inside space-y-1"
+                prop.children (
+                    gameStatDetails
+                    |> List.map (fun stat ->
+                        Html.li [ prop.text stat ]
+                    )
+                )
+            ]
         ]
     ]
 
@@ -163,42 +176,58 @@ let modalInstructionContent instructionList =
 // Footer buttons for code modal controls
 let codeModalFooter controlList dispatch =
     Html.div [
-        prop.className "flex justify-around py-2 border-t border-gray-300"
+        prop.className "flex flex-wrap justify-center gap-4 py-4 border-t border-base-300 bg-base-100"
         prop.children (
             controlList
             |> List.map (fun (title: string, msg) ->
-                Html.div [
-                    prop.className "modalControls cursor-pointer text-lg font-semibold text-primary hover:text-primary-focus"
-                    prop.onClick (fun _ -> msg |> dispatch)
-                    prop.children [ Html.h1 [ prop.text title ] ]
+                Html.button [
+                    prop.className "btn btn-sm md:btn-md btn-outline text-primary hover:btn-primary transition"
+                    prop.text title
+                    prop.onClick (fun _ -> dispatch msg)
                 ]
             )
         )
     ]
 
+type RightHeaderIcon = {
+    icon: ReactElement
+    label: string
+    externalLink: string option
+    externalAlt: string option
+}
+
+type GalleryHeaderProps = {
+    onClose: unit -> unit
+    rightIcon: RightHeaderIcon option
+}
+
 // Gallery header controls with close and external link buttons
-let galleryHeaderControls hrefLink hrefImg msg dispatch =
+let galleryHeaderControls (props: GalleryHeaderProps) =
     Html.div [
         prop.className "flex justify-between items-center p-2"
         prop.children [
-            Html.a [
-                prop.className "closeModal cursor-pointer"
-                prop.onClick (fun _ -> msg |> dispatch)
+            Html.button [
+                prop.className "btn btn-square btn-ghost text-error hover:text-error-content"
+                prop.onClick (fun _ -> props.onClose())
                 prop.children [
-                    Html.img [ prop.src "./imgs/icons/X-it.png"; prop.className "w-16 h-16"; prop.alt "Close" ]
+                    LucideIcon.X "w-6 h-6"
                 ]
             ]
-            Html.span [
-                prop.className "modalExternalLink"
-                prop.children [
-                    Html.a [
-                        prop.href hrefLink
-                        prop.children [
-                            Html.img [ prop.src hrefImg; prop.className "w-16 h-16"; prop.alt "External Link" ]
-                        ]
+            match props.rightIcon with
+            | Some icon ->
+                Html.a [
+                    match icon.externalLink with 
+                    | None -> ()
+                    | Some extLink -> prop.href extLink
+                    prop.target "_blank"
+                    prop.className "btn btn-ghost hover:bg-base-200"
+                    prop.title (icon.externalAlt |> Option.defaultValue "External Link")
+                    prop.children [
+                        icon.icon
+                        Html.span icon.label
                     ]
                 ]
-            ]
+            | None -> Html.none
         ]
     ]
 

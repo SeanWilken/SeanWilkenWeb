@@ -1,6 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from 'tailwindcss'
+import tailwindcss from '@tailwindcss/vite';
 import autoprefixer from 'autoprefixer'
 
 const proxyPort = process.env.SERVER_PROXY_PORT || "5000";
@@ -9,6 +9,7 @@ const proxyTarget = "http://localhost:" + proxyPort;
 // https://vitejs.dev/config/
 export default defineConfig({
     plugins: [
+        tailwindcss(),
         react(),
     ],
     build: {
@@ -30,7 +31,6 @@ export default defineConfig({
     css: {
         postcss: {
             plugins: [
-                tailwindcss,
                 autoprefixer
             ]
         }

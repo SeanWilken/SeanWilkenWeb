@@ -59,18 +59,16 @@ let urlParser location =
 let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebAppModel) : SharedWebAppModels.WebAppModel * Cmd<SharedWebAppModels.WebAppMsg> =
     match result with
     | None
-    | Some SharedPage.Page.Index ->
-        { model with CurrentAreaModel = SharedWebAppModels.Resume },
-        Navigation.newUrl (toPath None)
+    | Some SharedPage.Page.Index
+    | Some SharedPage.Page.Landing ->
+        { model with CurrentAreaModel = SharedWebAppModels.Landing },
+        Navigation.newUrl (toPath (Some Landing))
     | Some SharedPage.Page.About ->
         { model with CurrentAreaModel = SharedWebAppModels.About SharedAboutSection.getInitialModel },
         Navigation.newUrl (toPath (Some About))
     | Some SharedPage.Page.Contact ->
         { model with CurrentAreaModel = SharedWebAppModels.Contact },
         Navigation.newUrl (toPath (Some Contact)) 
-    | Some SharedPage.Page.Landing ->
-        { model with CurrentAreaModel = SharedWebAppModels.Landing },
-        Navigation.newUrl (toPath (Some Landing))
     | Some (SharedPage.Page.Portfolio (SharedPage.Code SharedPage.CodeSection.CodeLanding)) ->
         { model with CurrentAreaModel = SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery SharedCodeGallery.CodeGallery) },
         Navigation.newUrl (toPath (Some (Portfolio (Code CodeSection.CodeLanding)))) 

@@ -12,7 +12,13 @@
         <None Include="paket.references" />
 
         <!-- F# TSX Bindings -->
+        <Compile Include="Bindings\LucideIcons.fs" />
+        <Compile Include="Bindings\FramerMotion.fs" />
+        <Compile Include="Bindings\DockedNavbar.fs" />
         <Compile Include="Bindings\Resume.fs" />
+        <Compile Include="Bindings\SubNavbar.fs" />
+        <Compile Include="Bindings\ThemePicker.fs" />
+
         <Compile Include="Modules\JS.Wrapper\ParallaxComponentPortfolio.fs" />
         <Compile Include="Modules\JS.Wrapper\PhysicsSimulation.fs" />
         <Compile Include="Modules\JS.Wrapper\TSXHeaderCanvas.fs" />
@@ -21,6 +27,9 @@
         <!-- Shared -->
         <Compile Include="Modules\Shared\Index.fs" />
         
+        <!-- F# Components -->
+        <Compile Include="Components\FSharp\MainSideNav.fs" />
+
         <!-- F# Components -->
         <Compile Include="Modules\Portfolio\Games\GoalRoll\Index.fs" />
         <Compile Include="Modules\Portfolio\Games\PivotPoints\Index.fs" />
@@ -40,6 +49,7 @@
         <Compile Include="Modules\PageRouter\Index.fs" /> 
         
         <!-- Main Application Entry Point & Index -->
+        <Compile Include="Components\FSharp\PageLayout.fs" />
         <Compile Include="Index.fs" />
         <Compile Include="App.fs" />
         

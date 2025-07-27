@@ -22,6 +22,11 @@ Target.create "Clean" (fun _ ->
 
 Target.create "RestoreClientDependencies" (fun _ -> run pnpm [ "i" ] clientPath)
 
+// Target.create "BuildCss" (fun _ ->
+//     run pnpm [ "exec"; "postcss"; "src/Client/index.css"; "-o"; "src/Client/public/css/index.css" ] "."
+// )
+
+
 Target.create "Bundle" (fun _ ->
     [
         "server", dotnet [ "publish"; "-c"; "Release"; "-o"; deployPath ] serverPath
@@ -31,7 +36,7 @@ Target.create "Bundle" (fun _ ->
 
 Target.create "Azure" (fun _ ->
     let web = webApp {
-        name "SAFE-App"
+        name "Wilken Web"
         operating_system OS.Linux
         runtime_stack (DotNet "8.0")
         zip_deploy "deploy"
@@ -42,12 +47,11 @@ Target.create "Azure" (fun _ ->
         add_resource web
     }
 
-    deployment |> Deploy.execute "SAFE-App" Deploy.NoParameters |> ignore)
+    deployment |> Deploy.execute "Wilken Web" Deploy.NoParameters |> ignore)
 
 Target.create "Build" (fun _ ->
     run dotnet [ "build"; "Application.sln" ] "."
-
-    )
+)
 
 Target.create "Run" (fun _ ->
     [
@@ -80,6 +84,9 @@ let dependencies = [
 
     "RestoreClientDependencies" ==> "Build" ==> "RunTestsHeadless"
     "RestoreClientDependencies" ==> "Build" ==> "WatchRunTests"
+    
+    // "BuildCss" ==> "Bundle" ==> "Azure"
+    // "BuildCss" ==> "Bundle" ==> "Run"
 ]
 
 [<EntryPoint>]

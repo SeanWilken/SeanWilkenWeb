@@ -26,5 +26,6 @@
         "**/obj": true,
         "**/output": true,
         "**/deploy": true,
-    }
+    },
+    "editor.inlayHints.enabled": "offUnlessPressed"
 }
