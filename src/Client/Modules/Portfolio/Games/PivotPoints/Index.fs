@@ -215,7 +215,6 @@ let gameContentViewControls model controlList dispatch =
         )
     ]
 
-
 let pivotPointTileView rollDirection position style message dispatch =
     let iconPath =
         match position with
@@ -290,17 +289,84 @@ let pivotPointsBoardView (model: SharedPivotPoint.Model) dispatch =
         let laneStyles = laneStyleCreator ballLaneIndex ceiling
         laneView false model board laneStyles ceiling dispatch
 
+let pivotPointsGameLoopCard (model: SharedPivotPoint.Model) (dispatch: SharedPivotPoint.Msg -> unit) =
+    let toggleString = roundStateToggleString model
+    Html.div [
+        prop.className "card bg-base-200 shadow-md p-4 mt-4"
+        prop.children [
+            Html.div [
+                prop.className "flex flex-col space-y-6"
+                prop.children [
+                    Html.div [
+                        prop.className "modalAltContent p-4"
+                        prop.children [ 
+                            Html.div [
+                                prop.className "flex flex-col md:flex-row gap-4 justify-between items-stretch"
+                                prop.children [
+                                    Html.div [
+                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
+                                        prop.children [
+                                            Html.a [
+                                                prop.className "btn btn-sm btn-primary w-full"
+                                                prop.onClick (fun _ -> startGameLoop model dispatch |> ignore)
+                                                prop.text (toggleString + " Round")
+                                            ]
+                                            Html.a [
+                                                prop.className "btn btn-sm btn-secondary w-full"
+                                                prop.onClick (fun _ -> SharedPivotPoint.Msg.ResetRound |> dispatch)
+                                                prop.text "Restart Round"
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ]
+
 let pivotPointsModalContent (model: SharedPivotPoint.Model) dispatch =
     SharedViewModule.gameModalContent (
-        match model.GameState with
-        | RoundState.Settings -> gameRulesAndSettingsView model dispatch
-        | Won -> SharedViewModule.roundCompleteContent (modelPivotPointRoundDetails model)
-        | _ -> pivotPointsBoardView model dispatch
+        Html.div [
+            match model.GameState with
+            | Won -> SharedViewModule.roundCompleteContent (modelPivotPointRoundDetails model) (fun () -> SharedPivotPoint.ResetRound |> dispatch)
+            | _ ->
+                Html.div [
+                    prop.className "flex flex-row justify-between items-center w-full mb-4 gap-4 relative p-2"
+                    prop.children [
+                        Html.div [
+                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-info-content"
+                            prop.children [
+                                Html.div [
+                                    prop.className "text-error font-bold text-lg text-center"
+                                    prop.text $"Game Clock: {SharedViewModule.gameTickClock model.GameClock}"
+                                ]
+                            ]
+                        ]
+                        Html.div [
+                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-warning-content"
+                            prop.children [
+                                Html.div [
+                                    prop.className "text-info font-bold text-lg text-center"
+                                    prop.text $"Coins: {model.CoinsCollected}"
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+                Html.div [
+                    prop.className "my-4"
+                    prop.children [ pivotPointsBoardView model dispatch ]
+                ]
+                pivotPointsGameLoopCard model dispatch
+        ]
     )
 
 let view (model: SharedPivotPoint.Model) dispatch =
     Html.div [
-        SharedViewModule.sharedModalHeader "Pivot Points" SharedPivotPoint.QuitGame dispatch
+        SharedViewModule.sharedModalHeader "Pivot Points" pivotPointsDescriptions SharedPivotPoint.QuitGame dispatch
         pivotPointsModalContent model dispatch
-        gameContentViewControls model controlList dispatch
+        // gameContentViewControls model controlList dispatch
     ]

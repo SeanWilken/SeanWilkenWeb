@@ -457,6 +457,7 @@ module SharedTileTap =
         // RoundTileLifeTime: int // How many GameTicks the tile will live for // tie into Value?
         CurrentRoundDetails: TileTapRoundDetails
         CompletedRoundDetails: TileTapRoundDetails
+        Difficulty: TileTapDifficulty // current difficulty of the game
     }
 
     let levelCeiling = 1
@@ -476,6 +477,7 @@ module SharedTileTap =
         DispatchPointer = 0.0
         RoundTimer = 30
         AllowableRoundMistakes = 5
+        Difficulty = Simple
         // RoundTileLifeTime = 15 (just under 4 seconds)
         CurrentRoundDetails = emptyTileTapRoundDetails
         CompletedRoundDetails = emptyTileTapRoundDetails
@@ -505,17 +507,17 @@ module SharedTileTap =
     // based on requested TileTapDifficulty
     let updateSurvivalModeDifficulty  ( model : Model ) ( difficulty : TileTapDifficulty ) =
         match difficulty with
-        | Simple -> { model with RoundTimer = 30; AllowableRoundMistakes = 10 }
-        | Easy -> { model with RoundTimer = 60; AllowableRoundMistakes = 5 }
-        | Intermediate -> { model with RoundTimer = -1; AllowableRoundMistakes = 3 }
-        | Hard -> { model with RoundTimer = -1; AllowableRoundMistakes = 1 }
+        | Simple -> { model with Difficulty = difficulty; RoundTimer = 30; AllowableRoundMistakes = 10 }
+        | Easy -> { model with Difficulty = difficulty; RoundTimer = 60; AllowableRoundMistakes = 5 }
+        | Intermediate -> { model with Difficulty = difficulty; RoundTimer = -1; AllowableRoundMistakes = 3 }
+        | Hard -> { model with Difficulty = difficulty; RoundTimer = -1; AllowableRoundMistakes = 1 }
 
     let updateTimeAttackModeDifficulty  ( model : Model ) ( difficulty : TileTapDifficulty ) =
         match difficulty with
-        | Simple -> { model with RoundTimer = 90; AllowableRoundMistakes = -1 }
-        | Easy -> { model with RoundTimer = 60; AllowableRoundMistakes = -1 }
-        | Intermediate -> { model with RoundTimer = 45; AllowableRoundMistakes = -1 }
-        | Hard -> { model with RoundTimer = 30; AllowableRoundMistakes = -1 }
+        | Simple -> { model with Difficulty = difficulty; RoundTimer = 90; AllowableRoundMistakes = -1 }
+        | Easy -> { model with Difficulty = difficulty; RoundTimer = 60; AllowableRoundMistakes = -1 }
+        | Intermediate -> { model with Difficulty = difficulty; RoundTimer = 45; AllowableRoundMistakes = -1 }
+        | Hard -> { model with Difficulty = difficulty; RoundTimer = 30; AllowableRoundMistakes = -1 }
 
     // When ChangeDifficulty Msg is dispatched,
     // returns model with different round parameters
@@ -828,6 +830,7 @@ module SharedCodeGallery =
     type Msg =
         | BackToPortfolio
         | LoadSection of GallerySection
+        | LoadSourceCode of GallerySection
         | GoalRollMsg of SharedGoalRoll.Msg
         | TileTapMsg of SharedTileTap.Msg
         | TileSortMsg of SharedTileSort.Msg
@@ -839,6 +842,7 @@ module SharedCodeGallery =
         | TileTap of SharedTileTap.Model
         | TileSort of SharedTileSort.Model
         | PivotPoint of SharedPivotPoint.Model
+        | SourceCode of GallerySection
 
     let getInitialModel = CodeGallery
 

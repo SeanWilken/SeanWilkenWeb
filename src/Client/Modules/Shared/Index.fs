@@ -27,48 +27,6 @@ module GamePieceIcons =
         | MovementDirection.Left -> leftArrow
         | MovementDirection.Right -> rightArrow
 
-// Back button with image, clickable dispatch
-let backToGallery (dispatchMsg: unit -> unit) (dispatch: _ -> unit) =
-    Html.div [
-        prop.children [
-            Html.a [
-                prop.className "relativeBackButton cursor-pointer"
-                prop.onClick (fun _ -> dispatchMsg () |> dispatch)
-                prop.children [
-                    Html.img [
-                        prop.src "./imgs/icons/X-it.png"
-                        prop.className "w-12 h-12"
-                        prop.alt "Close"
-                    ]
-                ]
-            ]
-        ]
-    ]
-
-// Navigation button with letters spaced out in columns
-let bigNavButton (clickFunc: unit -> unit) (name: string) (dispatch: _ -> unit) =
-    Html.a [
-        prop.onClick (fun _ -> clickFunc () |> dispatch)
-        prop.className "bigSectionNavigationButton cursor-pointer"
-        prop.children [
-            Html.div [
-                prop.className "flex space-x-2 justify-center items-center text-xl font-semibold"
-                prop.children (
-                    name
-                    |> Seq.map (fun c -> Html.span [ prop.text (string c) ])
-                    |> Seq.toList
-                )
-            ]
-        ]
-    ]
-
-// Simple flat button for switching section
-let sharedSwitchSectionButton msg (buttonString: string) dispatch =
-    Html.button [
-        prop.className "btn btn-ghost"
-        prop.text buttonString
-        prop.onClick (fun _ -> msg |> dispatch)
-    ]
 
 // Modal content wrapper for games
 let gameModalContent content =
@@ -80,15 +38,20 @@ let gameModalContent content =
 // Modal header with close button and title
 open Bindings.LucideIcon
 
-let sharedModalHeader (gameTitle: string) msg dispatch =
+let sharedModalHeader (gameTitle: string) (gameInstructions: string list) msg dispatch =
+    let (showInfo, setShowInfo) = React.useState(false)
     Html.div [
-        prop.className "flex items-center justify-between px-6 py-4 border-b border-base-300 bg-base-100"
+        prop.className "bg-base-200 shadow-md flex items-center justify-between px-6 py-4"
         prop.children [
 
             // Left content placeholder (e.g. breadcrumbs or icons)
-            Html.div [
-                prop.className "w-16 h-16"
-                prop.children [ Html.none ]
+            Html.button [
+                prop.className "btn btn-square btn-ghost tooltip"
+                prop.custom("data-tip", "Close")
+                prop.onClick (fun _ -> dispatch msg)
+                prop.children [
+                    LucideIcon.X "w-6 h-6 text-base-content"
+                ]
             ]
 
             // Centered Title
@@ -98,12 +61,31 @@ let sharedModalHeader (gameTitle: string) msg dispatch =
             ]
 
             // Right-side close button
-            Html.button [
-                prop.className "btn btn-square btn-ghost tooltip"
-                prop.custom("data-tip", "Close")
-                prop.onClick (fun _ -> dispatch msg)
-                prop.children [
-                    LucideIcon.X "w-6 h-6 text-base-content"
+            Html.div [
+                prop.children [ 
+                    
+                    Html.span [
+                        prop.onClick ( fun _ -> setShowInfo(true))
+                        prop.children [
+                            LucideIcon.Info "cursor-pointer hover:text-blue-700 text-blue-500"
+                        ]
+                    ]
+                    if showInfo then
+                        Html.div [
+                            prop.className "absolute top-4 left-2 right-2 bg-base-100 border border-base-300 rounded shadow-lg p-4 w-64 z-20"
+                            prop.children [
+                                Html.h3 [ prop.className "font-bold mb-2"; prop.text "Game Rules" ]
+                                Html.ul [
+                                    for rule in gameInstructions do
+                                        Html.li [ prop.className "mb-1 text-sm"; prop.text rule ]
+                                ]
+                                Html.button [
+                                    prop.className "btn btn-xs btn-primary mt-2 w-full"
+                                    prop.onClick (fun _ -> setShowInfo(false))
+                                    prop.text "Close"
+                                ]
+                            ]
+                        ]
                 ]
             ]
         ]
@@ -135,7 +117,7 @@ let codeModalControlsContent (controlList: (string * 'msg) list) (dispatch: 'msg
     ]
 
 // Round complete content card
-let roundCompleteContent (gameStatDetails: string list) =
+let roundCompleteContent (gameStatDetails: string list) restartGame =
     Html.div [
         prop.className "bg-base-200 text-center rounded-xl shadow-lg p-6 text-base-content space-y-4"
         prop.children [
@@ -155,6 +137,11 @@ let roundCompleteContent (gameStatDetails: string list) =
                         Html.li [ prop.text stat ]
                     )
                 )
+            ]
+            Html.button [
+                prop.className "btn btn-primary mt-4"
+                prop.onClick (fun _ -> restartGame())
+                prop.text "Restart Round"
             ]
         ]
     ]
@@ -207,12 +194,20 @@ let galleryHeaderControls (props: GalleryHeaderProps) =
         prop.className "flex justify-between items-center p-2"
         prop.children [
             Html.button [
-                prop.className "btn btn-square btn-ghost text-error hover:text-error-content"
+                prop.className "btn btn-square btn-ghost tooltip"
+                prop.custom("data-tip", "Back")
+                // prop.onClick (fun _ -> dispatch msg)
                 prop.onClick (fun _ -> props.onClose())
                 prop.children [
-                    LucideIcon.X "w-6 h-6"
+                    LucideIcon.ChevronLeft "w-6 h-6 text-base-content"
                 ]
             ]
+            // Html.button [
+            //     prop.className "btn btn-square btn-ghost text-error hover:text-error-content"
+            //     prop.children [
+            //         LucideIcon.ChevronLeft "w-6 h-6"
+            //     ]
+            // ]
             match props.rightIcon with
             | Some icon ->
                 Html.a [

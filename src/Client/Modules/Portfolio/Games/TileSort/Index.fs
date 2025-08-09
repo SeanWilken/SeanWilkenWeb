@@ -27,10 +27,10 @@ let decodeDifficultyByString string =
 
 let difficultyToString difficulty =
     match difficulty with
-    | Simple -> "3x3 - Simple"
-    | Easy -> "4x4 - Easy"
-    | Medium -> "5x5 - Medium"
-    | Hard -> "6x6 - Hard"
+    | Simple -> "Simple - 3x3"
+    | Easy -> "Easy - 4x4"
+    | Medium -> "Medium - 5x5"
+    | Hard -> "Hard - 6x6"
 
 // VIEW
 let tileSortDescriptions = [ 
@@ -139,66 +139,113 @@ let tileSortGameBoard model dispatch =
         prop.children [ for row in tileRows -> tileSortRowCreator row dispatch ]
     ]
 
-let tileSortModalContent model dispatch =
-    let content =
-        match model.GameState with
-        | Shared.GridGame.Settings ->
-            Html.div [
-                SharedViewModule.modalInstructionContent tileSortDescriptions
-                SharedViewModule.codeModalControlsContent gameControls dispatch
-            ]
-        | Shared.GridGame.Won ->
-            SharedViewModule.roundCompleteContent (modelTileSortRoundDetails model)
-        | Shared.GridGame.Playing
-        | Shared.GridGame.Paused ->
-            tileSortGameBoard model dispatch
 
-    SharedViewModule.gameModalContent content
+let tileSortGameLoopCard (model: SharedTileSort.Model) (dispatch: Msg -> unit) =
+    Html.div [
+        prop.className "card bg-base-200 shadow-md p-4 mt-4"
+        prop.children [
+            Html.div [
+                // prop.className "flex flex-col space-y-6"
+                prop.children [
+                    Html.div [
+                        prop.className "modalAltContent p-4"
+                        prop.children [ 
+                            Html.div [
+                                prop.className "flex flex-col md:flex-row gap-4 justify-between items-stretch"
+                                prop.children [
+                                    Html.div [
+                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
+                                        prop.children [
+                                            Html.button [ 
+                                                prop.className "btn btn-sm btn-secondary w-full"
+                                                prop.onClick (fun _ -> ResetRound |> dispatch)
+                                                prop.text "Restart Round"
+                                            ]
+                                        ]
+                                    ]
+                                    Html.div [
+                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
+                                        prop.children [
+                                            Html.h3 [ prop.className "mb-1 text-center"; prop.text "Select Level:" ]
+                                            Html.div [
+                                                prop.className "flex flex-row gap-2 justify-center"
+                                                prop.children [
+                                                    Html.a [
+                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileSort.TileSortDifficulty.Simple then " text-primary" else ""))
+                                                        prop.onClick (fun _ -> Msg.UpdateDifficulty SharedTileSort.TileSortDifficulty.Simple |> dispatch)
+                                                        prop.text "Simple"
+                                                    ]
+                                                    Html.a [
+                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileSort.TileSortDifficulty.Easy then " text-primary" else ""))
+                                                        prop.onClick (fun _ -> Msg.UpdateDifficulty SharedTileSort.TileSortDifficulty.Easy |> dispatch)
+                                                        prop.text "Easy"
+                                                    ]
+                                                    Html.a [
+                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileSort.TileSortDifficulty.Medium then " text-primary" else ""))
+                                                        prop.onClick (fun _ -> Msg.UpdateDifficulty SharedTileSort.TileSortDifficulty.Medium |> dispatch)
+                                                        prop.text "Medium"
+                                                    ]
+                                                    Html.a [
+                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileSort.TileSortDifficulty.Hard then " text-primary" else ""))
+                                                        prop.onClick (fun _ -> Msg.UpdateDifficulty SharedTileSort.TileSortDifficulty.Hard |> dispatch)
+                                                        prop.text "Hard"
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ]
+
+let tileSortModalContent model dispatch =
+    SharedViewModule.gameModalContent (
+        Html.div [
+            match model.GameState with
+            | Shared.GridGame.Won ->
+                SharedViewModule.roundCompleteContent (modelTileSortRoundDetails model) (fun () -> SharedTileSort.Msg.ResetRound |> dispatch)
+            | _ ->
+                Html.div [
+                    prop.className "flex flex-row justify-between items-center w-full mb-4 gap-4 relative p-2"
+                    prop.children [
+                        Html.div [
+                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-success-content"
+                            prop.children [
+                                Html.div [
+                                    prop.className "text-success font-bold text-lg text-center"
+                                    prop.text $"Difficulty: {model.Difficulty |> difficultyToString}"
+                                ]
+                            ]
+                        ]
+                        Html.div [
+                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-warning-content"
+                            prop.children [
+                                Html.div [
+                                    prop.className "text-info font-bold text-lg text-center"
+                                    prop.text $"Total Moves: {model.Turns.Length}"
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+                Html.div [
+                    prop.className "my-4"
+                    prop.children [ tileSortGameBoard model dispatch ]
+                ]
+                tileSortGameLoopCard model dispatch
+            
+        ]
+            
+    )
+    
 
 let view model dispatch =
     Html.div [
-        SharedViewModule.sharedModalHeader "Tile Sort" QuitGame dispatch
+        SharedViewModule.sharedModalHeader "Tile Sort" tileSortDescriptions QuitGame dispatch
         tileSortModalContent model dispatch
-        SharedViewModule.codeModalFooter controlList dispatch
     ]
-
-
-// TEST ABOVE FUNCTIONALITY AND LOGIC
-// GENERATE A DIFFICULTY HARD TILE LIST
-// let hardModeGameBoardPositions = generateGameBoardPositionsBasedOffDifficulty Hard
-// let randomizedGeneratedHardGamePositions = createRandomGameTiles unassignedTiles hardModeGameBoardPositions
-// let randomTileGameRoundHard = randomBlankPosition randomizedGeneratedHardGamePositions
-// // REAL WAY TO CREATE GAME
-// let newRoundTest = createNewRoundGameBoardBasedOnDifficulty Hard
-// // AS ROWS: FOR VISIBILTY
-// let randomTileGameRoundHardAsRows = getTilesAsRows newRoundTest Hard
-// // AS COLUMNS: FOR VISIBILTY
-// let randomTileGameRoundHardAsColumns = getTilesAsColumns newRoundTest Hard
-// //explicitly sorted out correct solution
-// let explicitHardSolution30BlankValue = { GameTiles = [   
-//         {Value = Some 1 }; { Value = Some 2 }; { Value = Some 3 }; { Value = Some 4 }; { Value = Some 5 }; { Value = Some 6 }; // row representation
-//         { Value = Some 7 }; { Value = Some 8 }; { Value = Some 9 }; { Value = Some 10 }; { Value = Some 11 }; { Value = Some 12 };
-//         { Value = Some 13 }; { Value = Some 14 }; { Value = Some 15 }; { Value = Some 16 }; { Value = Some 17 }; { Value = Some 18 };
-//         { Value = Some 19 }; { Value = Some 20 }; { Value = Some 21 }; { Value = Some 22 }; { Value = Some 23 }; { Value = Some 24 };
-//         { Value = Some 25 }; { Value = Some 26 }; { Value = Some 27 }; { Value = Some 28 }; { Value = Some 29 }; { Value = None };
-//         { Value = Some 31 }; { Value = Some 32 }; { Value = Some 33 }; { Value = Some 34 }; { Value = Some 35 }; { Value = Some 36 }
-//     ]}
-// let explicitHardSolution30BlankValueAsRows = getTilesAsRows explicitHardSolution30BlankValue Hard
-// let explicitHardSolution30BlankValueAsColumns = getTilesAsColumns explicitHardSolution30BlankValue Hard
-// // check valid move -> currentTiles, the selected tile value, difficulty
-// let noneSelectedReturnFalse = checkTileMoveInRows explicitHardSolution30BlankValue (None) Hard
-// let selected29ReturnTrue = checkTileMoveInRows explicitHardSolution30BlankValue (Some 29) Hard
-// let selected18BlockedBy24ReturnFalse = checkTileMoveInColumns explicitHardSolution30BlankValue (Some 18) Hard
-// let selected24AboveBlankReturnTrue = checkTileMoveInColumns explicitHardSolution30BlankValue (Some 24) Hard
-// let selected36BelowBlankReturnTrue = checkTileMoveInColumns explicitHardSolution30BlankValue (Some 36) Hard
-// // VALID MOVES, RETURNS SELECTED SWAPPED WITH BLANK
-// let explicitHard30BlankSwappedWith24InColumn = canSwapSelectedTileWithBlank explicitHardSolution30BlankValue (Some 24) Hard
-// let explicitHard30BlankSwappedWith29InRow = canSwapSelectedTileWithBlank explicitHardSolution30BlankValue (Some 29) Hard
-// let explicitHard30BlankSwappedWith36InColumn = canSwapSelectedTileWithBlank explicitHardSolution30BlankValue (Some 36) Hard
-// // INVALID MOVES, RETURNS TILEBOARD UNCHANGED
-// let unchangedExplicitHardSolution30BlankValueFromNoneSwap = canSwapSelectedTileWithBlank explicitHardSolution30BlankValue (None) Hard
-// let unchangedExplicitHardSolution30BlankValueFromNotValidSwap = canSwapSelectedTileWithBlank explicitHardSolution30BlankValue (Some 18) Hard
-// //win case validation testing
-// let blankAtIncorrectIndexReturnFalse = winValidator explicitHard30BlankSwappedWith36InColumn
-// let tilesAreRandomReturnFalse = winValidator newRoundTest
-// let YouWinTrueCase = winValidator explicitHardSolution30BlankValue

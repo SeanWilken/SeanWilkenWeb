@@ -33,3 +33,5 @@ type LucideIcon =
     static member inline X     (classes: string) = icon "X" classes
     static member inline ChevronLeft     (classes: string) = icon "ChevronLeft" classes
     static member inline PenTool     (classes: string) = icon "PenTool" classes
+    static member inline Star     (classes: string) = icon "Star" classes
+    static member inline Info     (classes: string) = icon "Info" classes

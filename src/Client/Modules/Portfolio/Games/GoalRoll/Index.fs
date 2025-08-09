@@ -145,24 +145,95 @@ let goalRollLevelCreator model dispatch =
     let rows = getPositionsAsRows withGoal 8
     Html.div [ for row in rows -> goalRollRowCreator row dispatch ]
 
-let goalRollModalContent model dispatch =
-    SharedViewModule.gameModalContent (
-        match model.GameState with
-        | Settings -> 
+let goalRollGameLoopCard (model: SharedGoalRoll.Model) (dispatch: Msg -> unit) =
+    Html.div [
+        prop.className "card bg-base-200 shadow-md p-4 mt-4"
+        prop.children [
             Html.div [
-                prop.className "grid grid-cols-1 md:grid-cols-2 gap-8 items-start"
+                // prop.className "flex flex-col space-y-6"
                 prop.children [
-                    SharedViewModule.codeModalControlsContent gameControls dispatch
-                    SharedViewModule.modalInstructionContent goalRollDescriptions
+                    Html.div [
+                        prop.className "modalAltContent p-4"
+                        prop.children [ 
+                            Html.div [
+                                prop.className "flex flex-col md:flex-row gap-4 justify-between items-stretch"
+                                prop.children [
+                                    Html.div [
+                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
+                                        prop.children [
+                                            Html.button [
+                                                prop.className "btn btn-sm btn-secondary w-full"
+                                                prop.onClick (fun _ -> ResetRound |> dispatch)
+                                                prop.text "Restart Round"
+                                            ]
+                                        ]
+                                    ]
+                                    Html.div [
+                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
+                                        prop.children [
+                                            Html.h3 [ prop.className "mb-1 text-center"; prop.text "Select Level:" ]
+                                            Html.div [
+                                                prop.className "flex flex-row gap-2 justify-center"
+                                                prop.children [
+                                                    // 0 is lock level, check the logic
+                                                    for i in 1..3 do
+                                                        Html.a [
+                                                            prop.className ("btn btn-xs btn-outline" + (if model.LevelIndex = i then " text-primary" else ""))
+                                                            prop.onClick (fun _ -> Msg.LoadRound i |> dispatch)
+                                                            prop.text (string i)
+                                                        ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
                 ]
             ]
-        | Won ->  SharedViewModule.roundCompleteContent (modelGoalRollRoundDetails model)
-        | _ -> goalRollLevelCreator model dispatch
+        ]
+    ]
+
+let goalRollModalContent model dispatch =
+    SharedViewModule.gameModalContent (
+        Html.div [
+            match model.GameState with
+            | Won ->  SharedViewModule.roundCompleteContent (modelGoalRollRoundDetails model) (fun () -> SharedGoalRoll.Msg.ResetRound |> dispatch)
+            | _ -> 
+                Html.div [
+                    prop.className "flex flex-row justify-between items-center w-full mb-4 gap-4 relative p-2"
+                    prop.children [
+                        Html.div [
+                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-success-content"
+                            prop.children [
+                                Html.div [
+                                    prop.className "text-success font-bold text-lg text-center"
+                                    prop.text $"Level: {model.LevelIndex}"
+                                ]
+                            ]
+                        ]
+                        Html.div [
+                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-warning-content"
+                            prop.children [
+                                Html.div [
+                                    prop.className "text-info font-bold text-lg text-center"
+                                    prop.text $"Total Moves: {model.MovesMade}"
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+                Html.div [
+                    prop.className "my-4"
+                    prop.children [ goalRollLevelCreator model dispatch ]
+                ]
+                goalRollGameLoopCard model dispatch
+        ]
     )
 
 let view model dispatch =
     Html.div [
-        SharedViewModule.sharedModalHeader "Goal Roll" QuitGame dispatch
+        SharedViewModule.sharedModalHeader "Goal Roll" goalRollDescriptions QuitGame dispatch
         goalRollModalContent model dispatch
-        SharedViewModule.codeModalFooter controlList dispatch
     ]

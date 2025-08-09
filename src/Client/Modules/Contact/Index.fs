@@ -12,7 +12,7 @@ type AnchorLink = {
 let contactHeaderTitle = "Looking to tell me something?"
 let contactHeaderBlurbs = [
     "Drop a line to the appropriate entity..."
-    "Whatever it is, NO spam!"
+    "Whatever it is, PLEASE no spam!"
 ]
 
 let inquiryReasons = [
@@ -20,8 +20,7 @@ let inquiryReasons = [
         prop.className "prose max-w-2xl mx-auto text-base-content/90 text-center"
         prop.children [
             Html.h2 [ prop.className "text-2xl text-secondary font-semibold mb-2"; prop.text "Why get in touch?" ]
-            Html.p "You might want to reach out for freelance work, portfolio inquiries, hiring opportunities, or project collaboration."
-            Html.p "Whether you're scouting for design help or curious about the code behind this site — you're in the right place."
+            Html.p "You might want to reach out for freelance work, portfolio inquiries, hiring opportunities, or project collaboration. Whether you're scouting for design help or curious about the code behind this site — you're in the right place."
         ]
     ]
     Html.div [
@@ -29,8 +28,8 @@ let inquiryReasons = [
         prop.children [
             Html.h2 [ prop.className "text-xl text-accent font-medium"; prop.text "Which email should I use?" ]
             Html.ul [
-                Html.li "📬 For resume and professional outreach → Sean Wilken"
-                Html.li "🎨 For creative or brand inquiries → Xero Effort"
+                Html.li "📬 For development, resume and/or professional outreach → Sean Wilken"
+                Html.li "🎨 For art, creative or brand inquiries → Xero Effort"
             ]
         ]
     ]
@@ -42,7 +41,7 @@ let swContactEmailAnchor =
         Some {
             Hyperlink = "mailto:sean.d.wilken@gmail.com"
             LinkIcon = "" // Lucide used instead
-            LinkTitle = "Sean.D.Wilken@GMail.com"
+            LinkTitle = "sean.d.wilken@gmail.com"
         }
         "Credentials and career-focused inquiries welcome.",
         None
@@ -54,7 +53,7 @@ let xeContactEmailAnchor =
         Some {
             Hyperlink = "mailto:xeroeffortclub@gmail.com"
             LinkIcon = ""
-            LinkTitle = "XeroEffortClub@GMail.com"
+            LinkTitle = "xeroeffortclub@gmail.com"
         }
         "Reach out for art commissions, designs, or collabs.",
         None
