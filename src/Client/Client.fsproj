@@ -12,44 +12,44 @@
         <None Include="paket.references" />
 
         <!-- F# TSX Bindings -->
-        <Compile Include="Bindings\LucideIcons.fs" />
-        <Compile Include="Bindings\FramerMotion.fs" />
-        <Compile Include="Bindings\DockedNavbar.fs" />
-        <Compile Include="Bindings\Resume.fs" />
-        <Compile Include="Bindings\SubNavbar.fs" />
-        <Compile Include="Bindings\ThemePicker.fs" />
+        <Compile Include="Components\Typescript\Bindings\FramerMotion.fs" />
+        <Compile Include="Components\Typescript\Bindings\LucideIcons.fs" />
+        <Compile Include="Components\Typescript\Bindings\ParallaxComponentPortfolio.fs" />
+        <Compile Include="Components\Typescript\Bindings\PhysicsSimulation.fs" />
+        <Compile Include="Components\Typescript\Bindings\Resume.fs" />
+        <Compile Include="Components\Typescript\Bindings\ThemePicker.fs" />
 
-        <Compile Include="Modules\JS.Wrapper\ParallaxComponentPortfolio.fs" />
-        <Compile Include="Modules\JS.Wrapper\PhysicsSimulation.fs" />
-        <Compile Include="Modules\JS.Wrapper\TSXHeaderCanvas.fs" />
-        <Compile Include="Modules\JS.Wrapper\TSXNavbar.fs" />
-        
         <!-- Shared -->
-        <Compile Include="Modules\Shared\Index.fs" />
+        <Compile Include="Modules\Shared\Shared.fs" />
         
-        <!-- F# Components -->
-        <Compile Include="Components\FSharp\MainSideNav.fs" />
+        <!-- TSX Component Bindings -->
+        <Compile Include="Components\FSharp\Interop\TSXCanvas.fs" />
 
         <!-- F# Components -->
-        <Compile Include="Modules\Portfolio\Games\GoalRoll\Index.fs" />
-        <Compile Include="Modules\Portfolio\Games\PivotPoints\Index.fs" />
-        <Compile Include="Modules\Portfolio\Games\TileSort\Index.fs" />
-        <Compile Include="Modules\Portfolio\Games\TileTap\Index.fs" />
+        <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
+        <Compile Include="Components\FSharp\Portfolio\Games\GoalRoll\GoalRoll.fs" />
+        <Compile Include="Components\FSharp\Portfolio\Games\PivotPoints\PivotPoints.fs" />
+        <Compile Include="Components\FSharp\Portfolio\Games\TileSort\TileSort.fs" />
+        <Compile Include="Components\FSharp\Portfolio\Games\TileTap\TileTap.fs" />
 
-        <!-- Pages -->
-        <Compile Include="Modules\Portfolio\Games\Index.fs" />
-        <Compile Include="Modules\Portfolio\Art\Index.fs" />
-        <Compile Include="Modules\About\Index.fs" />
-        <Compile Include="Modules\Portfolio\index.fs" />
-        <Compile Include="Modules\Contact\Index.fs" />
-        <Compile Include="Modules\Welcome\Index.fs" />
-        <Compile Include="Pages\Resume.fs" />
+        <!-- F# Component Pages -->
+        <Compile Include="Components\FSharp\About\About.fs" />
+        <Compile Include="Components\FSharp\Portfolio\Art\ArtGallery.fs" />
+        <Compile Include="Components\FSharp\Contact\Contact.fs" />
+        <Compile Include="Components\FSharp\Portfolio\Games\CodeGallery.fs" />
+        <Compile Include="Components\FSharp\Portfolio\PortfolioLanding.fs" />
+        <Compile Include="Components\FSharp\Welcome\Welcome.fs" />
+
+        <!-- TSX => F# Binding Pages -->
+        <Compile Include="Components\FSharp\Interop\Resume.fs" />
         
         <!-- Page Router -->
-        <Compile Include="Modules\PageRouter\Index.fs" /> 
+        <Compile Include="Modules\PageRouter\PageRouter.fs" /> 
         
         <!-- Main Application Entry Point & Index -->
-        <Compile Include="Components\FSharp\PageLayout.fs" />
+        <Compile Include="Components\FSharp\Layout\NavigationMenu.fs" />
+        <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
+        <Compile Include="Components\FSharp\Layout\PageLayout.fs" />
         <Compile Include="Index.fs" />
         <Compile Include="App.fs" />
         

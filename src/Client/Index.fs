@@ -4,51 +4,45 @@ open Elmish
 open Shared
 open PageRouter
 open SharedWebAppModels
-open Components.PageLayout
-
-// Section Items
-// open Welcome
-// open AboutSection
-// open Portfolio
-// open Contact
+open Components.Layout.PageLayout
 
 Fable.Core.JsInterop.importSideEffects "./index.css"
 
 // the init has to have same signature and be called from the index html
 let init ( path: SharedPage.Page option ) : SharedWebAppModels.WebAppModel * Cmd<WebAppMsg> =
-    PageRouter.urlUpdate 
+    urlUpdate 
         path 
-        { Theme = Theme.Cyberpunk; CurrentAreaModel = SharedWebAppModels.Model.Welcome }
+        { Theme = Cyberpunk; CurrentAreaModel = Welcome }
 
 let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedWebAppModels.WebAppModel * Cmd<WebAppMsg> =
     match msg, model.CurrentAreaModel with
     
     // WELCOME PAGE
-    | WelcomeMsg ( SharedWelcome.SwitchSection appSection ), SharedWebAppModels.Welcome ->
+    | WelcomeMsg ( SharedWelcome.SwitchSection appSection ), Welcome ->
         model, Cmd.ofMsg ( SwitchToOtherApp appSection )
 
     // ABOUT PAGE
-    | AboutMsg ( SharedAboutSection.SwitchSection appSection ), SharedWebAppModels.About m ->
-        { model with CurrentAreaModel = SharedWebAppModels.About m }, Cmd.ofMsg (SwitchToOtherApp appSection)
-    | AboutMsg msg, SharedWebAppModels.Model.About ( m ) ->
+    | AboutMsg ( SharedAboutSection.SwitchSection appSection ), About m ->
+        { model with CurrentAreaModel = About m }, Cmd.ofMsg (SwitchToOtherApp appSection)
+    | AboutMsg msg, About ( m ) ->
         model, Cmd.none
 
     // PORTFOLIO PAGE
-    | PortfolioMsg msg, SharedWebAppModels.Portfolio pm ->
+    | PortfolioMsg msg, Portfolio pm ->
         match msg, pm with
-        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppView.PortfolioAppLandingView ), _ ->
-            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
-        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppView.PortfolioAppCodeView ), _ ->
-           { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.Code ( SharedPage.CodeSection.CodeLanding ) ) ) )
+        | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppLandingView, _ ->
+            { model with CurrentAreaModel = Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
+        | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppCodeView, _ ->
+           { model with CurrentAreaModel = Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.Code SharedPage.CodeSection.CodeLanding ) ) )
         | SharedPortfolioGallery.CodeGalleryMsg SharedCodeGallery.Msg.BackToPortfolio, _ -> 
-            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
-        | SharedPortfolioGallery.LoadSection ( SharedWebAppViewSections.AppView.PortfolioAppDesignView ), _ ->
-           { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.Design ) ) )
+            { model with CurrentAreaModel = Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
+        | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppDesignView, _ ->
+           { model with CurrentAreaModel = Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.Design ) )
         | SharedPortfolioGallery.ArtGalleryMsg SharedDesignGallery.Msg.BackToPortfolio, _ -> 
-            { model with CurrentAreaModel = SharedWebAppModels.Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
+            { model with CurrentAreaModel = Portfolio pm }, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
         | msg, m ->
-            let portfolioModel, com = Portfolio.update msg m
-            { model with CurrentAreaModel = SharedWebAppModels.Portfolio portfolioModel }, Cmd.map PortfolioMsg com
+            let portfolioModel, com = Components.FSharp.PortfolioLanding.update msg m
+            { model with CurrentAreaModel = Portfolio portfolioModel }, Cmd.map PortfolioMsg com
     
     // Page Routing
     | SwitchToOtherApp section, _ ->
@@ -56,9 +50,9 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
         | SharedWebAppViewSections.AppView.AboutAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.About )
         | SharedWebAppViewSections.AppView.ContactAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Contact )
         | SharedWebAppViewSections.AppView.LandingAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Landing )
-        | SharedWebAppViewSections.AppView.PortfolioAppCodeView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Code ( SharedPage.CodeSection.CodeLanding ) ) ) )
-        | SharedWebAppViewSections.AppView.PortfolioAppDesignView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Design ) ) )
-        | SharedWebAppViewSections.AppView.PortfolioAppLandingView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.PortfolioSection.PortfolioLanding ) ) )
+        | SharedWebAppViewSections.AppView.PortfolioAppCodeView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Code SharedPage.CodeSection.CodeLanding ) ) )
+        | SharedWebAppViewSections.AppView.PortfolioAppDesignView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.Design ) )
+        | SharedWebAppViewSections.AppView.PortfolioAppLandingView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
         | SharedWebAppViewSections.AppView.ResumeAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Resume )
         | SharedWebAppViewSections.AppView.WelcomeAppView ->
             model, Cmd.ofMsg ( LoadPage SharedPage.Welcome )
@@ -128,11 +122,11 @@ let heroBanner dispatch =
                     ]
                 ]
             ]
-            TSXHeaderCanvasWrapper.TSXHeaderCanvasComponent 
-                {|
-                    text = "TypeScript Components"
-                    textColor = "255, 255, 255"
-                |}
+            // TSXHeaderCanvasWrapper.TSXHeaderCanvasComponent 
+            //     {|
+            //         text = "TypeScript Components"
+            //         textColor = "255, 255, 255"
+            //     |}
             // TSXNavBarWrapper.Gallery () 
             // PhysicsPlayground.view()
             MyApp.Components.ProgrammingExamplesPage.view()
@@ -302,18 +296,19 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
                 prop.className "container mx-auto p-4"
                 prop.children [
                     match model.CurrentAreaModel with
-                    | SharedWebAppModels.About aboutModel -> AboutSection.view aboutModel dispatch
-                    | SharedWebAppModels.Contact -> Contact.view
+                    | SharedWebAppModels.About aboutModel -> Components.FSharp.About.view aboutModel dispatch
+                    | SharedWebAppModels.Contact -> Components.FSharp.Contact.view
                     | SharedWebAppModels.Index -> Html.div "This is the index page, which should not be used."
                     | SharedWebAppModels.Landing -> Html.div "Welcome to the Landing Page"
                     | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery ->
-                        Portfolio.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
+                        Components.FSharp.PortfolioLanding.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
                     | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) ->
-                        Portfolio.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
+                        Components.FSharp.PortfolioLanding.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
                     | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) ->
-                        Portfolio.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
-                    | SharedWebAppModels.Resume -> Pages.Resume.ResumePage ()
-                    | SharedWebAppModels.Welcome -> Welcome.view (WelcomeMsg >> dispatch)
+                        Components.FSharp.PortfolioLanding.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
+                    | SharedWebAppModels.Resume -> 
+                        Components.FSharp.Interop.Resume.ResumePage ()
+                    | SharedWebAppModels.Welcome -> Components.FSharp.Welcome.view (WelcomeMsg >> dispatch)
                 ]
             ]
     |}

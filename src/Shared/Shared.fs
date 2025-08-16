@@ -515,9 +515,9 @@ module SharedTileTap =
     let updateTimeAttackModeDifficulty  ( model : Model ) ( difficulty : TileTapDifficulty ) =
         match difficulty with
         | Simple -> { model with Difficulty = difficulty; RoundTimer = 90; AllowableRoundMistakes = -1 }
-        | Easy -> { model with Difficulty = difficulty; RoundTimer = 60; AllowableRoundMistakes = -1 }
-        | Intermediate -> { model with Difficulty = difficulty; RoundTimer = 45; AllowableRoundMistakes = -1 }
-        | Hard -> { model with Difficulty = difficulty; RoundTimer = 30; AllowableRoundMistakes = -1 }
+        | Easy -> { model with RoundTimer = 60; AllowableRoundMistakes = -1 }
+        | Intermediate -> { model with RoundTimer = 45; AllowableRoundMistakes = -1 }
+        | Hard -> { model with RoundTimer = 30; AllowableRoundMistakes = -1 }
 
     // When ChangeDifficulty Msg is dispatched,
     // returns model with different round parameters

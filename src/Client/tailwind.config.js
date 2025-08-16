@@ -10,6 +10,8 @@ module.exports = {
       fontFamily: {
         sans: ['DM Sans', 'ui-sans-serif', 'system-ui'],
         heading: ['Space Grotesk', 'ui-sans-serif', 'system-ui'],
+        clash: ['"Clash Display"', 'sans-serif'],
+        satoshi: ['Satoshi', 'sans-serif'],
       },
     },
   },
