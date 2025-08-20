@@ -794,8 +794,8 @@ module SharedWebAppViewSections =
     type AppView =
         | AboutAppView
         | ContactAppView
-        | IndexAppView
         | LandingAppView
+        | ShopAppView
         | PortfolioAppLandingView
         | PortfolioAppCodeView
         | PortfolioAppDesignView
@@ -807,11 +807,11 @@ module SharedWebAppViewSections =
         | AboutAppView -> "About"
         | PortfolioAppCodeView -> "Code"
         | ContactAppView -> "Contact"
-        | IndexAppView -> "Index"
         | LandingAppView -> "Landing"
         | PortfolioAppDesignView -> "Design"
         | PortfolioAppLandingView -> "Projects"
         | ResumeAppView -> "Resume"
+        | ShopAppView -> "Shop"
         | WelcomeAppView -> "Welcome"
 
 module SharedCodeGallery =
@@ -905,6 +905,334 @@ module SharedWelcome =
     type Msg =
         | SwitchSection of SharedWebAppViewSections.AppView
 
+module SharedServicesSection =
+
+    type OfferedService =
+        | AIServices
+        | APIIntegrations
+        | AutomationServices
+        | WebDevelopment
+        | UIUXDesign
+        
+    type Msg =
+        | ChangeServiceView of OfferedService
+
+    type Model = {
+        CurrentService: OfferedService
+    }
+
+module SharedShop =
+
+    
+    type ProductColor =
+        | White
+        | Black
+        | Ash
+        | Asphalt
+        | Aqua
+        | CharcoalGray
+        | Gold
+        | Maroon
+        | Mustard
+        | Navy
+        | Red
+        | Silver
+        | AthleticHeather
+        | BlackHeather
+        | DarkGreyHeather
+        | DeepHeather
+        | HeatherDarkGray
+        | HeatherOlive
+        | HeatherBlue
+        | HeatherNavy
+        | DarkHeather
+        | HeatherRaspberry
+        | HeatherDust
+        | HeatherDeepTeal
+        | NoColor of string
+
+    type ProductSize =
+        | XS
+        | S
+        | XS_S
+        | M
+        | L
+        | M_L
+        | XL
+        | XXL
+        | XXXL
+        | XXXXL
+        | OSFA
+        | NoSize of string
+
+    type ProductOption =
+        | ProductSize
+        | ProductColor
+
+    type CollectionTag =
+        | Limited
+        | Unlimited
+
+    let collectionTagToString = function
+        | Limited -> "limited"
+        | Unlimited -> "unlimited"
+
+    type ProductClass =
+        | TShirts
+        | LongSleeves
+        | Sweaters
+        | Hoodies
+        | Hats
+        | NoClass
+
+    type CatalogProduct = {
+        name: string
+        id: int
+        thumbnailURL: string
+    }
+
+    type ProductVariant = {
+        name: string
+        id: int
+        price: string
+    }
+
+    type StateCode =
+        | NY
+        | CA
+        | FL
+        | TX
+        | NO_STATE
+
+    type CountryCode =
+        | US
+        | MEX
+        | CAN
+        | NO_COUNTRY
+
+    type CustomerAddress = {
+        firstName: string
+        lastName: string
+        streetAddress: string
+        city: string
+        stateCode: StateCode
+        countryCode: CountryCode
+        zipCode: int
+    }
+
+    type OrderType =
+        | Order
+        | Draft
+
+    type Customer = {
+        firstName: string
+        lastName: string
+        userName: string
+        password: string
+        savedShippingAddress: CustomerAddress option
+        orders: (OrderType * int) list
+    }
+
+    type CustomerSignUpForm = {
+        firstName: string
+        lastName: string
+        userName: string
+        password: string
+        confirmPassword: string
+    }
+
+    let defaultCustomerSignUpForm = {
+        firstName = ""
+        lastName = ""
+        userName = ""
+        password = ""
+        confirmPassword = ""
+    }
+
+    type CustomerAddressForm = {
+        firstName: string
+        lastName: string
+        streetAddress: string
+        city: string
+        stateCode: string
+        countryCode: string
+        zipCode: string
+    }
+
+    let defaultCustomerAddressForm = {
+        firstName = ""
+        lastName = ""
+        streetAddress = ""
+        city = ""
+        stateCode = ""
+        countryCode = ""
+        zipCode = ""
+    }
+
+    type RequestResponse =
+        | SuccessfulRequest of string
+        | FailedRequest of string
+
+    type SignUpRequestResponse =
+        | SignUpSuccess of Customer
+        | SignUpFailed of RequestResponse list
+
+    type UserSignUpFormField =
+        | FirstNameField of string
+        | LastNameField of string
+        | UserNameField of string
+        | PasswordField of string
+        | ConfirmPasswordField of string
+
+    type CustomerAddressFormField =
+        | ShippingFirstNameField of string
+        | ShippingLastNameField of string
+        | ShippingStreetAddressField of string
+        | ShippingCityField of string
+        | ShippingStateCodeField of string
+        | ShippingCountryCodeField of string
+        | ShippingZipCodeField of string
+
+    type OrderItem = {
+        externalVariantId : string
+        itemQuantity : int
+        itemRetailPrice : string
+    }
+
+    type OrderCosts = {
+        orderSubTotal : string
+        orderShipping : string
+        orderTaxRate : string
+        orderTax : string
+        orderTotal : string
+    }
+
+    type CustomerDraftOrder = {
+        recipient : CustomerAddressForm
+        orderItems : OrderItem list
+        orderCosts : OrderCosts
+    }
+
+
+    type SyncProductVariant = {
+        externalSyncVariantId : string
+        variantName : string
+        variantSize : ProductSize
+        variantColor : ProductColor
+        variantPrice : float
+        variantHeroImagePath : string
+        variantAltImagePaths : string list
+    }
+
+    type SyncProduct = {
+        name : string
+        collectionTag : CollectionTag
+        syncProductId : int
+        syncProductHeroImagePath : string
+        syncProductAltImagePaths : string list
+        productVariations : SyncProductVariant list
+    }
+
+    type ProductCollection = {
+        collectionName : string
+        collectionTag : CollectionTag
+        products : SyncProduct list
+    }
+
+    type SyncVariationLookup =
+        | Successful of SyncProductVariant
+        | Failed of string
+
+    type ShopSection =
+        | ShopLanding
+        | Storefront
+        | Catalog of string
+        | Product of string * int
+        | ShoppingBag
+        | Checkout
+        | Payment
+        | Social
+        | Contact
+        | NotFound
+
+        
+    type QuantityAdjustment =
+        | Increment
+        | Decrement
+
+    type DraftResult = { code: string }
+
+    // Stub/placeholder types for API results
+    // Replace with your real server shared types
+
+    type CheckoutTax = { taxRequired: bool; taxRate: float }
+
+    type CheckoutShippingRate = { shippingRate: string }
+
+    type HttpError = string
+
+    type ShopMsg =
+        | NavigateTo of ShopSection
+        | UpdateCustomerForm of UserSignUpFormField
+        | UpdateAddressForm of CustomerAddressFormField
+        | CheckUserSignUpForm
+        | CheckAddressForm
+        | UpdateProductColor of SyncProduct * ProductColor
+        | UpdateProductSize of SyncProduct * ProductSize
+        | AddVariantToShoppingBag of SyncProductVariant
+        | DeleteVariantFromShoppingBag of SyncProductVariant
+        | AdjustLineItemQuantity of QuantityAdjustment * SyncProductVariant
+        | TestApiTaxRate
+        | TestApiShippingRate
+        | Send // apparently testing paypal
+        | GotResult of Result<string, HttpError>
+        | GotTaxRateResult of Result<CheckoutTax, HttpError>
+        | GotShippingRateResult of Result<CheckoutShippingRate list, HttpError>
+        | TestApiCustomerDraft of CustomerDraftOrder
+        | GotCustomerOrderDraftResult of Result<DraftResult, HttpError>
+        | GetAllProducts
+        | GotAllProducts of Result<CatalogProduct list, HttpError>
+        | GetProductVariants of int
+        | GotProductVariants of Result<ProductVariant list, HttpError>
+
+    type Model = {
+        section: ShopSection
+        customer : Customer option
+        productVariationOptionsSelected : ( ProductColor option * ProductSize option )
+        validSyncVariantId : String option
+        // -- make this paypal order reference, only set by return of the GotDraftResults, if there is a value, can render the JS Paypal button
+        payPalOrderReference :  String option 
+        shoppingBag : List<SyncProductVariant * int>
+        // -- ( Variant Line Item, Qty )
+        checkoutTaxShipping : float option * float option 
+        // -- Tax, Shipping 
+        //    HOME PAGE
+        homeGif : String
+        //    SIGN UP
+        customerSignUpForm : CustomerSignUpForm 
+        customerAddressForm : CustomerAddressForm 
+        validationResults : List<RequestResponse>
+        allProducts : List<CatalogProduct> option
+        productVariants : List<ProductVariant> option
+    }
+
+    let getInitialModel shopSection = {
+        section = shopSection
+        customer = None
+        productVariationOptionsSelected = (None, None)
+        validSyncVariantId = None
+        payPalOrderReference = None
+        shoppingBag = []
+        checkoutTaxShipping = (None, None)
+        homeGif = ""
+        customerSignUpForm = defaultCustomerSignUpForm
+        customerAddressForm = defaultCustomerAddressForm
+        validationResults = []
+        allProducts = None
+        productVariants = None
+    }
+        
+
 module SharedPage =
     
     type CodeSection =
@@ -925,11 +1253,12 @@ module SharedPage =
         | Landing
         | Portfolio of PortfolioSection
         | Resume
+        | Shop of SharedShop.ShopSection
         | Welcome
 
 module SharedWebAppModels =
 
-    
+
     type Theme =
         | Light
         | Dark
@@ -1007,8 +1336,11 @@ module SharedWebAppModels =
     // Contact -> How to get in touch with the entity the web app represents
     type Model =
         | About of SharedAboutSection.Model
-        | Index
         | Contact
+        | Help
+        | Settings
+        | Shop of SharedShop.Model
+        | Services of SharedServicesSection.Model
         | Landing
         | Portfolio of SharedPortfolioGallery.Model
         | Resume
@@ -1023,11 +1355,11 @@ module SharedWebAppModels =
         | WelcomeMsg of SharedWelcome.Msg
         | AboutMsg of SharedAboutSection.Msg
         | PortfolioMsg of SharedPortfolioGallery.Msg
+        | ShopMsg of SharedShop.ShopMsg
         | SwitchToOtherApp of SharedWebAppViewSections.AppView
         | LoadPage of SharedPage.Page
         | ErrorMsg of exn // WIP?
         | ChangeTheme of Theme
-
 
 // Ensure that the Client and Server use same end-point
 module Route =

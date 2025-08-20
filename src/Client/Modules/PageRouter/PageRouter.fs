@@ -6,12 +6,9 @@ open Shared
 // URL BROWSER UPDATES
 open Elmish.UrlParser
 open Elmish.Navigation
+open Shared.SharedShop
 open SharedPage
 
-let checkLevelIsValid levelInt ceiling floor =
-    if levelInt > ceiling then ceiling
-    elif levelInt < floor then floor
-    else levelInt
 
 let toPath =
     function
@@ -31,8 +28,30 @@ let toPath =
     | Some ( Portfolio PortfolioSection.PortfolioLanding ) -> "/portfolio"
     | Some Resume -> "/resume"
     | Some Welcome -> "/welcome"
+    | Some (Shop ShopLanding) -> "/shop/landing"
+    | Some (Shop Storefront) -> "/shop/storefront"
+    | Some (Shop (Catalog category)) -> $"/shop/catalog/{category}"
+    | Some (Shop (Product (category, id))) -> $"/shop/product/{category}/{id}"
+    | Some (Shop ShoppingBag) -> "/shop/shoppingBag"
+    | Some (Shop Checkout) -> "/shop/checkout"
+    | Some (Shop Payment) -> "/shop/payment"
+    | Some (Shop ShopSection.Contact) -> "/shop/contact"
+    | Some (Shop ShopSection.Social) -> "/shop/social"
+    | Some (Shop ShopSection.NotFound) -> "/notFound"
     | Some Index
     | None -> "/"
+
+let shopParser : Parser<ShopSection->Page,_> =
+    oneOf [
+        map ShopLanding (s "landing")
+        map Storefront (s "storefront")
+        map Catalog (s "catalog" </> str)  // string only, for category
+        // Product parser: combine string and int segments
+        map (fun category pid -> Product (category, pid)) ((s "product" </> str) </> i32)
+        map ShoppingBag (s "shoppingBag")
+        map Checkout (s "checkout")
+        map Payment (s "payment")
+    ]
 
 // router use combinators for better structured paths
 let pageParser : Parser< Page -> Page,_ > =
@@ -49,6 +68,7 @@ let pageParser : Parser< Page -> Page,_ > =
             map ( Page.Portfolio ( Code ( CodeSection.TileSort ) ) ) ( s "portfolio-tileSort" )
             map ( Page.Portfolio ( Code ( CodeSection.TileTap ) ) ) ( s "portfolio-tileSmash" )
             map Page.Resume ( s "resume" )
+            map (Page.Shop ) (s "shop" </> shopParser)
             map Page.Welcome ( s "welcome" )
         ]
 
@@ -88,9 +108,11 @@ let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebApp
         { model with CurrentAreaModel = SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery },
         Navigation.newUrl (toPath (Some (Portfolio PortfolioSection.PortfolioLanding)))
     | Some SharedPage.Page.Resume ->
-        printfn $"Navigating to Resume page"
         { model with CurrentAreaModel = SharedWebAppModels.Resume },
         Navigation.newUrl (toPath (Some Resume))
+    | Some (SharedPage.Page.Shop area) ->
+        { model with CurrentAreaModel = SharedWebAppModels.Shop (getInitialModel area)  },
+        Navigation.newUrl (toPath (Some (Shop area)))
     | Some SharedPage.Page.Welcome ->
         { model with CurrentAreaModel = SharedWebAppModels.Welcome },
         Navigation.newUrl (toPath (Some Welcome))

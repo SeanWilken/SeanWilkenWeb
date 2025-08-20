@@ -48,6 +48,7 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
     | SwitchToOtherApp section, _ ->
         match section with
         | SharedWebAppViewSections.AppView.AboutAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.About )
+        | SharedWebAppViewSections.AppView.ShopAppView -> model, Cmd.ofMsg ( LoadPage (SharedPage.Shop Shared.SharedShop.ShopSection.ShopLanding) )
         | SharedWebAppViewSections.AppView.ContactAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Contact )
         | SharedWebAppViewSections.AppView.LandingAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Landing )
         | SharedWebAppViewSections.AppView.PortfolioAppCodeView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Code SharedPage.CodeSection.CodeLanding ) ) )
@@ -72,7 +73,6 @@ open FSharp.Reflection
 // takes union case string, returns an app section
 let areaStringToAppSection string =
     match string with
-    | "Index" ->  SharedWebAppViewSections.AppView.IndexAppView
     | "Landing" ->  SharedWebAppViewSections.AppView.LandingAppView
     | "About" -> SharedWebAppViewSections.AppView.AboutAppView
     | "Contact" -> SharedWebAppViewSections.AppView.ContactAppView
@@ -90,7 +90,10 @@ let currentWebAppSection model =
     | SharedWebAppModels.Contact -> SharedWebAppViewSections.AppView.ContactAppView
     | SharedWebAppModels.Resume -> SharedWebAppViewSections.AppView.ResumeAppView
     | SharedWebAppModels.Landing -> SharedWebAppViewSections.AppView.LandingAppView
-    | SharedWebAppModels.Index -> SharedWebAppViewSections.AppView.IndexAppView
+    | SharedWebAppModels.Settings // -> SharedWebAppViewSections.AppView.Help
+    | SharedWebAppModels.Help // -> SharedWebAppViewSections.AppView.Help
+    | SharedWebAppModels.Services _ //_ -> SharedWebAppViewSections.AppView.ShopAppView
+    | SharedWebAppModels.Shop _ -> SharedWebAppViewSections.AppView.ShopAppView
 
 // Union cases of the different web app sub modules, in order to create elements
 // and reference the union type in code.
@@ -298,7 +301,7 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
                     match model.CurrentAreaModel with
                     | SharedWebAppModels.About aboutModel -> Components.FSharp.About.view aboutModel dispatch
                     | SharedWebAppModels.Contact -> Components.FSharp.Contact.view
-                    | SharedWebAppModels.Index -> Html.div "This is the index page, which should not be used."
+                    | SharedWebAppModels.Shop shopModel -> Components.FSharp.Shop.view shopModel (ShopMsg >> dispatch)
                     | SharedWebAppModels.Landing -> Html.div "Welcome to the Landing Page"
                     | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery ->
                         Components.FSharp.PortfolioLanding.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
@@ -308,6 +311,9 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
                         Components.FSharp.PortfolioLanding.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
                     | SharedWebAppModels.Resume -> 
                         Components.FSharp.Interop.Resume.ResumePage ()
+                    | Help 
+                    | Settings
+                    | Services _
                     | SharedWebAppModels.Welcome -> Components.FSharp.Welcome.view (WelcomeMsg >> dispatch)
                 ]
             ]
