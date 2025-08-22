@@ -7,6 +7,7 @@ open Shared
 open Elmish.UrlParser
 open Elmish.Navigation
 open Shared.SharedShop
+open Shared.SharedShopDomain
 open SharedPage
 
 

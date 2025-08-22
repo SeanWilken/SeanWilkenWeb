@@ -48,7 +48,7 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
     | SwitchToOtherApp section, _ ->
         match section with
         | SharedWebAppViewSections.AppView.AboutAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.About )
-        | SharedWebAppViewSections.AppView.ShopAppView -> model, Cmd.ofMsg ( LoadPage (SharedPage.Shop Shared.SharedShop.ShopSection.ShopLanding) )
+        | SharedWebAppViewSections.AppView.ShopAppView -> model, Cmd.ofMsg ( LoadPage (SharedPage.Shop Shared.SharedShopDomain.ShopSection.ShopLanding) )
         | SharedWebAppViewSections.AppView.ContactAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Contact )
         | SharedWebAppViewSections.AppView.LandingAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Landing )
         | SharedWebAppViewSections.AppView.PortfolioAppCodeView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Code SharedPage.CodeSection.CodeLanding ) ) )

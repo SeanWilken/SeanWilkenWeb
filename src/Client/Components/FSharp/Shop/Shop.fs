@@ -8,6 +8,7 @@ open Elmish.Navigation
 open Fable.Core
 open Fable.Core.JsInterop
 open Feliz
+open Shared.SharedShopDomain
 open Shared.SharedShop
 
 // ------------------- HELPERS -------------------
@@ -363,18 +364,6 @@ let syncProductVariantGenerator variantId variantName variantSize variantColor v
       variantHeroImagePath = heroImagePath
       variantAltImagePaths = altImagePaths }
 
-// outforBloodShirt : SyncProduct
-// let outforBloodShirt =
-//     { 
-//         name = outForBloodShirtProductName
-//         collectionTag = Unlimited
-//         syncProductHeroImagePath = "./public/images/products/Out for Blood/Out for Blood - Unisex Shirt.jpg"
-//         syncProductAltImagePaths = []
-//         syncProductId = 1
-//         productVariations =
-//             [ smallGray; mediumGray; largeGray; xLargeGray ]
-//     }
-
 let outForBloodShirtProductName = "Out for Blood - Unisex Shirt"
 let outForBloodHoodieProductName = "Out for Blood - Unisex Hoodie"
 let inescapableStareProductName = "Inescapable Stare - Unisex Hoodie"
@@ -461,12 +450,6 @@ let productVariationOptions (variations: SyncProductVariant list) : ProductColor
 
     colors, sizes
 
-
-// --------------------------------
-// Domain shared with Elm code
-// --------------------------------
-
-
 // --------------------------------
 // Commands (Stubs)
 // Replace these with your real HTTP commands (Thoth.Fetch/Elmish.Cmd.OfAsync/etc.)
@@ -482,7 +465,28 @@ let testApiCreateDraftOrder (_draft: CustomerDraftOrder) : Cmd<Shared.SharedShop
 
 let sendMessage (_paypalOrderRef: string) : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
 
-let getAllProducts : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
+let getAllProducts (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Shared.SharedShop.ShopMsg> =
+    Console.WriteLine $"CALLED PRODUCTS"
+    Cmd.OfAsync.either
+        ( fun x -> Client.Api.productsApi.getProducts x )
+        request
+        GotAllProducts
+        FailedAllProducts
+
+let defaultProductsRequest : Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery = 
+    {
+        category_ids = Some [ 1 ]
+        colors = None
+        destination_country = None
+        limit = None
+        newOnly = None
+        offset = None
+        placements = None
+        selling_region_name = None
+        sort_direction = None
+        sort_type = None
+        techniques = None
+    }
 
 let getProductVariants (_variantId: int) : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
 
@@ -505,7 +509,8 @@ let init () : Shared.SharedShop.Model * Cmd<Shared.SharedShop.ShopMsg> =
         validationResults = []
         allProducts = None
         productVariants = None 
-    }, Cmd.batch [ getAllProducts; getHomeGif ]
+    }, getAllProducts defaultProductsRequest
+    //  getHomeGif
 
 // --------------------------------
 // Helpers
@@ -626,26 +631,26 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
 
     | TestApiTaxRate -> model, testApiGetTaxRate model.customerAddressForm
 
-    | GotTaxRateResult result ->
-        match result with
-        | Ok response ->
-            let taxValue = if response.taxRequired then Some response.taxRate else Some 0.0
-            { model with checkoutTaxShipping = (taxValue, snd model.checkoutTaxShipping) }, Cmd.none
-        | Error _ ->
-            { model with validationResults = model.validationResults @ [ FailedRequest "We couldn’t retrieve tax information. Please try again." ] }, Cmd.none
+    // | GotTaxRateResult result ->
+    //     match result with
+    //     | Ok response ->
+    //         let taxValue = if response.taxRequired then Some response.taxRate else Some 0.0
+    //         { model with checkoutTaxShipping = (taxValue, snd model.checkoutTaxShipping) }, Cmd.none
+    //     | Error _ ->
+    //         { model with validationResults = model.validationResults @ [ FailedRequest "We couldn’t retrieve tax information. Please try again." ] }, Cmd.none
 
-    | TestApiShippingRate -> model, testApiGetShippingRate model.customerAddressForm model.shoppingBag
+    // | TestApiShippingRate -> model, testApiGetShippingRate model.customerAddressForm model.shoppingBag
 
-    | GotShippingRateResult result ->
-        match result with
-        | Ok (shipRates) ->
-            match shipRates |> List.tryHead with
-            | Some ship ->
-                match Double.TryParse ship.shippingRate with
-                | true, s -> { model with checkoutTaxShipping = (fst model.checkoutTaxShipping, Some s) }, Cmd.none
-                | _ -> { model with validationResults = model.validationResults @ [ FailedRequest "Could not read shipping rate." ] }, Cmd.none
-            | None -> { model with validationResults = model.validationResults @ [ FailedRequest "No shipping options returned." ] }, Cmd.none
-        | Error _ -> { model with validationResults = model.validationResults @ [ FailedRequest "Shipping rate lookup failed." ] }, Cmd.none
+    // | GotShippingRateResult result ->
+    //     match result with
+    //     | Ok (shipRates) ->
+    //         match shipRates |> List.tryHead with
+    //         | Some ship ->
+    //             match Double.TryParse ship.shippingRate with
+    //             | true, s -> { model with checkoutTaxShipping = (fst model.checkoutTaxShipping, Some s) }, Cmd.none
+    //             | _ -> { model with validationResults = model.validationResults @ [ FailedRequest "Could not read shipping rate." ] }, Cmd.none
+    //         | None -> { model with validationResults = model.validationResults @ [ FailedRequest "No shipping options returned." ] }, Cmd.none
+    //     | Error _ -> { model with validationResults = model.validationResults @ [ FailedRequest "Shipping rate lookup failed." ] }, Cmd.none
 
     | TestApiCustomerDraft customerDraft ->
         model, Cmd.batch [ testApiCreateDraftOrder customerDraft; Navigation.newUrl "/payment" ]
@@ -659,19 +664,21 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
         let id = defaultArg model.payPalOrderReference ""
         model, sendMessage id
 
-    | GetAllProducts -> model, getAllProducts
+    | GetAllProducts -> 
+        Console.WriteLine $"GETTING ALL PRODUCTS"
+        model, getAllProducts defaultProductsRequest
 
     | GotAllProducts productResult ->
-        match productResult with
-        | Ok products -> { model with allProducts = Some products }, Cmd.none
-        | Error _ -> { model with allProducts = None }, Cmd.none
-
+        { model with allProducts = Some productResult.products }, Cmd.none
+    | FailedAllProducts ex ->
+        Console.WriteLine $"ex: {ex.Message}"
+        model, Cmd.none
+        
     | GetProductVariants variantId -> model, getProductVariants variantId
+    | FailedProductVariants ex -> model, Cmd.none
 
     | GotProductVariants variantResult ->
-        match variantResult with
-        | Ok variants -> { model with productVariants = Some variants }, Cmd.none
-        | Error _ -> { model with productVariants = None }, Cmd.none
+        { model with productVariants = Some variantResult }, Cmd.none
 
 open Feliz
 
@@ -742,23 +749,29 @@ let contentHeader (sectionTitle: string) (contentNavigation: ReactElement option
         ]
     ]
 
-let homeView (homeGif: string) dispatch =
+let homeView (homeGifUrls: string list) dispatch =
     let gifView =
-        Html.img [
-            prop.className "homeGif rounded-lg shadow-md"
-            prop.src "https://media.giphy.com/media/3o85xxSZvFZgD4wXde/giphy.gif"
-        ]
+        homeGifUrls
+        |> List.map (
+            fun link ->
+            Html.img [
+                prop.className "homeGif rounded-lg shadow-md"
+                // prop.src "https://media.giphy.com/media/3o85xxSZvFZgD4wXde/giphy.gif"
+                prop.src link
+            ]
+        )
+
 
     Html.div [
         prop.className "centeredView flex flex-col items-center gap-6 p-6"
         prop.children [
             Html.div [
                 prop.className "contentNavigation clash-font text-xl"
-                prop.text "HOLD ONTO YOUR BEERS, INITIATING LAUNCH...."
+                prop.text "XERO EFFORT"
             ]
             Html.div [
-                prop.className "gifContainer grid grid-cols-2 gap-4"
-                prop.children [gifView; gifView; gifView; gifView]
+                prop.className "gifContainer grid md:grid-cols-2 gap-4"
+                prop.children gifView
             ]
             Html.div [
                 prop.className "homeContent satorshi-font text-lg flex flex-col gap-3"
@@ -1392,40 +1405,41 @@ let catalogView2 collectionString (model: Model) =
             prop.children [ Html.text "No Products found" ]
         ]
 
-let shopCategoryLink collectionTag =
+let shopCategoryLink collectionTag dispatch =
     let collectionString = collectionTagToString collectionTag
     Html.div [
         prop.className "contentBackground"
         prop.children [
-            Html.a [
-                prop.href ("/shop/" + collectionString)
+            Html.button [
+                // prop.href ("/shop/" + collectionString)
+                // prop.href ("/shop/" + collectionString)
+                prop.onClick ( fun _ -> (NavigateTo (ShopSection.Catalog "Limited")) |> dispatch )
                 prop.children [
                     Html.div [
                         prop.className "navigationLink"
                         prop.children [ Html.text (collectionString + " collection") ]
                     ]
-                    Html.div [
-                        prop.children [
-                            Html.img [
-                                prop.src ("../public/images/" + collectionString + ".png")
-                            ]
-                        ]
-                    ]
+                    // Html.div [
+                    //     prop.children [
+                    //         Html.img [
+                    //             prop.src ("../public/images/" + collectionString + ".png")
+                    //         ]
+                    //     ]
                 ]
             ]
         ]
     ]
 
         
-let collectionView =
+let collectionView dispatch =
     Html.div [
         prop.children [
             contentHeader "BROWSE BY COLLECTION" (Some (headerLink "/home"))
             Html.div [
                 prop.className "navigationControls"
                 prop.children [
-                    shopCategoryLink Limited
-                    shopCategoryLink Unlimited
+                    shopCategoryLink Limited dispatch
+                    shopCategoryLink Unlimited dispatch
                 ]
             ]
         ]
@@ -1437,9 +1451,26 @@ let view (model: Shared.SharedShop.Model) (dispatch: Shared.SharedShop.ShopMsg -
     Html.div [
         match model.section with
         | ShopLanding ->
-            homeView "" dispatch
+            homeView 
+                [   
+                    "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXhkdm5teWs4cHRrYW53bmZ5bnZxenV4eXFkM2s3dzdva2swcDFwbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2QXWNglhiBC4KI/giphy.gif"
+                    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsaXJvN2JrNzA2dHAxeTVtOWZxampyZDNtejdlczJlc2V3N3c2ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d2W70ynZhKMyWTMQ/giphy.gif"
+                    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGducmk3MmpzaHF6aGNlcncwbnY3MTBmaTE4MmlkbzJ2MXJqcWU0NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/4EEy1K5SgmYcxFGCII/giphy.gif"
+                    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExa2J5bXN0cmpzeXZhaTI0MzgxaXRqYXkwazl1cXJua3djMXM1NGdmMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yb4GOQLoRkTJFnaJam/giphy.gif"
+                    // "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODQwZWs2eTRnM2VxMDRqMGh4MXA2cHhrb3hvanQyZjI3NmdnMjM0eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/vwT1f00PU44QnUgY2l/giphy.gif"
+                    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3czeTFpdnYxczhiMWRqaGkxdHU4bHgybm51bWp2Znh2N2ZobnM5aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/HtfFneOxp0fx6nUvYn/giphy.gif"
+                    "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXA2ZnduMGV1dHJnZzBycG9nOXg1bm5tcG95NmFwMjA5ZDg4MGVraCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l46C82yRUnonqFM9q/giphy.gif"
+                    // "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXN0bzUzaTZ2bTRtN2d4NWdkaGp6NmZic3Q3NWY1cGludGpsM3B6aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kv5ek9HvmdqpOYiYxh/giphy.gif"
+                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsZXNzNGg4NXRqOXgybTlhcGp4a3AzbTFmaTUwM3hzcTNtOGMzOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/C8OSeOz7PY6FzId1lQ/giphy.gif"
+                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExODJ3a2FydHoydDQ2bDg4cHl1ZW45c3dudnJocTlremh1cm5jZHdiOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7ZezIWW1cKlqFpCM/giphy.gif"
+                    // "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjVwNXpucjhnNTF5M3Azb3ptNGxqZnZkdGpzMXl4aWhuOXgyd2U0dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oEjHDPbHx75Oo5ec8/giphy.gif"
+                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExamk1dDR1ZXZsazdpdHB5eHY4cjA1MmxkZGRkamJrMnkzYm90amE5bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/jorJeXKNM6rxIEV7jr/giphy.gif"
+                    // I LIKE BELOW A LOT
+                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExd20xdDB3eWNpbnYxemo3cWF0Z3cwbmRmOHRjZGJ2cjYwcWRnbnhkeCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/V3rEdkdScV7mo/giphy.gif"
+                ] 
+                dispatch
         | Storefront ->
-            collectionView
+            collectionView dispatch
         | Catalog catalogName ->
             catalogView2 catalogName model
         | Product (productName, productId) ->

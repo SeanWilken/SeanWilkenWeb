@@ -921,7 +921,7 @@ module SharedServicesSection =
         CurrentService: OfferedService
     }
 
-module SharedShop =
+module SharedShopDomain =
 
     
     type ProductColor =
@@ -985,16 +985,54 @@ module SharedShop =
         | Hats
         | NoClass
 
+    /// Simplified type for displaying catalog products in your app
     type CatalogProduct = {
-        name: string
         id: int
+        name: string
         thumbnailURL: string
+        description: string option
+        brand: string option
+        model: string option
+        variantCount: int
+        isDiscontinued: bool
+        sizes: string list
+        colors: string list
+    }
+
+    type PlacementDimension = {
+        placement: string
+        height: float
+        width: float
+        orientation: string
+    }
+
+    type HateoasLink = {
+        href : string
+    }
+
+    type VariantLinks = {
+        self: HateoasLink
+        productVariants: HateoasLink
+        productDetails: HateoasLink
+        variantPrices: HateoasLink
+        variantImages: HateoasLink
     }
 
     type ProductVariant = {
         name: string
         id: int
         price: string
+    }
+
+    type CatalogVariant = {
+        id: int
+        productId: int
+        name: string
+        size: string
+        color: string option
+        imageUrl: string
+        placements: PlacementDimension array
+        links: VariantLinks
     }
 
     type StateCode =
@@ -1165,11 +1203,242 @@ module SharedShop =
     // Stub/placeholder types for API results
     // Replace with your real server shared types
 
-    type CheckoutTax = { taxRequired: bool; taxRate: float }
+    type CheckoutTax = { required: bool; rate: float; shipping_taxable: bool }
 
-    type CheckoutShippingRate = { shippingRate: string }
+    type CheckoutShippingRate = { rate: float; name: string }
 
     type HttpError = string
+
+
+module Api =
+    open System.Threading.Tasks
+
+    type TaxAddress = {
+        Country : string
+        State   : string
+        City    : string
+        Zip     : string
+    }
+
+    type ShippingRequest = {
+        Address : TaxAddress
+        Items   : string list
+    }
+
+    type Product = {
+        Id : string
+        Name : string
+        Price : decimal
+    }
+
+    module Printful =
+
+        module CatalogProductRequest = 
+
+            type CatalogProductsQuery = {
+                category_ids: int list option
+                colors: string list option
+                limit: int option
+                newOnly: bool option
+                offset: int option
+                placements: string list option
+                selling_region_name: string option
+                sort_direction: string option
+                sort_type: string option
+                techniques: string list option
+                destination_country: string option
+            }
+
+        module Common =
+             /// Paging information
+            type PagingInfoDTO = {
+                total: int
+                offset: int
+                limit: int
+            }
+
+            /// Navigation links (HATEOAS from Printful)
+            type LinksDTO = {
+                self: string
+                next: string option
+                first: string option
+                last: string option
+            }
+
+        module CatalogProduct =
+
+            open SharedShopDomain
+            open Common
+
+            type ProductLinks = {
+                self  : HateoasLink
+                next  : HateoasLink option
+                first : HateoasLink option
+                last  : HateoasLink option
+            }
+
+            type Color = {
+                name : string
+                code : string option
+                image : string option
+            }
+
+            type Technique = {
+                key : string
+                display_name : string
+            }
+
+            type DesignPlacement = {
+                placement : string
+                display_name : string
+            }
+
+            type CatalogOption = {
+                id : string
+                title : string
+                type' : string
+            }
+
+            type PrintfulProduct = {
+                id              : int
+                main_category_id: int
+                ``type``        : string
+                name            : string
+                brand           : string option
+                model           : string option
+                image           : string
+                variant_count   : int
+                is_discontinued : bool
+                description     : string
+                sizes           : string array
+                colors          : Color array
+                techniques      : Technique array
+                placements      : DesignPlacement array
+                product_options : CatalogOption array
+                _links          : ProductLinks
+            }
+
+            type Paging = {
+                total  : int
+                offset : int
+                limit  : int
+            }
+
+            type PrintfulCatalogProductResponse = {
+                data   : PrintfulProduct array
+                paging : Paging
+                _links : ProductLinks
+            }
+
+            let mapPrintfulProduct (p: PrintfulProduct) : SharedShopDomain.CatalogProduct =
+                { 
+                    id = p.id
+                    name = p.name
+                    thumbnailURL = p.image
+                    description = Some p.description
+                    brand = p.brand
+                    model = p.model
+                    variantCount = p.variant_count
+                    isDiscontinued = p.is_discontinued
+                    sizes = p.sizes |> List.ofArray
+                    colors = p.colors |> Array.map (fun c -> c.name) |> List.ofArray
+                }
+
+
+            ///// ACTUALLY GO OVER THE WIRE
+           
+            /// API response shaped for the client
+            type CatalogResponseDTO = {
+                products: SharedShopDomain.CatalogProduct list
+                paging: PagingInfoDTO
+                links: LinksDTO
+            }
+
+            let mapPrintfulResponse (r: PrintfulCatalogProductResponse) : CatalogResponseDTO =
+                { 
+                    products = 
+                        r.data
+                        |> Array.map mapPrintfulProduct
+                        |> List.ofArray
+                    paging =
+                        { 
+                            total = r.paging.total
+                            offset = r.paging.offset
+                            limit = r.paging.limit
+                        }
+                    links =
+                        { 
+                            self = r._links.self.href
+                            next = r._links.next |> Option.map (fun l -> l.href)
+                            first = r._links.first |> Option.map (fun l -> l.href)
+                            last = r._links.last |> Option.map (fun l -> l.href)
+                        } 
+                }
+
+        module ProductVariant =
+            
+            open SharedShopDomain
+            open Common
+
+            type PrintfulVariant = {
+                id: int
+                catalog_product_id: int
+                name: string
+                size: string
+                color: string option
+                color_code: string option
+                color_code2: string option
+                placement_dimensions: PlacementDimension array
+                image: string
+                _links: VariantLinks
+            }
+
+            type VariantLinks = {
+                self: HateoasLink
+                productVariants: HateoasLink
+                productDetails: HateoasLink
+                variantPrices: HateoasLink
+                variantImages: HateoasLink
+            }
+
+            let mapVariant (v: PrintfulVariant) : SharedShopDomain.CatalogVariant =
+                {
+                    id = v.id
+                    productId = v.catalog_product_id
+                    name = v.name
+                    size = v.size
+                    color = v.color
+                    imageUrl = v.image
+                    placements = v.placement_dimensions
+                    links = v._links
+                }
+
+            type PrintfulVariantsResponse = {
+                data: PrintfulVariant array
+                paging: PagingInfoDTO
+                _links: LinksDTO
+            }
+
+            let mapVariants (resp: PrintfulVariantsResponse) : CatalogVariant list =
+                resp.data
+                |> Array.map mapVariant
+                |> Array.toList
+
+    type ProductApi = {
+        getProducts : 
+            Printful.CatalogProductRequest.CatalogProductsQuery -> Async<Printful.CatalogProduct.CatalogResponseDTO>
+        getProductVariants : int -> Async<SharedShopDomain.CatalogVariant list>
+    }
+
+    type PaymentApi = {
+        getTaxRate : TaxAddress -> Async<SharedShopDomain.CheckoutTax>
+        getShipping : ShippingRequest -> Async<decimal>
+        createPayPalOrder : decimal -> Async<string>   // returns order id
+        capturePayPalOrder : string -> Async<bool>     // capture by order id
+    }
+
+module SharedShop =
+    open SharedShopDomain
 
     type ShopMsg =
         | NavigateTo of ShopSection
@@ -1182,18 +1451,29 @@ module SharedShop =
         | AddVariantToShoppingBag of SyncProductVariant
         | DeleteVariantFromShoppingBag of SyncProductVariant
         | AdjustLineItemQuantity of QuantityAdjustment * SyncProductVariant
+        // Testing
         | TestApiTaxRate
         | TestApiShippingRate
         | Send // apparently testing paypal
         | GotResult of Result<string, HttpError>
-        | GotTaxRateResult of Result<CheckoutTax, HttpError>
-        | GotShippingRateResult of Result<CheckoutShippingRate list, HttpError>
         | TestApiCustomerDraft of CustomerDraftOrder
         | GotCustomerOrderDraftResult of Result<DraftResult, HttpError>
+        // Tax
+        | GetTaxRateResult of CustomerAddress
+        | GotTaxRateResult of CheckoutTax
+        | FailedTaxRateResult of exn
+        // Shipping Rates
+        | GetShippingRateResult of Result<CheckoutShippingRate list, HttpError>
+        | GotShippingRateResult of CheckoutShippingRate list
+        | FailedShippingRateResult of exn
+        // Product Catalog
         | GetAllProducts
-        | GotAllProducts of Result<CatalogProduct list, HttpError>
+        | GotAllProducts of Api.Printful.CatalogProduct.CatalogResponseDTO
+        | FailedAllProducts of exn
+        // Product Variants
         | GetProductVariants of int
-        | GotProductVariants of Result<ProductVariant list, HttpError>
+        | GotProductVariants of SharedShopDomain.CatalogVariant list
+        | FailedProductVariants of exn
 
     type Model = {
         section: ShopSection
@@ -1213,7 +1493,7 @@ module SharedShop =
         customerAddressForm : CustomerAddressForm 
         validationResults : List<RequestResponse>
         allProducts : List<CatalogProduct> option
-        productVariants : List<ProductVariant> option
+        productVariants : List<CatalogVariant> option
     }
 
     let getInitialModel shopSection = {
@@ -1253,7 +1533,7 @@ module SharedPage =
         | Landing
         | Portfolio of PortfolioSection
         | Resume
-        | Shop of SharedShop.ShopSection
+        | Shop of SharedShopDomain.ShopSection
         | Welcome
 
 module SharedWebAppModels =
@@ -1365,6 +1645,3 @@ module SharedWebAppModels =
 module Route =
     let builder typeName methodName =
         sprintf "/api/%s/%s" typeName methodName
-
-type IPageApi =
-    { GetPage :  string -> Async<SharedWebAppModels.Model> }

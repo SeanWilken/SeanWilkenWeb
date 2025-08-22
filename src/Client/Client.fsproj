@@ -21,6 +21,10 @@
 
         <!-- Shared -->
         <Compile Include="Modules\Shared\Shared.fs" />
+
+        <!-- Api -->
+        <Compile Include="Modules\Remoting\Api.fs" />
+        
         
         <!-- TSX Component Bindings -->
         <Compile Include="Components\FSharp\Interop\TSXCanvas.fs" />
