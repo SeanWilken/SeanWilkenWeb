@@ -791,10 +791,29 @@ module SharedTileSort =
         }
 
 module SharedWebAppViewSections =
+    type ProfessionalServicesView =
+        | ServicesLanding
+        | AI
+        | Automation
+        | Integration
+        | Website
+        | SalesPlatform
+        | Development
+
+        member x.toUrlString  =
+            match x with
+            | ServicesLanding -> "/services"
+            | AI -> "/ai-services"
+            | Automation -> "/automation-services"
+            | Integration -> "/integration-services"
+            | Website -> "/web-services"
+            | SalesPlatform -> "/sales-services"
+            | Development -> "/development-services"
+
     type AppView =
         | AboutAppView
         | ContactAppView
-        | IndexAppView
+        | ProfessionalServicesAppView of ProfessionalServicesView
         | LandingAppView
         | PortfolioAppLandingView
         | PortfolioAppCodeView
@@ -807,7 +826,7 @@ module SharedWebAppViewSections =
         | AboutAppView -> "About"
         | PortfolioAppCodeView -> "Code"
         | ContactAppView -> "Contact"
-        | IndexAppView -> "Index"
+        | ProfessionalServicesAppView _ -> "Services"
         | LandingAppView -> "Landing"
         | PortfolioAppDesignView -> "Design"
         | PortfolioAppLandingView -> "Projects"
@@ -858,6 +877,33 @@ module SharedDesignGallery =
 
     let getInitialModel = { CurrentPieceIndex = 0; }
 
+module SharedServices =
+
+    type Industry =
+        | Contractor
+        | Lawyer
+        | Doctor
+        | InsuranceAgency
+        | RealEstate
+        | Retail
+        | Restaurant
+        | SmallBusiness
+        | Other
+
+    type SharedServiceSectionMsg =
+        | GoToLanding
+        | GoToSection of SharedWebAppViewSections.ProfessionalServicesView
+
+    type Msg =
+        | LoadSection of SharedWebAppViewSections.AppView
+        | AISectionMsg of SharedServiceSectionMsg
+
+    type Model = {
+        CurrentSection: SharedWebAppViewSections.ProfessionalServicesView
+    }
+        
+    let getInitialModel section = { CurrentSection = section }
+
 module SharedPortfolioGallery =
     
     open SharedCodeGallery
@@ -899,8 +945,6 @@ module SharedAboutSection =
        
     let getInitialModel = {ActiveModalIndex = 0; ModalIsActive = false}
 
-
-
 module SharedWelcome = 
     type Msg =
         | SwitchSection of SharedWebAppViewSections.AppView
@@ -921,14 +965,13 @@ module SharedPage =
     type Page =
         | About
         | Contact
-        | Index
         | Landing
         | Portfolio of PortfolioSection
+        | Services of SharedWebAppViewSections.ProfessionalServicesView
         | Resume
         | Welcome
 
 module SharedWebAppModels =
-
     
     type Theme =
         | Light
@@ -1007,9 +1050,9 @@ module SharedWebAppModels =
     // Contact -> How to get in touch with the entity the web app represents
     type Model =
         | About of SharedAboutSection.Model
-        | Index
         | Contact
         | Landing
+        | Services of SharedServices.Model
         | Portfolio of SharedPortfolioGallery.Model
         | Resume
         | Welcome
@@ -1024,6 +1067,7 @@ module SharedWebAppModels =
         | AboutMsg of SharedAboutSection.Msg
         | PortfolioMsg of SharedPortfolioGallery.Msg
         | SwitchToOtherApp of SharedWebAppViewSections.AppView
+        | ServicesMsg of SharedServices.Msg
         | LoadPage of SharedPage.Page
         | ErrorMsg of exn // WIP?
         | ChangeTheme of Theme

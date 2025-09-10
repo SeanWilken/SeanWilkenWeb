@@ -31,13 +31,16 @@
         <Compile Include="Components\FSharp\Portfolio\Games\PivotPoints\PivotPoints.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\TileSort\TileSort.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\TileTap\TileTap.fs" />
+        <Compile Include="Components\FSharp\Layout\Elements\MultiContent.fs" />
 
         <!-- F# Component Pages -->
         <Compile Include="Components\FSharp\About\About.fs" />
+        <Compile Include="Components\FSharp\Services\AIAutomation\AISalesDeck.fs" />
         <Compile Include="Components\FSharp\Portfolio\Art\ArtGallery.fs" />
         <Compile Include="Components\FSharp\Contact\Contact.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\CodeGallery.fs" />
         <Compile Include="Components\FSharp\Portfolio\PortfolioLanding.fs" />
+        <Compile Include="Components\FSharp\Services\ServicesLanding.fs" />
         <Compile Include="Components\FSharp\Welcome\Welcome.fs" />
 
         <!-- TSX => F# Binding Pages -->

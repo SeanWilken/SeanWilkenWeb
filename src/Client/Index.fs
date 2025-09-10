@@ -54,6 +54,7 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
         | SharedWebAppViewSections.AppView.PortfolioAppDesignView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.Design ) )
         | SharedWebAppViewSections.AppView.PortfolioAppLandingView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
         | SharedWebAppViewSections.AppView.ResumeAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Resume )
+        | SharedWebAppViewSections.AppView.ProfessionalServicesAppView section   -> model, Cmd.ofMsg ( LoadPage (SharedPage.Services section) )
         | SharedWebAppViewSections.AppView.WelcomeAppView ->
             model, Cmd.ofMsg ( LoadPage SharedPage.Welcome )
 
@@ -71,14 +72,15 @@ open FSharp.Reflection
 
 // takes union case string, returns an app section
 let areaStringToAppSection string =
+    printfn $"SECTION: {string}"
     match string with
-    | "Index" ->  SharedWebAppViewSections.AppView.IndexAppView
     | "Landing" ->  SharedWebAppViewSections.AppView.LandingAppView
     | "About" -> SharedWebAppViewSections.AppView.AboutAppView
     | "Contact" -> SharedWebAppViewSections.AppView.ContactAppView
     | "Projects" ->  SharedWebAppViewSections.AppView.PortfolioAppLandingView
     | "Resume" ->  SharedWebAppViewSections.AppView.ResumeAppView
     | "Welcome" ->  SharedWebAppViewSections.AppView.WelcomeAppView
+    | "Services" ->  SharedWebAppViewSections.AppView.ProfessionalServicesAppView SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding
     | _ -> SharedWebAppViewSections.AppView.WelcomeAppView
 
 // returns the current model as an area
@@ -90,7 +92,7 @@ let currentWebAppSection model =
     | SharedWebAppModels.Contact -> SharedWebAppViewSections.AppView.ContactAppView
     | SharedWebAppModels.Resume -> SharedWebAppViewSections.AppView.ResumeAppView
     | SharedWebAppModels.Landing -> SharedWebAppViewSections.AppView.LandingAppView
-    | SharedWebAppModels.Index -> SharedWebAppViewSections.AppView.IndexAppView
+    | SharedWebAppModels.Services serviceModel -> SharedWebAppViewSections.AppView.ProfessionalServicesAppView serviceModel.CurrentSection
 
 // Union cases of the different web app sub modules, in order to create elements
 // and reference the union type in code.
@@ -298,7 +300,6 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
                     match model.CurrentAreaModel with
                     | SharedWebAppModels.About aboutModel -> Components.FSharp.About.view aboutModel dispatch
                     | SharedWebAppModels.Contact -> Components.FSharp.Contact.view
-                    | SharedWebAppModels.Index -> Html.div "This is the index page, which should not be used."
                     | SharedWebAppModels.Landing -> Html.div "Welcome to the Landing Page"
                     | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery ->
                         Components.FSharp.PortfolioLanding.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
@@ -308,6 +309,7 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
                         Components.FSharp.PortfolioLanding.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
                     | SharedWebAppModels.Resume -> 
                         Components.FSharp.Interop.Resume.ResumePage ()
+                    | SharedWebAppModels.Services serviceModel -> Components.FSharp.Services.Landing.view serviceModel dispatch
                     | SharedWebAppModels.Welcome -> Components.FSharp.Welcome.view (WelcomeMsg >> dispatch)
                 ]
             ]

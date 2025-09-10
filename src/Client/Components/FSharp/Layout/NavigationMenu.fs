@@ -10,6 +10,7 @@ let navIconFor label =
     | "Projects" -> LucideIcon.Briefcase "w-6 h-6"
     | "About" -> LucideIcon.UserCircle "w-6 h-6"
     | "Resume" -> LucideIcon.File "w-6 h-6"
+    | "Services" -> LucideIcon.Cpu "w-6 h-6"
     | "Contact" -> LucideIcon.Mail "w-6 h-6"
     | "Theme" -> LucideIcon.Palette "w-6 h-6"
     | _ -> Html.none

@@ -29,9 +29,9 @@ let toPath =
         sprintf "/portfolio-design"
     | Some ( Portfolio _ )
     | Some ( Portfolio PortfolioSection.PortfolioLanding ) -> "/portfolio"
+    | Some ( Services section ) -> section.toUrlString
     | Some Resume -> "/resume"
     | Some Welcome -> "/welcome"
-    | Some Index
     | None -> "/"
 
 // router use combinators for better structured paths
@@ -42,6 +42,8 @@ let pageParser : Parser< Page -> Page,_ > =
             map Page.Contact ( s "contact" )
             map ( Page.Landing) ( s "landing" )
             map ( Page.Landing) ( s "index" )
+            map ( Page.Services SharedWebAppViewSections.ProfessionalServicesView.SalesPlatform) ( s "services-sales" )
+            map ( Page.Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding) ( s "services" )
             map ( Page.Portfolio PortfolioSection.PortfolioLanding) ( s "portfolio" )
             map ( Page.Portfolio ( Code ( CodeSection.CodeLanding ) ) ) ( s "portfolio-code" )
             map ( Page.Portfolio Design ) ( s "portfolio-design" )
@@ -59,7 +61,6 @@ let urlParser location =
 let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebAppModel) : SharedWebAppModels.WebAppModel * Cmd<SharedWebAppModels.WebAppMsg> =
     match result with
     | None
-    | Some SharedPage.Page.Index
     | Some SharedPage.Page.Landing ->
         { model with CurrentAreaModel = SharedWebAppModels.Landing },
         Navigation.newUrl (toPath (Some Landing))
@@ -87,6 +88,10 @@ let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebApp
     | Some (SharedPage.Page.Portfolio _) ->
         { model with CurrentAreaModel = SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery },
         Navigation.newUrl (toPath (Some (Portfolio PortfolioSection.PortfolioLanding)))
+    | Some (SharedPage.Page.Services section) ->
+        { model with CurrentAreaModel = SharedWebAppModels.Services (SharedServices.getInitialModel section) },
+        
+        Navigation.newUrl (toPath (Some (Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding)))
     | Some SharedPage.Page.Resume ->
         printfn $"Navigating to Resume page"
         { model with CurrentAreaModel = SharedWebAppModels.Resume },
