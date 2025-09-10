@@ -22,21 +22,16 @@ Target.create "Clean" (fun _ ->
 
 Target.create "RestoreClientDependencies" (fun _ -> run pnpm [ "i" ] clientPath)
 
-// Target.create "BuildCss" (fun _ ->
-//     run pnpm [ "exec"; "postcss"; "src/Client/index.css"; "-o"; "src/Client/public/css/index.css" ] "."
-// )
-
-
 Target.create "Bundle" (fun _ ->
     [
         "server", dotnet [ "publish"; "-c"; "Release"; "-o"; deployPath ] serverPath
-        "client", dotnet [ "fable"; "-o"; "output"; "-s"; "--run"; "npx"; "vite"; "build" ] clientPath
+        "client", dotnet [ "fable"; "-o"; "output"; "-s"; "--run"; "pnpm"; "exec"; "vite"; "build" ] clientPath
     ]
     |> runParallel)
 
 Target.create "Azure" (fun _ ->
     let web = webApp {
-        name "Wilken Web"
+        name "Sean-Wilken-Web"
         operating_system OS.Linux
         runtime_stack (DotNet "8.0")
         zip_deploy "deploy"
@@ -47,16 +42,17 @@ Target.create "Azure" (fun _ ->
         add_resource web
     }
 
-    deployment |> Deploy.execute "Wilken Web" Deploy.NoParameters |> ignore)
+    deployment |> Deploy.execute "SAFE-App" Deploy.NoParameters |> ignore)
 
 Target.create "Build" (fun _ ->
     run dotnet [ "build"; "Application.sln" ] "."
-)
+
+    )
 
 Target.create "Run" (fun _ ->
     [
         "server", dotnet [ "watch"; "run"; "--no-restore" ] serverPath
-        "client", dotnet [ "fable"; "watch"; "-o"; "output"; "-s"; "--run"; "npx"; "vite" ] clientPath
+        "client", dotnet [ "fable"; "watch"; "-o"; "output"; "-s"; "--run"; "pnpm"; "exec"; "vite" ] clientPath
     ]
     |> runParallel)
 
@@ -64,13 +60,13 @@ Target.create "RunTestsHeadless" (fun _ ->
     run dotnet [ "run" ] serverTestsPath
     run pnpm [ "install" ] clientTestsPath
     run dotnet [ "fable"; "-o"; "output" ] clientTestsPath
-    run npx [ "mocha"; "output" ] clientTestsPath
+    run pnpm [ "exec"; "mocha"; "output" ] clientTestsPath
 )
 
 Target.create "WatchRunTests" (fun _ ->
     [
         "server", dotnet [ "watch"; "run"; "--no-restore" ] serverTestsPath
-        "client", dotnet [ "fable"; "watch"; "-o"; "output"; "-s"; "--run"; "npx"; "vite" ] clientTestsPath
+        "client", dotnet [ "fable"; "watch"; "-o"; "output"; "-s"; "--run"; "pnpm"; "exec"; "vite" ] clientTestsPath
     ]
     |> runParallel)
 
@@ -84,9 +80,6 @@ let dependencies = [
 
     "RestoreClientDependencies" ==> "Build" ==> "RunTestsHeadless"
     "RestoreClientDependencies" ==> "Build" ==> "WatchRunTests"
-    
-    // "BuildCss" ==> "Bundle" ==> "Azure"
-    // "BuildCss" ==> "Bundle" ==> "Run"
 ]
 
 [<EntryPoint>]

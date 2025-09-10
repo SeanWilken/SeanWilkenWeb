@@ -40,3 +40,7 @@ type LucideIcon =
     static member inline MegaPhone     (classes: string) = icon "Megaphone" classes
     static member inline JoyStick     (classes: string) = icon "Joystick" classes
     static member inline BookOpenText     (classes: string) = icon "BookOpenText" classes
+    static member inline Cog     (classes: string) = icon "Cog" classes
+    static member inline Bot     (classes: string) = icon "Bot" classes
+    static member inline CircleQuestionMark     (classes: string) = icon "CircleQuestionMark" classes
+    static member inline HandPlatter     (classes: string) = icon "HandPlatter" classes

@@ -21,6 +21,10 @@
 
         <!-- Shared -->
         <Compile Include="Modules\Shared\Shared.fs" />
+
+        <!-- Api -->
+        <Compile Include="Modules\Remoting\Api.fs" />
+        
         
         <!-- TSX Component Bindings -->
         <Compile Include="Components\FSharp\Interop\TSXCanvas.fs" />
@@ -32,6 +36,7 @@
         <Compile Include="Components\FSharp\Portfolio\Games\TileSort\TileSort.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\TileTap\TileTap.fs" />
         <Compile Include="Components\FSharp\Layout\Elements\MultiContent.fs" />
+        <Compile Include="Components\FSharp\Services\AIServices.fs" />
 
         <!-- F# Component Pages -->
         <Compile Include="Components\FSharp\About\About.fs" />
@@ -39,8 +44,10 @@
         <Compile Include="Components\FSharp\Portfolio\Art\ArtGallery.fs" />
         <Compile Include="Components\FSharp\Contact\Contact.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\CodeGallery.fs" />
+        <Compile Include="Components\FSharp\Shop\Shop.fs" />
         <Compile Include="Components\FSharp\Portfolio\PortfolioLanding.fs" />
         <Compile Include="Components\FSharp\Services\ServicesLanding.fs" />
+        <!-- <Compile Include="Components\FSharp\Portfolio\ServicesDirectory.fs" /> -->
         <Compile Include="Components\FSharp\Welcome\Welcome.fs" />
 
         <!-- TSX => F# Binding Pages -->

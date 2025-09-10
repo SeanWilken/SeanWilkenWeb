@@ -6,20 +6,24 @@ open Bindings.FramerMotion
 
 let navIconFor label =
     match label with
-    | "Home" -> LucideIcon.Home "w-6 h-6"
-    | "Projects" -> LucideIcon.Briefcase "w-6 h-6"
-    | "About" -> LucideIcon.UserCircle "w-6 h-6"
-    | "Resume" -> LucideIcon.File "w-6 h-6"
-    | "Services" -> LucideIcon.Cpu "w-6 h-6"
-    | "Contact" -> LucideIcon.Mail "w-6 h-6"
-    | "Theme" -> LucideIcon.Palette "w-6 h-6"
+    | "About" -> LucideIcon.UserCircle "w-6 h-6 pr-4"
+    | "AI" -> LucideIcon.Bot "w-6 h-6 pr-4"
+    | "Contact" -> LucideIcon.Mail "w-6 h-6 pr-4"
+    | "Help" -> LucideIcon.CircleQuestionMark "w-6 h-6 pr-4"
+    | "Home" -> LucideIcon.Home "w-6 h-6 pr-4"
+    | "Projects" -> LucideIcon.Briefcase "w-6 h-6 pr-4"
+    | "Resume" -> LucideIcon.File "w-6 h-6 pr-4"
+    | "Settings" -> LucideIcon.Cog "w-6 h-6 pr-4"
+    | "Theme" -> LucideIcon.Palette "w-6 h-6 pr-4"
+    | "Shop" -> LucideIcon.ShoppingCart "w-6 h-6 pr-4"
+    | "Services" -> LucideIcon.HandPlatter "w-6 h-6 pr-4"
     | _ -> Html.none
 
-let navItem (label: string) icon isActive expandedMenu onSelect =
+let navItem (label: string) icon isActive expandedMenu onSelect isEnd =
     Html.button [
         prop.className (
-            "group w-full rounded-xl flex items-center justify-center px-2 lg:px-4 py-3 " +
-            "transition-all duration-200 ease-in-out hover:bg-base-200 overflow-y-auto"
+            "group w-full rounded-xl flex items-center justify-between align-center px-2 lg:px-4 py-3 " +
+            "transition-all duration-200 ease-in-out hover:bg-base-200"
         )
         prop.onClick (fun _ -> onSelect label)
         prop.children [
@@ -27,15 +31,17 @@ let navItem (label: string) icon isActive expandedMenu onSelect =
                 prop.children [
                     Html.div [
                         prop.className (
-                            "relative w-10 h-10 flex items-center justify-center shrink-0 " +
+                            "relative w-10 h-10 flex items-center justify-center shrink-0" +
                             (if isActive then
-                                "before:content-[''] before:absolute before:inset-0 before:bg-primary/20 " +
-                                "before:-skew-x-12 before:z-0 before:rounded-md"
+                                " before:content-['']  " +
+                                "before:left-2 before:right-0 before:bg-primary/20 " +
+                                "before:-skew-x-12 before:z-0 before:rounded-lg"
                             else "")
                         )
+                        prop.style [ style.paddingRight 10 ]
                         prop.children [
                             Html.div [
-                                prop.className "w-6 h-6 flex items-center justify-center text-secondary"
+                                prop.className "w-6 h-6 flex items-center justify-center text-primary"
                                 prop.children [ icon ]
                             ]
                         ]
@@ -64,6 +70,7 @@ type SubSection = {
 
 type NavigationMenuProps = {|
     items: string[]
+    endItems: string[]
     menuOpen: bool
     activeItem: string
     onSelect: string -> unit
@@ -119,7 +126,15 @@ let NavigationMenu (props: NavigationMenuProps) =
                     prop.className "flex-1 space-y-1"
                     prop.children [
                         for item in props.items do
-                            navItem item (navIconFor item) (item = props.activeItem) isHovered props.onSelect
+                            navItem item (navIconFor item) (item = props.activeItem) isHovered props.onSelect false
+                    ]
+                ]
+                // Footer navigation
+                Html.nav [
+                    prop.className "space-y-1 mt-auto"
+                    prop.children [
+                        for foot in props.endItems do
+                            navItem foot (navIconFor foot) (foot = props.activeItem) isHovered props.onSelect true
                     ]
                 ]
             ]

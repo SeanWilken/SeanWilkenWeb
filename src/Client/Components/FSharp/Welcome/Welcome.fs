@@ -125,20 +125,6 @@ let view (dispatch: Msg -> unit) =
                 prop.className "w-full max-w-6xl mx-auto px-6"
                 prop.children [
 
-                    Components.Layout.LayoutElements.SectionList {
-                        Title = "🖥️ Site Stack 🖥️"
-                        Items = [
-                            "F#"
-                            "Fable"
-                            "TypeScript"
-                            "Tailwind"
-                            "DaisyUI"
-                            "Azure"
-                            "Digital Ocean"
-                            "Kubernetes"
-                        ]
-                    }
-
                     Components.Layout.LayoutElements.SectionGrid {
                         Title = "🛠️ Services 🛠️"
                         Items = [
@@ -158,7 +144,6 @@ let view (dispatch: Msg -> unit) =
                     }
 
                     Components.Layout.LayoutElements.SectionCarousel {|
-
                         Title = "📰 Coming Soon 📰"
                         Items = [
                             {
@@ -188,6 +173,20 @@ let view (dispatch: Msg -> unit) =
                             }
                         ]
                     |}
+
+                    Components.Layout.LayoutElements.SectionList {
+                            Title = "🖥️ Site Stack 🖥️"
+                            Items = [
+                                "F#"
+                                "Fable"
+                                "TypeScript"
+                                "Tailwind"
+                                "DaisyUI"
+                                "Azure"
+                                "Digital Ocean"
+                                "Kubernetes"
+                            ]
+                        }
                 ]
             ]
         ]

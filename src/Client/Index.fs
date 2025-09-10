@@ -48,6 +48,7 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
     | SwitchToOtherApp section, _ ->
         match section with
         | SharedWebAppViewSections.AppView.AboutAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.About )
+        | SharedWebAppViewSections.AppView.ShopAppView -> model, Cmd.ofMsg ( LoadPage (SharedPage.Shop Shared.SharedShopDomain.ShopSection.ShopLanding) )
         | SharedWebAppViewSections.AppView.ContactAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Contact )
         | SharedWebAppViewSections.AppView.LandingAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Landing )
         | SharedWebAppViewSections.AppView.PortfolioAppCodeView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Code SharedPage.CodeSection.CodeLanding ) ) )
@@ -93,6 +94,9 @@ let currentWebAppSection model =
     | SharedWebAppModels.Resume -> SharedWebAppViewSections.AppView.ResumeAppView
     | SharedWebAppModels.Landing -> SharedWebAppViewSections.AppView.LandingAppView
     | SharedWebAppModels.Services serviceModel -> SharedWebAppViewSections.AppView.ProfessionalServicesAppView serviceModel.CurrentSection
+    | SharedWebAppModels.Settings // -> SharedWebAppViewSections.AppView.Help
+    | SharedWebAppModels.Help // -> SharedWebAppViewSections.AppView.Help
+    | SharedWebAppModels.Shop _ -> SharedWebAppViewSections.AppView.ShopAppView
 
 // Union cases of the different web app sub modules, in order to create elements
 // and reference the union type in code.
@@ -300,6 +304,7 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
                     match model.CurrentAreaModel with
                     | SharedWebAppModels.About aboutModel -> Components.FSharp.About.view aboutModel dispatch
                     | SharedWebAppModels.Contact -> Components.FSharp.Contact.view
+                    | SharedWebAppModels.Shop shopModel -> Components.FSharp.Shop.view shopModel (ShopMsg >> dispatch)
                     | SharedWebAppModels.Landing -> Html.div "Welcome to the Landing Page"
                     | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery ->
                         Components.FSharp.PortfolioLanding.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
@@ -310,6 +315,8 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
                     | SharedWebAppModels.Resume -> 
                         Components.FSharp.Interop.Resume.ResumePage ()
                     | SharedWebAppModels.Services serviceModel -> Components.FSharp.Services.Landing.view serviceModel dispatch
+                    | Help 
+                    | Settings
                     | SharedWebAppModels.Welcome -> Components.FSharp.Welcome.view (WelcomeMsg >> dispatch)
                 ]
             ]

@@ -31,11 +31,12 @@ export const ThemePickerModal: React.FC<ThemePickerProps> = ({ isOpen, onClose }
   return (
     <div className="fixed inset-0 z-50 bg-base-100 bg-opacity-90 flex items-center justify-center px-4 py-8 bg-black/50" onClick={onClose}>
       <div
-        className="bg-base-100 rounded-lg shadow-xl max-h-[80vh] w-full max-w-md overflow-y-auto"
+        className="bg-base-300 rounded-lg shadow-xl max-h-[80vh] w-full max-w-lg overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-between items-center px-4 py-3 border-b border-base-content/10">
           <h2 className="text-lg font-bold">Select a Theme</h2>
+          <h6>Typescript component</h6>
           <button
             onClick={onClose}
             className="text-base-content/60 hover:text-base-content"
@@ -44,7 +45,7 @@ export const ThemePickerModal: React.FC<ThemePickerProps> = ({ isOpen, onClose }
           </button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-3 lg:grid-cols-4 gap-2">
           {themes.map((theme) => (
             // <div
             //   key={theme}
@@ -65,7 +66,7 @@ export const ThemePickerModal: React.FC<ThemePickerProps> = ({ isOpen, onClose }
               onClick={() => {
                 setTheme(theme);
               }}
-              className={`cursor-pointer aspect-square rounded-xl flex flex-col justify-between items-center p-4 text-center shadow transition hover:scale-105`}
+              className={`cursor-pointer aspect-square rounded-xl flex flex-col justify-between items-center p-4 m-4 text-center shadow transition hover:scale-105`}
                 // ${
                 // theme === savedTheme
                 //   ? "bg-primary text-primary-content font-semibold"

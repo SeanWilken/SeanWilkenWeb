@@ -318,7 +318,6 @@ let tileView colorClass tapTile (tileImage: string) dispatch =
                 | TapTileValue.Bomb -> prop.text SharedViewModule.GamePieceIcons.bomb
                 | TapTileValue.Heart -> prop.text SharedViewModule.GamePieceIcons.heart
                 | Minor | Modest | Major -> prop.text "★" // Use a star icon for balls
-                | _ -> prop.text SharedViewModule.GamePieceIcons.empty
             ]
             Html.span [
                 prop.className "mt-1 text-xs font-bold text-white"

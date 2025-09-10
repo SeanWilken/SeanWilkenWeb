@@ -52,12 +52,16 @@ let PageLayout (props: PageLayoutProps) =
                 )
                 prop.children [
                     NavigationMenu {|
-                        items = [| "Home"; "About"; "Projects"; "Services"; "Resume"; "Contact"; "Theme" |]
+                        // "AI";
+                        items = [| "Home"; "About"; "Services"; "Projects"; "Shop"; "Resume"; "Contact"; |]
+                        endItems = [| "Settings"; "Theme"; "Help"; |]
                         activeItem =
 
                             match props.model.CurrentAreaModel with
                             | Welcome -> "Home"
                             | About _ -> "About"
+                            | Shop _ -> "Shop"
+                            // | AI -> "AI"
                             | Portfolio _ -> "Projects"
                             | Resume -> "Resume"
                             | Services _ -> "Services"
@@ -73,6 +77,7 @@ let PageLayout (props: PageLayoutProps) =
                             | "Resume" -> props.dispatch (SwitchToOtherApp ResumeAppView)
                             | "Contact" -> props.dispatch (SwitchToOtherApp ContactAppView)
                             | "Services" -> props.dispatch (SwitchToOtherApp (ProfessionalServicesAppView ServicesLanding) )
+                            | "Shop" -> props.dispatch (SwitchToOtherApp ShopAppView)
                             | "Theme" -> setThemePickerOpen true
                             | _ -> ()
 
