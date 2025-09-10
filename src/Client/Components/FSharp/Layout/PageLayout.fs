@@ -54,7 +54,7 @@ let PageLayout (props: PageLayoutProps) =
                     NavigationMenu {|
                         // "AI";
                         items = [| "Home"; "About"; "Services"; "Projects"; "Shop"; "Resume"; "Contact"; |]
-                        endItems = [| "Settings"; "Theme"; "Help"; |]
+                        endItems = [| "Theme"; |] // "Settings"; "Help";
                         activeItem =
 
                             match props.model.CurrentAreaModel with

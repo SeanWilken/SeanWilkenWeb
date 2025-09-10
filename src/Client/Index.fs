@@ -27,6 +27,10 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
     | AboutMsg msg, About ( m ) ->
         model, Cmd.none
 
+    | ShopMsg msg, Shop shopModel ->
+        let updatedModel, com = Components.FSharp.Shop.update msg shopModel
+        { model with CurrentAreaModel = Shop updatedModel }, Cmd.map ShopMsg com
+
     // PORTFOLIO PAGE
     | PortfolioMsg msg, Portfolio pm ->
         match msg, pm with

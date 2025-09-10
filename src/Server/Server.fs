@@ -31,7 +31,7 @@ module Api =
                     //     | a when a = null -> "<YOUR_API_KEY>"
                     //     | str ->  str
                     // AuthenticationHeaderValue("Bearer", apiKey)
-                    AuthenticationHeaderValue("Bearer", "pvAnqTGZHpreT9NImBOvIKHggidL7KRDXMjtPlZF")
+                    AuthenticationHeaderValue("Bearer", "CtxfvCP31MacEZMVh8th76TwH2IflQBoFN6viKrE")
 
             module CatalogProduct = 
                 open System.Threading.Tasks
@@ -60,9 +60,14 @@ module Api =
                 // Fetch products (paginated)
                 let fetchProducts (queryParams: Printful.CatalogProductRequest.CatalogProductsQuery) : Async<Printful.CatalogProduct.CatalogResponseDTO> = async {
                     let url = queryString queryParams
-                    let! response = printfulHttpClient.GetAsync(url) |> Async.AwaitTask
 
-                    response.EnsureSuccessStatusCode() |> ignore
+                    System.Console.WriteLine $"URL: {url}"
+
+                    let! response = printfulHttpClient.GetAsync("catalog-products" + url) |> Async.AwaitTask
+
+                    System.Console.WriteLine $"RESPONSE: {response}"
+
+                    // response.EnsureSuccessStatusCode() |> ignore
 
                     let! body = response.Content.ReadAsStringAsync() |> Async.AwaitTask
                     

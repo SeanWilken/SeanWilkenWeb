@@ -467,6 +467,7 @@ let sendMessage (_paypalOrderRef: string) : Cmd<Shared.SharedShop.ShopMsg> = Cmd
 
 let getAllProducts (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Shared.SharedShop.ShopMsg> =
     Console.WriteLine $"CALLED PRODUCTS"
+    // Cmd.ofMsg GetAllProducts
     Cmd.OfAsync.either
         ( fun x -> Client.Api.productsApi.getProducts x )
         request
@@ -570,6 +571,8 @@ let adjustLineItemQuantity (adj: QuantityAdjustment) (itemVariant: SyncProductVa
 
 let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.SharedShop.ShopMsg> =
     match msg with
+    | NavigateTo section ->
+        { model with section = section }, Cmd.none
 
     | UpdateCustomerForm fld ->
         updateCustomerField model fld, Cmd.none
@@ -665,7 +668,6 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
         model, sendMessage id
 
     | GetAllProducts -> 
-        Console.WriteLine $"GETTING ALL PRODUCTS"
         model, getAllProducts defaultProductsRequest
 
     | GotAllProducts productResult ->
@@ -781,8 +783,13 @@ let homeView (homeGifUrls: string list) dispatch =
                     Html.p [ prop.text "It would be dangerous to go alone...better grab a suitcase with some gear, some beer and call up the crew!!" ]
                     Html.button [
                         prop.className "btn btn-primary"
-                        prop.onClick (fun _ -> dispatch GetAllProducts)
-                        prop.text "TRY GETTING ALL PRODUCTS"
+                        prop.onClick (fun _ -> dispatch (ShopMsg.NavigateTo (ShopSection.Catalog "limited")))
+                        prop.text "LIMITED COLLECTION"
+                    ]
+                    Html.button [
+                        prop.className "btn btn-primary"
+                        prop.onClick (fun _ -> dispatch (ShopMsg.NavigateTo (ShopSection.Catalog "unlimited")))
+                        prop.text "UNLIMITED COLLECTION"
                     ]
                 ]
             ]
@@ -1448,18 +1455,19 @@ let collectionView dispatch =
 
 // View dispatcher: select page content based on Model.CurrentPage
 let view (model: Shared.SharedShop.Model) (dispatch: Shared.SharedShop.ShopMsg -> unit) =
+    React.useEffectOnce ( fun _ -> dispatch GetAllProducts )
     Html.div [
         match model.section with
         | ShopLanding ->
             homeView 
                 [   
-                    "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXhkdm5teWs4cHRrYW53bmZ5bnZxenV4eXFkM2s3dzdva2swcDFwbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2QXWNglhiBC4KI/giphy.gif"
-                    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsaXJvN2JrNzA2dHAxeTVtOWZxampyZDNtejdlczJlc2V3N3c2ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d2W70ynZhKMyWTMQ/giphy.gif"
-                    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGducmk3MmpzaHF6aGNlcncwbnY3MTBmaTE4MmlkbzJ2MXJqcWU0NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/4EEy1K5SgmYcxFGCII/giphy.gif"
-                    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExa2J5bXN0cmpzeXZhaTI0MzgxaXRqYXkwazl1cXJua3djMXM1NGdmMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yb4GOQLoRkTJFnaJam/giphy.gif"
-                    // "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODQwZWs2eTRnM2VxMDRqMGh4MXA2cHhrb3hvanQyZjI3NmdnMjM0eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/vwT1f00PU44QnUgY2l/giphy.gif"
                     "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3czeTFpdnYxczhiMWRqaGkxdHU4bHgybm51bWp2Znh2N2ZobnM5aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/HtfFneOxp0fx6nUvYn/giphy.gif"
-                    "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXA2ZnduMGV1dHJnZzBycG9nOXg1bm5tcG95NmFwMjA5ZDg4MGVraCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l46C82yRUnonqFM9q/giphy.gif"
+                    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsaXJvN2JrNzA2dHAxeTVtOWZxampyZDNtejdlczJlc2V3N3c2ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d2W70ynZhKMyWTMQ/giphy.gif"
+                    // "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXhkdm5teWs4cHRrYW53bmZ5bnZxenV4eXFkM2s3dzdva2swcDFwbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2QXWNglhiBC4KI/giphy.gif"
+                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGducmk3MmpzaHF6aGNlcncwbnY3MTBmaTE4MmlkbzJ2MXJqcWU0NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/4EEy1K5SgmYcxFGCII/giphy.gif"
+                    // "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExa2J5bXN0cmpzeXZhaTI0MzgxaXRqYXkwazl1cXJua3djMXM1NGdmMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yb4GOQLoRkTJFnaJam/giphy.gif"
+                    // "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODQwZWs2eTRnM2VxMDRqMGh4MXA2cHhrb3hvanQyZjI3NmdnMjM0eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/vwT1f00PU44QnUgY2l/giphy.gif"
+                    // "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXA2ZnduMGV1dHJnZzBycG9nOXg1bm5tcG95NmFwMjA5ZDg4MGVraCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l46C82yRUnonqFM9q/giphy.gif"
                     // "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXN0bzUzaTZ2bTRtN2d4NWdkaGp6NmZic3Q3NWY1cGludGpsM3B6aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kv5ek9HvmdqpOYiYxh/giphy.gif"
                     // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsZXNzNGg4NXRqOXgybTlhcGp4a3AzbTFmaTUwM3hzcTNtOGMzOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/C8OSeOz7PY6FzId1lQ/giphy.gif"
                     // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExODJ3a2FydHoydDQ2bDg4cHl1ZW45c3dudnJocTlremh1cm5jZHdiOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7ZezIWW1cKlqFpCM/giphy.gif"
