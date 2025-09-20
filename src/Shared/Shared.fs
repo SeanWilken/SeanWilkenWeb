@@ -1,24 +1,5 @@
 namespace Shared
 
-open System
-
-type Todo = { Id: Guid; Description: string }
-
-module Todo =
-    let isValid (description: string) =
-        String.IsNullOrWhiteSpace description |> not
-
-    let create (description: string) = {
-        Id = Guid.NewGuid()
-        Description = description
-    }
-
-type ITodosApi = {
-    getTodos: unit -> Async<Todo list>
-    addTodo: Todo -> Async<Todo list>
-}
-
-
 namespace Shared
 
 open System
@@ -951,346 +932,283 @@ module SharedWelcome =
     type Msg =
         | SwitchSection of SharedWebAppViewSections.AppView
 
-// module SharedServicesSection =
-
-    // type OfferedService =
-    //     | AIServices
-    //     | APIIntegrations
-    //     | AutomationServices
-    //     | WebDevelopment
-    //     | UIUXDesign
-        
-    // type Msg =
-    //     | ChangeServiceView of OfferedService
-
-    // type Model = {
-    //     CurrentService: OfferedService
-    // }
 
 module SharedShopDomain =
 
-
     /// Simplified type for displaying catalog products in your app
-    type CatalogProduct = {
-        id: int
-        name: string
-        thumbnailURL: string
-        description: string option
-        brand: string option
-        model: string option
-        variantCount: int
-        isDiscontinued: bool
-        sizes: string list
-        colors: {| Color : string; ColorCodeOpt : string option |} list
-    }
+    // type CatalogProduct = {
+    //     id: int
+    //     name: string
+    //     thumbnailURL: string
+    //     description: string option
+    //     brand: string option
+    //     model: string option
+    //     variantCount: int
+    //     isDiscontinued: bool
+    //     sizes: string list
+    //     colors: {| Color : string; ColorCodeOpt : string option |} list
+    // }
 
-    module BuildYourOwnProduct =    
-        type Step =
-            | SelectProduct
-            | SelectVariant
-            | SelectDesign
-            | ConfigurePlacement
-            | Review
-
-        type Model = {
-            products: CatalogProduct list
-            // total: int
-            // limit: int
-            // offset: int
-            // query: Printful.CatalogProductRequest.CatalogProductsQuery
-            currentStep: Step
-            selectedProduct: CatalogProduct option
-            selectedVariantSize: string option
-            selectedVariantColor: string option
-            selectedDesign: string option
-            placements: (string * string) list // placement, url
-        }
-
-        // type Msg =
-        //     | LoadProducts
-        //     | ProductsLoaded of CatalogProduct list * int
-        //     | SetPage of int
-        // | SetPage newOffset ->
-        //     { model with offset = newOffset; query = { model.query with offset = Some newOffset } },
-        //     Cmd.ofMsg LoadProducts
-
-        type Msg =
-            | Next
-            | Back
-            | ChooseProduct of CatalogProduct
-            // | ChooseProduct of string
-            | ChooseVariantSize of string
-            | ChooseVariantColor of string
-            | ChooseDesign of string
-            | TogglePlacement of string * string
-            | AddProductToBag of CatalogProduct
-
-        let initialState products = {
-            products = products
-            currentStep = SelectProduct
-            selectedProduct = None
-            selectedVariantSize = None
-            selectedVariantColor = None
-            selectedDesign = None
-            placements = []
-        }
     
-    type ProductColor =
-        | White
-        | Black
-        | Ash
-        | Asphalt
-        | Aqua
-        | CharcoalGray
-        | Gold
-        | Maroon
-        | Mustard
-        | Navy
-        | Red
-        | Silver
-        | AthleticHeather
-        | BlackHeather
-        | DarkGreyHeather
-        | DeepHeather
-        | HeatherDarkGray
-        | HeatherOlive
-        | HeatherBlue
-        | HeatherNavy
-        | DarkHeather
-        | HeatherRaspberry
-        | HeatherDust
-        | HeatherDeepTeal
-        | NoColor of string
+    
+    // type ProductColor =
+    //     | White
+    //     | Black
+    //     | Ash
+    //     | Asphalt
+    //     | Aqua
+    //     | CharcoalGray
+    //     | Gold
+    //     | Maroon
+    //     | Mustard
+    //     | Navy
+    //     | Red
+    //     | Silver
+    //     | AthleticHeather
+    //     | BlackHeather
+    //     | DarkGreyHeather
+    //     | DeepHeather
+    //     | HeatherDarkGray
+    //     | HeatherOlive
+    //     | HeatherBlue
+    //     | HeatherNavy
+    //     | DarkHeather
+    //     | HeatherRaspberry
+    //     | HeatherDust
+    //     | HeatherDeepTeal
+    //     | NoColor of string
 
-    type ProductSize =
-        | XS
-        | S
-        | XS_S
-        | M
-        | L
-        | M_L
-        | XL
-        | XXL
-        | XXXL
-        | XXXXL
-        | OSFA
-        | NoSize of string
+    // type ProductSize =
+    //     | XS
+    //     | S
+    //     | XS_S
+    //     | M
+    //     | L
+    //     | M_L
+    //     | XL
+    //     | XXL
+    //     | XXXL
+    //     | XXXXL
+    //     | OSFA
+    //     | NoSize of string
 
-    type ProductOption =
-        | ProductSize
-        | ProductColor
+    // type ProductOption =
+    //     | ProductSize
+    //     | ProductColor
 
-    type CollectionTag =
-        | Limited
-        | Unlimited
+    // type CollectionTag =
+    //     | Limited
+    //     | Unlimited
 
-        member x.toString() =
-            match x with
-            | Limited -> "Limited"
-            | Unlimited -> "Unlimited"
+    //     member x.toString() =
+    //         match x with
+    //         | Limited -> "Limited"
+    //         | Unlimited -> "Unlimited"
 
-    type ProductClass =
-        | TShirts
-        | LongSleeves
-        | Sweaters
-        | Hoodies
-        | Hats
-        | NoClass
-
-
-    type PlacementDimension = {
-        placement: string
-        height: float
-        width: float
-        orientation: string
-    }
-
-    type HateoasLink = {
-        href : string
-    }
-
-    type VariantLinks = {
-        self: HateoasLink
-        productVariants: HateoasLink
-        productDetails: HateoasLink
-        variantPrices: HateoasLink
-        variantImages: HateoasLink
-    }
-
-    type ProductVariant = {
-        name: string
-        id: int
-        price: string
-    }
-
-    type CatalogVariant = {
-        id: int
-        productId: int
-        name: string
-        size: string
-        color: string option
-        imageUrl: string
-        placements: PlacementDimension array
-        links: VariantLinks
-    }
-
-    type StateCode =
-        | NY
-        | CA
-        | FL
-        | TX
-        | NO_STATE
-
-    type CountryCode =
-        | US
-        | MEX
-        | CAN
-        | NO_COUNTRY
-
-    type CustomerAddress = {
-        firstName: string
-        lastName: string
-        streetAddress: string
-        city: string
-        stateCode: StateCode
-        countryCode: CountryCode
-        zipCode: int
-    }
-
-    type OrderType =
-        | Order
-        | Draft
-
-    type Customer = {
-        firstName: string
-        lastName: string
-        userName: string
-        password: string
-        savedShippingAddress: CustomerAddress option
-        orders: (OrderType * int) list
-    }
-
-    type CustomerSignUpForm = {
-        firstName: string
-        lastName: string
-        userName: string
-        password: string
-        confirmPassword: string
-    }
-
-    let defaultCustomerSignUpForm = {
-        firstName = ""
-        lastName = ""
-        userName = ""
-        password = ""
-        confirmPassword = ""
-    }
-
-    type CustomerAddressForm = {
-        firstName: string
-        lastName: string
-        streetAddress: string
-        city: string
-        stateCode: string
-        countryCode: string
-        zipCode: string
-    }
-
-    let defaultCustomerAddressForm = {
-        firstName = ""
-        lastName = ""
-        streetAddress = ""
-        city = ""
-        stateCode = ""
-        countryCode = ""
-        zipCode = ""
-    }
-
-    type RequestResponse =
-        | SuccessfulRequest of string
-        | FailedRequest of string
-
-    type SignUpRequestResponse =
-        | SignUpSuccess of Customer
-        | SignUpFailed of RequestResponse list
-
-    type UserSignUpFormField =
-        | FirstNameField of string
-        | LastNameField of string
-        | UserNameField of string
-        | PasswordField of string
-        | ConfirmPasswordField of string
-
-    type CustomerAddressFormField =
-        | ShippingFirstNameField of string
-        | ShippingLastNameField of string
-        | ShippingStreetAddressField of string
-        | ShippingCityField of string
-        | ShippingStateCodeField of string
-        | ShippingCountryCodeField of string
-        | ShippingZipCodeField of string
-
-    type OrderItem = {
-        externalVariantId : string
-        itemQuantity : int
-        itemRetailPrice : string
-    }
-
-    type OrderCosts = {
-        orderSubTotal : string
-        orderShipping : string
-        orderTaxRate : string
-        orderTax : string
-        orderTotal : string
-    }
-
-    type CustomerDraftOrder = {
-        recipient : CustomerAddressForm
-        orderItems : OrderItem list
-        orderCosts : OrderCosts
-    }
+    // type ProductClass =
+    //     | TShirts
+    //     | LongSleeves
+    //     | Sweaters
+    //     | Hoodies
+    //     | Hats
+    //     | NoClass
 
 
-    type SyncProductVariant = {
-        externalSyncVariantId : string
-        variantName : string
-        variantSize : ProductSize
-        variantColor : ProductColor
-        variantPrice : float
-        variantHeroImagePath : string
-        variantAltImagePaths : string list
-    }
+    // type PlacementDimension = {
+    //     placement: string
+    //     height: float
+    //     width: float
+    //     orientation: string
+    // }
 
-    type SyncProduct = {
-        name : string
-        collectionTag : CollectionTag
-        syncProductId : int
-        syncProductHeroImagePath : string
-        syncProductAltImagePaths : string list
-        productVariations : SyncProductVariant list
-    }
+    // type HateoasLink = {
+    //     href : string
+    // }
 
-    type ProductCollection = {
-        collectionName : string
-        collectionTag : CollectionTag
-        products : SyncProduct list
-    }
+    // type VariantLinks = {
+    //     self: HateoasLink
+    //     productVariants: HateoasLink
+    //     productDetails: HateoasLink
+    //     variantPrices: HateoasLink
+    //     variantImages: HateoasLink
+    // }
 
-    type SyncVariationLookup =
-        | Successful of SyncProductVariant
-        | Failed of string
+    // type ProductVariant = {
+    //     name: string
+    //     id: int
+    //     price: string
+    // }
 
-    type ShopSection =
-        | ShopLanding
-        | Storefront
-        | Catalog of string
-        | Product of string * int
-        | ShoppingBag
-        | Checkout
-        | Payment
-        | Social
-        | Contact
-        | NotFound
+    // type CatalogVariant = {
+    //     id: int
+    //     productId: int
+    //     name: string
+    //     size: string
+    //     color: string option
+    //     imageUrl: string
+    //     placements: PlacementDimension array
+    //     links: VariantLinks
+    // }
+
+    // type StateCode =
+    //     | NY
+    //     | CA
+    //     | FL
+    //     | TX
+    //     | NO_STATE
+
+    // type CountryCode =
+    //     | US
+    //     | MEX
+    //     | CAN
+    //     | NO_COUNTRY
+
+    // type CustomerAddress = {
+    //     firstName: string
+    //     lastName: string
+    //     streetAddress: string
+    //     city: string
+    //     stateCode: StateCode
+    //     countryCode: CountryCode
+    //     zipCode: int
+    // }
+
+    // type OrderType =
+    //     | Order
+    //     | Draft
+
+    // type Customer = {
+    //     firstName: string
+    //     lastName: string
+    //     userName: string
+    //     password: string
+    //     savedShippingAddress: CustomerAddress option
+    //     orders: (OrderType * int) list
+    // }
+
+    // type CustomerSignUpForm = {
+    //     firstName: string
+    //     lastName: string
+    //     userName: string
+    //     password: string
+    //     confirmPassword: string
+    // }
+
+    // let defaultCustomerSignUpForm = {
+    //     firstName = ""
+    //     lastName = ""
+    //     userName = ""
+    //     password = ""
+    //     confirmPassword = ""
+    // }
+
+    // type CustomerAddressForm = {
+    //     firstName: string
+    //     lastName: string
+    //     streetAddress: string
+    //     city: string
+    //     stateCode: string
+    //     countryCode: string
+    //     zipCode: string
+    // }
+
+    // let defaultCustomerAddressForm = {
+    //     firstName = ""
+    //     lastName = ""
+    //     streetAddress = ""
+    //     city = ""
+    //     stateCode = ""
+    //     countryCode = ""
+    //     zipCode = ""
+    // }
+
+    // type RequestResponse =
+    //     | SuccessfulRequest of string
+    //     | FailedRequest of string
+
+    // type SignUpRequestResponse =
+    //     | SignUpSuccess of Customer
+    //     | SignUpFailed of RequestResponse list
+
+    // type UserSignUpFormField =
+    //     | FirstNameField of string
+    //     | LastNameField of string
+    //     | UserNameField of string
+    //     | PasswordField of string
+    //     | ConfirmPasswordField of string
+
+    // type CustomerAddressFormField =
+    //     | ShippingFirstNameField of string
+    //     | ShippingLastNameField of string
+    //     | ShippingStreetAddressField of string
+    //     | ShippingCityField of string
+    //     | ShippingStateCodeField of string
+    //     | ShippingCountryCodeField of string
+    //     | ShippingZipCodeField of string
+
+    // type OrderItem = {
+    //     externalVariantId : string
+    //     itemQuantity : int
+    //     itemRetailPrice : string
+    // }
+
+    // type OrderCosts = {
+    //     orderSubTotal : string
+    //     orderShipping : string
+    //     orderTaxRate : string
+    //     orderTax : string
+    //     orderTotal : string
+    // }
+
+    // type CustomerDraftOrder = {
+    //     recipient : CustomerAddressForm
+    //     orderItems : OrderItem list
+    //     orderCosts : OrderCosts
+    // }
+
+
+    // type SyncProductVariant = {
+    //     externalSyncVariantId : string
+    //     variantName : string
+    //     variantSize : ProductSize
+    //     variantColor : ProductColor
+    //     variantPrice : float
+    //     variantHeroImagePath : string
+    //     variantAltImagePaths : string list
+    // }
+
+    // type SyncProduct = {
+    //     name : string
+    //     collectionTag : CollectionTag
+    //     syncProductId : int
+    //     syncProductHeroImagePath : string
+    //     syncProductAltImagePaths : string list
+    //     productVariations : SyncProductVariant list
+    // }
+
+    // type ProductCollection = {
+    //     collectionName : string
+    //     collectionTag : CollectionTag
+    //     products : SyncProduct list
+    // }
+
+    // type SyncVariationLookup =
+    //     | Successful of SyncProductVariant
+    //     | Failed of string
+
+    // type ShopSection =
+    //     | ShopLanding
+    //     | Storefront
+    //     | ProductTemplates
+    //     | Customize
+    //     | Catalog of string
+    //     | Product of string * int
+    //     | ShoppingBag
+    //     | Checkout
+    //     | Payment
+    //     | Social
+    //     | Contact
+    //     | NotFound
 
         
     type QuantityAdjustment =
@@ -1308,132 +1226,240 @@ module SharedShopDomain =
 
     type HttpError = string
 
-
-module Api =
-    open System.Threading.Tasks
-
-    type TaxAddress = {
-        Country : string
-        State   : string
-        City    : string
-        Zip     : string
+module PrintfulCommon =
+    /// Paging information
+    type PagingInfoDTO = {
+        total: int
+        offset: int
+        limit: int
     }
 
-    type ShippingRequest = {
-        Address : TaxAddress
-        Items   : string list
+    let emptyPaging = {
+        total = 0
+        offset = 0
+        limit = 0
     }
 
-    type Product = {
-        Id : string
-        Name : string
-        Price : decimal
+    /// Navigation links (HATEOAS from Printful)
+    type LinksDTO = {
+        self: string
+        next: string option
+        first: string option
+        last: string option
     }
 
-    module Printful =
+    type HateoasLink = {
+        href : string
+    }
 
-        module CatalogProductRequest = 
+// Refactor Shop Types
+module SharedShopV2 =
 
-            type CatalogProductsQuery = {
-                category_ids: int list option
-                colors: string list option
-                limit: int option
-                newOnly: bool option
-                offset: int option
-                placements: string list option
-                selling_region_name: string option
-                sort_direction: string option
-                sort_type: string option
-                techniques: string list option
-                destination_country: string option
+    module PrintfulCatalog =
+        /// Simplified type for displaying catalog products in your app
+        type CatalogProduct = {
+            id: int
+            name: string
+            thumbnailURL: string
+            description: string option
+            brand: string option
+            model: string option
+            variantCount: int
+            isDiscontinued: bool
+            sizes: string list
+            colors: {| Color : string; ColorCodeOpt : string option |} list
+        }
+
+    module ProductTemplate =
+
+        // Fable-safe DTOs only
+        type OptionData = {
+            id    : string
+            value : string array
+        }
+
+        type Color = {
+            color_name  : string
+            color_codes : string array
+        }
+
+        type PlacementOption = {
+            placement               : string
+            display_name            : string
+            technique_key           : string
+            technique_display_name  : string
+            options                 : string array
+        }
+
+        type PlacementOptionData = {
+            ``type`` : string
+            options  : string array
+        }
+
+        type ProductTemplate = {
+            id                    : int
+            product_id            : int
+            external_product_id   : string option
+            title                 : string
+            available_variant_ids : int array
+            option_data           : OptionData array
+            colors                : Color array
+            sizes                 : string array
+            mockup_file_url       : string
+            placements            : PlacementOption array
+            created_at            : int64
+            updated_at            : int64
+            placement_option_data : PlacementOptionData array
+            design_id             : string option
+        }
+
+        type ProductTemplatePaging = {
+            total  : int
+            limit  : int
+            offset : int
+        }
+
+        type ProductTemplateResponse = {
+            code   : int
+            result : ProductTemplate list
+            extra  : string array
+            paging : PrintfulCommon.PagingInfoDTO
+        }
+
+
+        module ProductTemplateBrowser =
+
+            type Filters = {
+                Categories: int list
+                Colors: string list
+                Sizes: string list
+                Placements: string list
+                Techniques: string list
+                OnlyNew: bool
+                SellingRegion: string option
+                DestinationCountry: string option
+                SortDirection: string option
+                SortType: string option
             }
 
-        module Common =
-             /// Paging information
-            type PagingInfoDTO = {
-                total: int
-                offset: int
-                limit: int
-            }
-
-            /// Navigation links (HATEOAS from Printful)
-            type LinksDTO = {
-                self: string
-                next: string option
-                first: string option
-                last: string option
-            }
-
-        module ProductTemplate =
-
-            // Fable-safe DTOs only
-            type OptionData = {
-                id    : string
-                value : string array
-            }
-
-            type Color = {
-                color_name  : string
-                color_codes : string array
-            }
-
-            type PlacementOption = {
-                placement               : string
-                display_name            : string
-                technique_key           : string
-                technique_display_name  : string
-                options                 : string array
-            }
-
-            type PlacementOptionData = {
-                ``type`` : string
-                options  : string array
-            }
-
-            type ProductTemplate = {
-                id                    : int
-                product_id            : int
-                external_product_id   : string option
-                title                 : string
-                available_variant_ids : int array
-                option_data           : OptionData array
-                colors                : Color array
-                sizes                 : string array
-                mockup_file_url       : string
-                placements            : PlacementOption array
-                created_at            : int64
-                updated_at            : int64
-                placement_option_data : PlacementOptionData array
-                design_id             : string option
-            }
-
-            type ProductTemplatePaging = {
-                total  : int
-                limit  : int
-                offset : int
-            }
-
-            type ProductTemplateResult = {
-                items : ProductTemplate array
-            }
-
-            type ProductTemplateResponse = {
-                code   : int
-                result : ProductTemplateResult
-                extra  : string array
-                paging : Common.PagingInfoDTO
-            }
-
-            type ProductTemplateCatalog = {
-                result : ProductTemplateResult
-                paging : Common.PagingInfoDTO
+            let defaultFilters = {
+                Categories = []
+                Colors = []
+                Sizes = []
+                Placements = []
+                Techniques = []
+                OnlyNew = false
+                SellingRegion = None
+                DestinationCountry = None
+                SortDirection = None
+                SortType = None
             }
 
 
+            type Model = {
+                Filters: Filters
+                Paging: PrintfulCommon.PagingInfoDTO
+                Templates: ProductTemplate list
+                SelectedTemplate: ProductTemplate option
+                IsLoading: bool
+                Error: string option
+            }
+
+            let initialModel () = {
+                Filters = defaultFilters
+                Paging = PrintfulCommon.emptyPaging
+                Templates = []
+                SelectedTemplate = None
+                IsLoading = false
+                Error = None
+            }
+
+    module BuildYourOwnProductWizard =
+
+        type Step =
+            | SelectProduct
+            | SelectVariant
+            | SelectDesign
+            | ConfigurePlacement
+            | Review
+
+        type CatalogProductsFilters = {
+            SelectedCategories: int list
+            SelectedColors: string list
+            SelectedPlacements: string list
+            SelectedTechniques: string list
+            OnlyNew: bool
+            SellingRegion: string option
+            DestinationCountry: string option
+            SortDirection: string option
+            SortType: string option
+        }
+
+        let defaultCatalogProductsFilters = {
+            SelectedCategories = []
+            SelectedColors = []
+            SelectedPlacements = []
+            SelectedTechniques = []
+            OnlyNew = false
+            SellingRegion = None
+            DestinationCountry = None
+            SortDirection = None
+            SortType = None
+        }
+
+        type Model = {
+            products: PrintfulCatalog.CatalogProduct list
+            paging: PrintfulCommon.PagingInfoDTO
+            query: CatalogProductsFilters
+            currentStep: Step
+            selectedProduct: PrintfulCatalog.CatalogProduct option
+            selectedVariantSize: string option
+            selectedVariantColor: string option
+            selectedDesign: string option
+            placements: (string * string) list // placement, url
+        }
+
+
+        // ADD DEFERRED!!!!
+        let initialState () = {
+            products = []
+            paging = PrintfulCommon.emptyPaging
+            query = defaultCatalogProductsFilters
+            currentStep = SelectProduct
+            selectedProduct = None
+            selectedVariantSize = None
+            selectedVariantColor = None
+            selectedDesign = None
+            placements = []
+        }
+
+
+    type ShopSection =
+        | ShopLanding // this is is a welcome page
+        | ShopTypeSelector // this is landing page, for selecting either of the two workflows
+        | ProductTemplateBrowser of ProductTemplate.ProductTemplateBrowser.Model // product template browser, not yet created
+        | BuildYourOwnWizard of BuildYourOwnProductWizard.Model // build your own, should be able to control whether or not we allow the user to upload their own images.
+        | ShoppingBag
+        | Checkout
+        | Payment
+        | Social
+        | Contact
+        | NotFound
+
+module SharedShopV2Domain =
+
+    module ProductTemplateResponse =
+        type ProductTemplatesResponse = {
+            templateItems : SharedShopV2.ProductTemplate.ProductTemplate list
+            paging : PrintfulCommon.PagingInfoDTO
+        }
+
+    module CatalogProductResponse =
+        
         module CatalogProduct =
 
             open SharedShopDomain
-            open Common
+            open PrintfulCommon
 
             type ProductLinks = {
                 self  : HateoasLink
@@ -1483,179 +1509,153 @@ module Api =
                 _links          : ProductLinks
             }
 
-            type Paging = {
-                total  : int
-                offset : int
-                limit  : int
-            }
-
             type PrintfulCatalogProductResponse = {
                 data   : PrintfulProduct array
-                paging : Paging
+                paging : PrintfulCommon.PagingInfoDTO
                 _links : ProductLinks
             }
-            let mapPrintfulProduct (p: PrintfulProduct) : SharedShopDomain.CatalogProduct =
-                System.Console.WriteLine($"Mapping product: {p.name} with id {p.id}")
-                p.colors |> Array.iter (fun (c: Color) -> 
-                    System.Console.WriteLine $"COLOR: {c.name} with code {c.value}"
-                )
 
-                
-                { 
-                    id = p.id
-                    name = p.name
-                    thumbnailURL = p.image
-                    description = Some p.description
-                    brand = p.brand
-                    model = p.model
-                    variantCount = p.variant_count
-                    isDiscontinued = p.is_discontinued
-                    sizes = p.sizes |> List.ofArray
-                    colors = p.colors |> Array.map (fun c -> {| Color = c.name; ColorCodeOpt = c.value |} ) |> Array.toList
-                }
+        let mapPrintfulProduct (p: CatalogProduct.PrintfulProduct) : SharedShopV2.PrintfulCatalog.CatalogProduct =
+            System.Console.WriteLine($"Mapping product: {p.name} with id {p.id}")
+            p.colors |> Array.iter (fun (c: CatalogProduct.Color) -> 
+                System.Console.WriteLine $"COLOR: {c.name} with code {c.value}"
+            )
 
-            type StorefrontProduct = {
-                    id: int
-                    external_id: string
-                    name: string
-                    variants: int
-                    synced: int
-                    thumbnail_url: string
-                    is_ignored: bool
-                }
-            
-            type PrintfulStoreProductResponse = {
-                code    : int
-                result  : StorefrontProduct array
-                paging : Paging
-                extra : obj array
+            { 
+                id = p.id
+                name = p.name
+                thumbnailURL = p.image
+                description = Some p.description
+                brand = p.brand
+                model = p.model
+                variantCount = p.variant_count
+                isDiscontinued = p.is_discontinued
+                sizes = p.sizes |> List.ofArray
+                colors = p.colors |> Array.map (fun c -> {| Color = c.name; ColorCodeOpt = c.value |} ) |> Array.toList
             }
 
-            let mapPrintfulStoreProduct (p: StorefrontProduct) : SharedShopDomain.CatalogProduct =
-                { 
-                    id = p.id
-                    name = p.name
-                    thumbnailURL = p.thumbnail_url
-                    description = None //Some p.description
-                    brand = None // p.brand
-                    model = None // p.model
-                    variantCount = p.variants
-                    isDiscontinued = p.is_ignored
-                    sizes = [] // p.sizes |> List.ofArray
-                    colors = [] // p.colors |> Array.map (fun c -> c.name) |> List.ofArray
-                }
+        
+        /// API response shaped for the client
+        type CatalogProductsResponse = {
+            products: SharedShopV2.PrintfulCatalog.CatalogProduct list
+            paging: PrintfulCommon.PagingInfoDTO
+            links: PrintfulCommon.LinksDTO
+        }
 
-            // type PrintfulStoreProductResponseDto = {
-            //     products  : SharedShopDomain.CatalogProduct array
-            //     paging : Paging
-            // }
-
-            ///// ACTUALLY GO OVER THE WIRE
-           
-            /// API response shaped for the client
-            type CatalogResponseDTO = {
-                products: SharedShopDomain.CatalogProduct list
-                paging: PagingInfoDTO
-                links: LinksDTO
+        let mapPrintfulResponse (r: CatalogProduct.PrintfulCatalogProductResponse) : CatalogProductsResponse =
+            { 
+                products = 
+                    r.data
+                    |> Array.map mapPrintfulProduct
+                    |> List.ofArray
+                paging = r.paging
+                links =
+                    { 
+                        self = r._links.self.href
+                        next = r._links.next |> Option.map (fun l -> l.href)
+                        first = r._links.first |> Option.map (fun l -> l.href)
+                        last = r._links.last |> Option.map (fun l -> l.href)
+                    } 
             }
 
-            let mapPrintfulResponse (r: PrintfulCatalogProductResponse) : CatalogResponseDTO =
-                { 
-                    products = 
-                        r.data
-                        |> Array.map mapPrintfulProduct
-                        |> List.ofArray
-                    paging =
-                        { 
-                            total = r.paging.total
-                            offset = r.paging.offset
-                            limit = r.paging.limit
-                        }
-                    links =
-                        { 
-                            self = r._links.self.href
-                            next = r._links.next |> Option.map (fun l -> l.href)
-                            first = r._links.first |> Option.map (fun l -> l.href)
-                            last = r._links.last |> Option.map (fun l -> l.href)
-                        } 
-                }
+    type ShopLandingMsg =
+        | SwitchSection of SharedShopV2.ShopSection
 
-            let mapPrintfulStoreResponse (r: PrintfulStoreProductResponse) : CatalogResponseDTO =
-                { 
-                    products = 
-                        r.result
-                        |> Array.map mapPrintfulStoreProduct
-                        |> List.ofArray
-                    paging =
-                        { 
-                            total = r.paging.total
-                            offset = r.paging.offset
-                            limit = r.paging.limit
-                        }
-                    links =
-                        { 
-                            self = "" // r._links.self.href
-                            next = None // r._links.next |> Option.map (fun l -> l.href)
-                            first = None // r._links.first |> Option.map (fun l -> l.href)
-                            last = None // r._links.last |> Option.map (fun l -> l.href)
-                        } 
-                }
+    type ShopTypeSelectorMsg =
+        | SwitchSection of SharedShopV2.ShopSection
 
-        module ProductVariant =
-            
-            open SharedShopDomain
-            open Common
+    // extend to have invalid state impossible
+    type ShopBuildYourOwnProductWizardMsg =
+        | SwitchSection of SharedShopV2.ShopSection
+        | Next
+        | Back
+        | ChooseProduct of SharedShopV2.PrintfulCatalog.CatalogProduct
+        // | ChooseProduct of string
+        | ChooseVariantSize of string
+        | ChooseVariantColor of string
+        | ChooseDesign of string
+        | TogglePlacement of string * string
+        | GetAllProducts
+        | GotAllProducts of CatalogProductResponse.CatalogProductsResponse
+        | FailedAllProducts of exn
+        | AddProductToBag of SharedShopV2.PrintfulCatalog.CatalogProduct
 
-            type PrintfulVariant = {
-                id: int
-                catalog_product_id: int
-                name: string
-                size: string
-                color: string option
-                color_code: string option
-                color_code2: string option
-                placement_dimensions: PlacementDimension array
-                image: string
-                _links: VariantLinks
+    // extend to have invalid state impossible
+    type ShopProductTemplatesMsg =
+        | SwitchSection of SharedShopV2.ShopSection
+        | Next
+        | Back
+        | ViewProductTemplate of SharedShopV2.ProductTemplate.ProductTemplate
+        | ChooseVariantSize of string
+        | ChooseVariantColor of string
+        | GetProductTemplates
+        | GotProductTemplates of ProductTemplateResponse.ProductTemplatesResponse
+        | FailedProductTemplates of exn
+        | AddProductToBag of SharedShopV2.ProductTemplate.ProductTemplate
+
+module Api =
+
+    open System.Threading.Tasks
+
+    type TaxAddress = {
+        Country : string
+        State   : string
+        City    : string
+        Zip     : string
+    }
+
+    type ShippingRequest = {
+        Address : TaxAddress
+        Items   : string list
+    }
+
+    type Product = {
+        Id : string
+        Name : string
+        Price : decimal
+    }
+
+    module Printful =
+
+        module CatalogProductRequest =
+
+            type CatalogProductsQuery = {
+                category_ids: int list option
+                colors: string list option
+                limit: int option
+                newOnly: bool option
+                offset: int option
+                placements: string list option
+                selling_region_name: string option
+                sort_direction: string option
+                sort_type: string option
+                techniques: string list option
+                destination_country: string option
             }
 
-            type VariantLinks = {
-                self: HateoasLink
-                productVariants: HateoasLink
-                productDetails: HateoasLink
-                variantPrices: HateoasLink
-                variantImages: HateoasLink
-            }
-
-            let mapVariant (v: PrintfulVariant) : SharedShopDomain.CatalogVariant =
+            let toApiQuery (paging: PrintfulCommon.PagingInfoDTO) (stateFilters: SharedShopV2.BuildYourOwnProductWizard.CatalogProductsFilters) : CatalogProductsQuery =
                 {
-                    id = v.id
-                    productId = v.catalog_product_id
-                    name = v.name
-                    size = v.size
-                    color = v.color
-                    imageUrl = v.image
-                    placements = v.placement_dimensions
-                    links = v._links
+                    category_ids = if stateFilters.SelectedCategories |> List.isEmpty then None else Some stateFilters.SelectedCategories
+                    colors = if stateFilters.SelectedColors |> List.isEmpty then None else Some stateFilters.SelectedColors
+                    limit = Some paging.limit
+                    offset = Some paging.offset
+                    newOnly = Some stateFilters.OnlyNew
+                    placements = if stateFilters.SelectedPlacements |> List.isEmpty then None else Some stateFilters.SelectedPlacements
+                    selling_region_name = stateFilters.SellingRegion
+                    sort_direction = stateFilters.SortDirection
+                    sort_type = stateFilters.SortType
+                    techniques = if stateFilters.SelectedTechniques |> List.isEmpty then None else Some stateFilters.SelectedTechniques
+                    destination_country = stateFilters.DestinationCountry
                 }
-
-            type PrintfulVariantsResponse = {
-                data: PrintfulVariant array
-                paging: PagingInfoDTO
-                _links: LinksDTO
-            }
-
-            let mapVariants (resp: PrintfulVariantsResponse) : CatalogVariant list =
-                resp.data
-                |> Array.map mapVariant
-                |> Array.toList
 
     type ProductApi = {
         getProducts : 
-            Printful.CatalogProductRequest.CatalogProductsQuery -> Async<Printful.CatalogProduct.CatalogResponseDTO>
+            Printful.CatalogProductRequest.CatalogProductsQuery -> 
+                Async<SharedShopV2Domain.CatalogProductResponse.CatalogProductsResponse>
         getProductTemplates : 
-            Printful.CatalogProductRequest.CatalogProductsQuery -> Async<Printful.ProductTemplate.ProductTemplateCatalog>
-        getProductVariants : int -> Async<SharedShopDomain.CatalogVariant list>
+            Printful.CatalogProductRequest.CatalogProductsQuery -> 
+                Async<SharedShopV2Domain.ProductTemplateResponse.ProductTemplatesResponse>
+        // getProductVariants : int -> Async<SharedShopDomain.CatalogVariant list>
     }
 
     type PaymentApi = {
@@ -1668,91 +1668,112 @@ module Api =
 module SharedShop =
     open SharedShopDomain
 
-    type ShopMsg =
-        | NavigateTo of ShopSection
-        | UpdateCustomerForm of UserSignUpFormField
-        | UpdateAddressForm of CustomerAddressFormField
-        | CheckUserSignUpForm
-        | CheckAddressForm
-        | UpdateProductColor of SyncProduct * ProductColor
-        | UpdateProductSize of SyncProduct * ProductSize
-        | AddVariantToShoppingBag of SyncProductVariant
-        | DeleteVariantFromShoppingBag of SyncProductVariant
-        | AdjustLineItemQuantity of QuantityAdjustment * SyncProductVariant
-        // Testing
-        | TestApiTaxRate
-        | TestApiShippingRate
-        | Send // apparently testing paypal
-        | GotResult of Result<string, HttpError>
-        | TestApiCustomerDraft of CustomerDraftOrder
-        | GotCustomerOrderDraftResult of Result<DraftResult, HttpError>
-        // Tax
-        | GetTaxRateResult of CustomerAddress
-        | GotTaxRateResult of CheckoutTax
-        | FailedTaxRateResult of exn
-        // Shipping Rates
-        | GetShippingRateResult of Result<CheckoutShippingRate list, HttpError>
-        | GotShippingRateResult of CheckoutShippingRate list
-        | FailedShippingRateResult of exn
-        // Product Templates
-        | GetProductTemplates
-        | GotProductTemplates of Api.Printful.ProductTemplate.ProductTemplateCatalog
-        | FailedProductTemplates of exn
-        // Product Catalog
-        | GetAllProducts
-        | GotAllProducts of Api.Printful.CatalogProduct.CatalogResponseDTO
-        | FailedAllProducts of exn
-        // Product Variants
-        | GetProductVariants of int
-        | GotProductVariants of SharedShopDomain.CatalogVariant list
-        | FailedProductVariants of exn
+    type CartItem =
+        | Template of SharedShopV2.ProductTemplate.ProductTemplate * qty:int
+        // below is awful
+        | Custom of SharedShopV2.BuildYourOwnProductWizard.Model * qty:int
 
-        // Build Your Own
-        | BuildYourOwnProductMsg of BuildYourOwnProduct.Msg
-        | RemoveProductFromBag of int
+
+    type ShopMsg =
+        | NavigateTo of SharedShopV2.ShopSection
+        | ShopLanding of SharedShopV2Domain.ShopLandingMsg
+        | ShopTypeSelection of SharedShopV2Domain.ShopTypeSelectorMsg
+        | ShopBuildYourOwnWizard of SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg
+        | ShopStoreProductTemplates of SharedShopV2Domain.ShopProductTemplatesMsg
+        // | ShoppingBagMsg of ShoppingBag.Msg
+        // | CheckoutMsg of Checkout.Msg
+        // | PaymentMsg of Payment.Msg
+        // | ApiFailed of exn
+        // | UpdateCustomerForm of UserSignUpFormField
+        // | UpdateAddressForm of CustomerAddressFormField
+        // | CheckUserSignUpForm
+        // | CheckAddressForm
+        // | UpdateProductColor of SyncProduct * ProductColor
+        // | UpdateProductSize of SyncProduct * ProductSize
+        // | AddVariantToShoppingBag of SyncProductVariant
+        // | DeleteVariantFromShoppingBag of SyncProductVariant
+        // | AdjustLineItemQuantity of QuantityAdjustment * SyncProductVariant
+        // Testing
+        // | TestApiTaxRate
+        // | TestApiShippingRate
+        // | Send // apparently testing paypal
+        // | GotResult of Result<string, HttpError>
+        // | TestApiCustomerDraft of CustomerDraftOrder
+        // | GotCustomerOrderDraftResult of Result<DraftResult, HttpError>
+        // Tax
+        // | GetTaxRateResult of CustomerAddress
+        // | GotTaxRateResult of CheckoutTax
+        // | FailedTaxRateResult of exn
+        // Shipping Rates
+        // | GetShippingRateResult of Result<CheckoutShippingRate list, HttpError>
+        // | GotShippingRateResult of CheckoutShippingRate list
+        // | FailedShippingRateResult of exn
+        // Product Variants
+        // | GetProductVariants of int
+        // | GotProductVariants of SharedShopDomain.CatalogVariant list
+        // | FailedProductVariants of exn
+        // | RemoveProductFromBag of int
+
+    // I don't like this model, and I need to unify the overall types to be able to submit a printful order 
+    // at the end based on the items configured in either workflow.
+    // type Model = {
+    //     section: SharedShopV2.ShopSection
+    //     // customer : Customer option
+    //     // productVariationOptionsSelected : ( ProductColor option * ProductSize option )
+    //     validSyncVariantId : String option
+    //     // -- make this paypal order reference, only set by return of the GotDraftResults, if there is a value, can render the JS Paypal button
+    //     payPalOrderReference :  String option 
+    //     // shoppingBag : List<CatalogProduct * int>
+    //     // shoppingBag : List<SyncProductVariant * int>
+    //     // -- ( Variant Line Item, Qty )
+    //     checkoutTaxShipping : float option * float option 
+    //     // -- Tax, Shipping 
+    //     //    HOME PAGE
+    //     homeGif : String
+    //     //    SIGN UP
+    //     // customerSignUpForm : CustomerSignUpForm 
+    //     // customerAddressForm : CustomerAddressForm 
+    //     // validationResults : List<RequestResponse>
+    //     allProducts : SharedShopV2.PrintfulCatalog.CatalogProduct list option
+    //     // productVariants : List<CatalogVariant> option
+    //     productTemplates : SharedShopV2.ProductTemplate.ProductTemplate list
+    //     productTemplate : SharedShopV2.ProductTemplate.ProductTemplateBrowser.Model option
+    //     buildYourOwn: SharedShopV2.BuildYourOwnProductWizard.Model option
+    // }
+    // let getInitialModel shopSection = {
+    //     section = shopSection
+    //     // customer = None
+    //     // productVariationOptionsSelected = (None, None)
+    //     validSyncVariantId = None
+    //     payPalOrderReference = None
+    //     // shoppingBag = []
+    //     checkoutTaxShipping = (None, None)
+    //     homeGif = ""
+    //     // customerSignUpForm = defaultCustomerSignUpForm
+    //     // customerAddressForm = defaultCustomerAddressForm
+    //     // validationResults = []
+    //     allProducts = None
+    //     // productVariants = None
+    //     productTemplates = []
+    //     productTemplate = None
+    //     buildYourOwn = None
+    // }
 
     type Model = {
-        section: ShopSection
-        customer : Customer option
-        productVariationOptionsSelected : ( ProductColor option * ProductSize option )
-        validSyncVariantId : String option
-        // -- make this paypal order reference, only set by return of the GotDraftResults, if there is a value, can render the JS Paypal button
-        payPalOrderReference :  String option 
-        shoppingBag : List<CatalogProduct * int>
-        // shoppingBag : List<SyncProductVariant * int>
-        // -- ( Variant Line Item, Qty )
-        checkoutTaxShipping : float option * float option 
-        // -- Tax, Shipping 
-        //    HOME PAGE
-        homeGif : String
-        //    SIGN UP
-        customerSignUpForm : CustomerSignUpForm 
-        customerAddressForm : CustomerAddressForm 
-        validationResults : List<RequestResponse>
-        allProducts : CatalogProduct list option
-        productVariants : List<CatalogVariant> option
-        productTemplates : Api.Printful.ProductTemplate.ProductTemplateCatalog option
-        buildYourOwn: SharedShopDomain.BuildYourOwnProduct.Model option
+        Section: SharedShopV2.ShopSection
+        Cart: CartItem list
+        PayPalOrderReference: string option
+        CheckoutTax: float option
+        CheckoutShipping: float option
     }
 
     let getInitialModel shopSection = {
-        section = shopSection
-        customer = None
-        productVariationOptionsSelected = (None, None)
-        validSyncVariantId = None
-        payPalOrderReference = None
-        shoppingBag = []
-        checkoutTaxShipping = (None, None)
-        homeGif = ""
-        customerSignUpForm = defaultCustomerSignUpForm
-        customerAddressForm = defaultCustomerAddressForm
-        validationResults = []
-        allProducts = None
-        productVariants = None
-        productTemplates = None
-        buildYourOwn = None
+        Section = shopSection
+        Cart = []
+        PayPalOrderReference = None
+        CheckoutTax = None
+        CheckoutShipping = None
     }
-        
 
 module SharedPage =
     
@@ -1774,7 +1795,7 @@ module SharedPage =
         | Portfolio of PortfolioSection
         | Services of SharedWebAppViewSections.ProfessionalServicesView
         | Resume
-        | Shop of SharedShopDomain.ShopSection
+        | Shop of SharedShopV2.ShopSection
         | Welcome
 
 module SharedWebAppModels =

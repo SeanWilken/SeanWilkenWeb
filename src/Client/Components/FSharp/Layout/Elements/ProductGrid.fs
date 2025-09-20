@@ -5,7 +5,7 @@ open Feliz
 open Components.FSharp.Layout.Elements.ProductCard
 
 [<ReactComponent>]
-let ProductGrid (products: Shared.SharedShopDomain.CatalogProduct list) loadProductCallback =
+let ProductGrid (products: Shared.SharedShopV2.PrintfulCatalog.CatalogProduct list) loadProductCallback =
     Html.div [
         prop.className "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
         prop.children (

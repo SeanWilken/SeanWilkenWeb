@@ -6,8 +6,8 @@ open Shared
 // URL BROWSER UPDATES
 open Elmish.UrlParser
 open Elmish.Navigation
-open Shared.SharedShop
-open Shared.SharedShopDomain
+// open Shared.SharedShop
+open Shared.SharedShopV2Domain
 open SharedPage
 
 
@@ -17,63 +17,81 @@ let toPath =
     | Some Contact -> "/contact"
     | Some Landing -> "/landing"
     | Some ( Portfolio ( Code ( code ) ) ) -> 
-        // match code with
         match code with
-        | GoalRoll -> sprintf "/portfolio-goalRoll" 
-        | TileTap -> sprintf "/portfolio-tileSmash" 
-        | TileSort -> sprintf "/portfolio-tileSort"
+        | GoalRoll -> "/portfolio-goalRoll" 
+        | TileTap -> "/portfolio-tileSmash" 
+        | TileSort -> "/portfolio-tileSort"
         | CodeSection.CodeLanding -> "/portfolio-code"
-    | Some ( Portfolio ( Design ) ) ->
-        sprintf "/portfolio-design"
+    | Some ( Portfolio Design ) -> "/portfolio-design"
     | Some ( Portfolio _ )
     | Some ( Portfolio PortfolioSection.PortfolioLanding ) -> "/portfolio"
     | Some ( Services section ) -> section.toUrlString
     | Some Resume -> "/resume"
     | Some Welcome -> "/welcome"
-    | Some (Shop ShopLanding) -> "/shop/landing"
-    | Some (Shop Storefront) -> "/shop/storefront"
-    | Some (Shop (Catalog category)) -> $"/shop/catalog/{category}"
-    | Some (Shop (Product (category, id))) -> $"/shop/product/{category}/{id}"
-    | Some (Shop ShoppingBag) -> "/shop/shoppingBag"
-    | Some (Shop Checkout) -> "/shop/checkout"
-    | Some (Shop Payment) -> "/shop/payment"
-    | Some (Shop ShopSection.Contact) -> "/shop/contact"
-    | Some (Shop ShopSection.Social) -> "/shop/social"
-    | Some (Shop ShopSection.NotFound) -> "/notFound"
+    | Some (Shop SharedShopV2.ShopSection.ShopLanding) -> "/shop/landing"
+    | Some (Shop SharedShopV2.ShopSection.ShopTypeSelector) -> "/shop/select"
+    | Some (Shop (SharedShopV2.ShopSection.ProductTemplateBrowser _)) -> "/shop/templates"
+    | Some (Shop (SharedShopV2.ShopSection.BuildYourOwnWizard _)) -> "/shop/build"
+    | Some (Shop SharedShopV2.ShopSection.ShoppingBag) -> "/shop/shoppingBag"
+    | Some (Shop SharedShopV2.ShopSection.Checkout) -> "/shop/checkout"
+    | Some (Shop SharedShopV2.ShopSection.Payment) -> "/shop/payment"
+    | Some (Shop SharedShopV2.ShopSection.Contact) -> "/shop/contact"
+    | Some (Shop SharedShopV2.ShopSection.Social) -> "/shop/social"
+    | Some (Shop SharedShopV2.ShopSection.NotFound) -> "/notFound"
     | None -> "/"
 
-let shopParser : Parser<ShopSection->Page,_> =
+
+let shopParser : Parser<SharedShopV2.ShopSection->Page,_> =
     oneOf [
-        map ShopLanding (s "landing")
-        map Storefront (s "storefront")
-        map Catalog (s "catalog" </> str)  // string only, for category
-        // Product parser: combine string and int segments
-        map (fun category pid -> Product (category, pid)) ((s "product" </> str) </> i32)
-        map ShoppingBag (s "shoppingBag")
-        map Checkout (s "checkout")
-        map Payment (s "payment")
+        map SharedShopV2.ShopLanding (s "landing")
+        map SharedShopV2.ShopTypeSelector (s "select")
+        map (SharedShopV2.ProductTemplateBrowser (SharedShopV2.ProductTemplate.ProductTemplateBrowser.initialModel())) (s "templates")
+        map (SharedShopV2.BuildYourOwnWizard (SharedShopV2.BuildYourOwnProductWizard.initialState ())) (s "build")
+        map SharedShopV2.ShoppingBag (s "shoppingBag")
+        map SharedShopV2.Checkout (s "checkout")
+        map SharedShopV2.Payment (s "payment")
     ]
 
+
 // router use combinators for better structured paths
-let pageParser : Parser< Page -> Page,_ > =
-    oneOf
-        [
-            map Page.About ( s "about" )
-            map Page.Contact ( s "contact" )
-            map ( Page.Landing) ( s "landing" )
-            map ( Page.Landing) ( s "index" )
-            map ( Page.Services SharedWebAppViewSections.ProfessionalServicesView.SalesPlatform) ( s "services-sales" )
-            map ( Page.Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding) ( s "services" )
-            map ( Page.Portfolio PortfolioSection.PortfolioLanding) ( s "portfolio" )
-            map ( Page.Portfolio ( Code ( CodeSection.CodeLanding ) ) ) ( s "portfolio-code" )
-            map ( Page.Portfolio Design ) ( s "portfolio-design" )
-            map ( Page.Portfolio ( Code ( CodeSection.GoalRoll ) ) ) ( s "portfolio-goalRoll" )
-            map ( Page.Portfolio ( Code ( CodeSection.TileSort ) ) ) ( s "portfolio-tileSort" )
-            map ( Page.Portfolio ( Code ( CodeSection.TileTap ) ) ) ( s "portfolio-tileSmash" )
-            map Page.Resume ( s "resume" )
-            map (Page.Shop ) (s "shop" </> shopParser)
-            map Page.Welcome ( s "welcome" )
-        ]
+// let pageParser : Parser< Page -> Page,_ > =
+//     oneOf
+//         [
+//             map Page.About ( s "about" )
+//             map Page.Contact ( s "contact" )
+//             map ( Page.Landing) ( s "landing" )
+//             map ( Page.Landing) ( s "index" )
+//             map ( Page.Services SharedWebAppViewSections.ProfessionalServicesView.SalesPlatform) ( s "services-sales" )
+//             map ( Page.Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding) ( s "services" )
+//             map ( Page.Portfolio PortfolioSection.PortfolioLanding) ( s "portfolio" )
+//             map ( Page.Portfolio ( Code ( CodeSection.CodeLanding ) ) ) ( s "portfolio-code" )
+//             map ( Page.Portfolio Design ) ( s "portfolio-design" )
+//             map ( Page.Portfolio ( Code ( CodeSection.GoalRoll ) ) ) ( s "portfolio-goalRoll" )
+//             map ( Page.Portfolio ( Code ( CodeSection.TileSort ) ) ) ( s "portfolio-tileSort" )
+//             map ( Page.Portfolio ( Code ( CodeSection.TileTap ) ) ) ( s "portfolio-tileSmash" )
+//             map Page.Resume ( s "resume" )
+//             map (Page.Shop ) (s "shop" </> shopParser)
+//             map Page.Welcome ( s "welcome" )
+//         ]
+let pageParser : Parser<Page -> Page,_> =
+    oneOf [
+        map Page.About (s "about")
+        map Page.Contact (s "contact")
+        map Page.Landing (s "landing")
+        map Page.Landing (s "index")
+        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.SalesPlatform) (s "services-sales")
+        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding) (s "services")
+        map (Page.Portfolio PortfolioSection.PortfolioLanding) (s "portfolio")
+        map (Page.Portfolio (Code CodeSection.CodeLanding)) (s "portfolio-code")
+        map (Page.Portfolio Design) (s "portfolio-design")
+        map (Page.Portfolio (Code CodeSection.GoalRoll)) (s "portfolio-goalRoll")
+        map (Page.Portfolio (Code CodeSection.TileSort)) (s "portfolio-tileSort")
+        map (Page.Portfolio (Code CodeSection.TileTap)) (s "portfolio-tileSmash")
+        map Page.Resume (s "resume")
+        map Page.Welcome (s "welcome")
+        map Page.Shop (s "shop" </> shopParser)
+    ]
+
 
 let urlParser location = 
     // printfn "url is: %A" location
@@ -118,9 +136,9 @@ let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebApp
     | Some (SharedPage.Page.Shop area) ->
         match model.CurrentAreaModel with
         | SharedWebAppModels.Shop shop ->
-            { model with CurrentAreaModel = SharedWebAppModels.Shop { shop with section = area } }
+            { model with CurrentAreaModel = SharedWebAppModels.Shop { shop with Section = area } }
         | _ ->
-            { model with CurrentAreaModel = SharedWebAppModels.Shop (getInitialModel area)  }
+            { model with CurrentAreaModel = SharedWebAppModels.Shop (SharedShop.getInitialModel area)  }
         , Navigation.newUrl (toPath (Some (Shop area)))
     | Some SharedPage.Page.Welcome ->
         { model with CurrentAreaModel = SharedWebAppModels.Welcome },

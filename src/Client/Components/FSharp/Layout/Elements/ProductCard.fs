@@ -3,11 +3,11 @@ module Components.FSharp.Layout.Elements.ProductCard
 open Feliz
 open Feliz.DaisyUI
 open Fable.Core.JsInterop
-open Shared.SharedShopDomain
+open Shared.SharedShopV2
 
 type Props = {
-    product: CatalogProduct
-    onClick: CatalogProduct -> unit
+    product: PrintfulCatalog.CatalogProduct
+    onClick: PrintfulCatalog.CatalogProduct -> unit
 }
 
 [<ReactComponent>]

@@ -2,8 +2,9 @@ module Components.FSharp.CreateYourOwnProduct
 
 open Feliz
 open Feliz.DaisyUI
-open Shared.SharedShopDomain
-open Shared.SharedShopDomain.BuildYourOwnProduct
+open Shared.SharedShopV2Domain
+open Shared.SharedShopV2.BuildYourOwnProductWizard
+open Elmish
 
 let stepToIndex = function
     | SelectProduct -> 1
@@ -12,37 +13,48 @@ let stepToIndex = function
     | ConfigurePlacement -> 4
     | Review -> 5
 
-let update (msg: Msg) (state: Shared.SharedShopDomain.BuildYourOwnProduct.Model) : Shared.SharedShopDomain.BuildYourOwnProduct.Model =
+let getAllProducts (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<ShopBuildYourOwnProductWizardMsg> =
+    Cmd.OfAsync.either
+        ( fun x -> Client.Api.productsApi.getProducts x )
+        request
+        ShopBuildYourOwnProductWizardMsg.GotAllProducts
+        ShopBuildYourOwnProductWizardMsg.FailedAllProducts
+
+let update (msg: Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg) (state: Shared.SharedShopV2.BuildYourOwnProductWizard.Model) : Shared.SharedShopV2.BuildYourOwnProductWizard.Model =
     match msg with
-    | Next ->
+    | ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
+        state
+    | ShopBuildYourOwnProductWizardMsg.Next ->
         match state.currentStep with
         | SelectProduct -> { state with currentStep = SelectVariant }
         | SelectVariant -> { state with currentStep = SelectDesign }
         | SelectDesign -> { state with currentStep = ConfigurePlacement }
         | ConfigurePlacement -> { state with currentStep = Review }
         | Review -> state
-
-    | Back ->
+    | ShopBuildYourOwnProductWizardMsg.Back ->
         match state.currentStep with
         | SelectProduct -> state
         | SelectVariant -> { state with currentStep = SelectProduct }
         | SelectDesign -> { state with currentStep = SelectVariant }
         | ConfigurePlacement -> { state with currentStep = SelectDesign }
         | Review -> { state with currentStep = ConfigurePlacement }
+    | ShopBuildYourOwnProductWizardMsg.AddProductToBag catalogProduct ->
+        state
 
-    | ChooseProduct product ->
+
+    | ShopBuildYourOwnProductWizardMsg.ChooseProduct product ->
         { state with selectedProduct = Some product; currentStep = SelectVariant }
 
-    | ChooseVariantSize size ->
+    | ShopBuildYourOwnProductWizardMsg.ChooseVariantSize size ->
         { state with selectedVariantSize = Some size } //; currentStep = SelectDesign }
     
-    | ChooseVariantColor color ->
+    | ShopBuildYourOwnProductWizardMsg.ChooseVariantColor color ->
         { state with selectedVariantColor = Some color } // ; currentStep = SelectDesign }
 
-    | ChooseDesign designId ->
+    | ShopBuildYourOwnProductWizardMsg.ChooseDesign designId ->
         { state with selectedDesign = Some designId; currentStep = ConfigurePlacement }
 
-    | TogglePlacement (placement, status) ->
+    | ShopBuildYourOwnProductWizardMsg.TogglePlacement (placement, status) ->
         let placements =
             if List.contains (placement, status) state.placements then
                 state.placements |> List.except [(placement, status)]
@@ -50,9 +62,14 @@ let update (msg: Msg) (state: Shared.SharedShopDomain.BuildYourOwnProduct.Model)
                 (placement, status) :: state.placements
         { state with placements = placements }
 
-open Feliz
-open Feliz.DaisyUI
+    | ShopBuildYourOwnProductWizardMsg.GetAllProducts ->
+        state
+    
+    | ShopBuildYourOwnProductWizardMsg.GotAllProducts catalogResponse ->
+        state
 
+    | ShopBuildYourOwnProductWizardMsg.FailedAllProducts failure ->
+        state
 type ColorOption = {
     Name: string
     Hex: string
@@ -83,11 +100,11 @@ let ColorSwatchGroup (colors: ColorOption list) =
 let progressBar (step: int) =
     let steps = 
         [ 
-            "Choose Product", Shared.SharedShopDomain.BuildYourOwnProduct.Step.SelectProduct
-            "Configure", Shared.SharedShopDomain.BuildYourOwnProduct.Step.SelectVariant
-            "Artwork", Shared.SharedShopDomain.BuildYourOwnProduct.Step.SelectDesign
-            "Placements", Shared.SharedShopDomain.BuildYourOwnProduct.Step.ConfigurePlacement
-            "Review", Shared.SharedShopDomain.BuildYourOwnProduct.Step.Review 
+            "Choose Product", SelectProduct
+            "Configure", SelectVariant
+            "Artwork", SelectDesign
+            "Placements", ConfigurePlacement
+            "Review", Review 
         ]
 
     Daisy.progress [
@@ -96,10 +113,10 @@ let progressBar (step: int) =
         prop.max steps.Length
     ]
 
-let productCard (dispatch: Msg -> unit) (product: CatalogProduct) =
+let productCard (dispatch: ShopBuildYourOwnProductWizardMsg -> unit) (product: Shared.SharedShopV2.PrintfulCatalog.CatalogProduct) =
     Daisy.card [
         prop.className "w-64 shadow-xl hover:scale-105 transition cursor-pointer"
-        prop.onClick (fun _ -> dispatch (Msg.ChooseProduct product))
+        prop.onClick (fun _ -> dispatch (ShopBuildYourOwnProductWizardMsg.ChooseProduct product))
         prop.children [
             Html.img [
                 prop.src product.thumbnailURL
@@ -128,9 +145,40 @@ let productCard (dispatch: Msg -> unit) (product: CatalogProduct) =
     ]
 
 
+
+// let getAllProductTemplates (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Shared.SharedShop.ShopMsg> =
+//     Cmd.OfAsync.either
+//         ( fun x -> Client.Api.productsApi.getProductTemplates x )
+//         request
+//         GotProductTemplates
+//         FailedProductTemplates
+
+// let getAllProducts (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg> =
+//     Cmd.OfAsync.either
+//         ( fun x -> Client.Api.productsApi.getProducts x )
+//         request
+//         GotAllProducts
+//         FailedAllProducts
+
+// let defaultProductsRequest : Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery = 
+//     {
+//         category_ids = Some [ 1 ]
+//         colors = None
+//         destination_country = None
+//         limit = None
+//         newOnly = None
+//         offset = None
+//         placements = None
+//         selling_region_name = None
+//         sort_direction = None
+//         sort_type = None
+//         techniques = None
+//     }
+
+
 [<ReactComponent>]
 let VariantSelectors
-    (product: CatalogProduct)
+    (product: Shared.SharedShopV2.PrintfulCatalog.CatalogProduct)
     (selectedSize: string option)
     (selectedColor: string option)
     (onSizeChange: string -> unit)
@@ -264,8 +312,8 @@ let render (model: Model) dispatch =
                         (p)
                         model.selectedVariantSize
                         model.selectedVariantColor
-                        (fun size -> dispatch (ChooseVariantSize size))
-                        (fun color -> dispatch (ChooseVariantColor color))
+                        (fun size -> dispatch (ShopBuildYourOwnProductWizardMsg.ChooseVariantSize size))
+                        (fun color -> dispatch (ShopBuildYourOwnProductWizardMsg.ChooseVariantColor color))
                 // Daisy.select [
                 //     prop.onChange (ChooseVariant >> dispatch)
                 //     prop.children [
@@ -278,13 +326,13 @@ let render (model: Model) dispatch =
                 Html.div [
                     Daisy.button.button [
                         button.outline
-                        prop.onClick (fun _ -> dispatch Back)
+                        prop.onClick (fun _ -> dispatch ShopBuildYourOwnProductWizardMsg.Back)
                         prop.text "Back"
                     ]
                     Daisy.button.button [
                         button.primary
                         prop.disabled (model.selectedVariantColor.IsNone || model.selectedVariantSize.IsNone)
-                        prop.onClick (fun _ -> dispatch Next)
+                        prop.onClick (fun _ -> dispatch ShopBuildYourOwnProductWizardMsg.Next)
                         prop.text "Next"
                     ]
                 ]
@@ -317,13 +365,13 @@ let render (model: Model) dispatch =
                 Html.div [
                     Daisy.button.button [
                         button.outline
-                        prop.onClick (fun _ -> dispatch Back)
+                        prop.onClick (fun _ -> dispatch ShopBuildYourOwnProductWizardMsg.Back)
                         prop.text "Back"
                     ]
                     Daisy.button.button [
                         button.primary
                         prop.disabled (model.selectedDesign.IsNone)
-                        prop.onClick (fun _ -> dispatch Next)
+                        prop.onClick (fun _ -> dispatch ShopBuildYourOwnProductWizardMsg.Next)
                         prop.text "Next"
                     ]
                 ]
@@ -349,12 +397,12 @@ let render (model: Model) dispatch =
                 Html.div [
                     Daisy.button.button [
                         button.outline
-                        prop.onClick (fun _ -> dispatch Back)
+                        prop.onClick (fun _ -> dispatch ShopBuildYourOwnProductWizardMsg.Back)
                         prop.text "Back"
                     ]
                     Daisy.button.button [
                         button.primary
-                        prop.onClick (fun _ -> dispatch Next)
+                        prop.onClick (fun _ -> dispatch ShopBuildYourOwnProductWizardMsg.Next)
                         prop.text "Next"
                     ]
                 ]
@@ -375,7 +423,7 @@ let render (model: Model) dispatch =
                 Html.div [
                     Daisy.button.button [
                         button.outline
-                        prop.onClick (fun _ -> dispatch Back)
+                        prop.onClick (fun _ -> dispatch ShopBuildYourOwnProductWizardMsg.Back)
                         prop.text "Back"
                     ]
                     // Daisy.button.button [
@@ -390,7 +438,7 @@ let render (model: Model) dispatch =
                             | Some product, Some color, Some size ->
                                 // let built = buildCatalogVariant product variantId model.selectedDesign model.placements
                                  // dispatch (ShopMsg.AddProductToBag built)
-                                dispatch (AddProductToBag product)
+                                dispatch (ShopBuildYourOwnProductWizardMsg.AddProductToBag product)
                             | _ -> ()
                         )
                     ]
