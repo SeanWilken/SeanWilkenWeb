@@ -465,9 +465,14 @@ let testApiCreateDraftOrder (_draft: CustomerDraftOrder) : Cmd<Shared.SharedShop
 
 let sendMessage (_paypalOrderRef: string) : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
 
+let getAllProductTemplates (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Shared.SharedShop.ShopMsg> =
+    Cmd.OfAsync.either
+        ( fun x -> Client.Api.productsApi.getProductTemplates x )
+        request
+        GotProductTemplates
+        FailedProductTemplates
+
 let getAllProducts (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Shared.SharedShop.ShopMsg> =
-    Console.WriteLine $"CALLED PRODUCTS"
-    // Cmd.ofMsg GetAllProducts
     Cmd.OfAsync.either
         ( fun x -> Client.Api.productsApi.getProducts x )
         request
@@ -489,7 +494,14 @@ let defaultProductsRequest : Shared.Api.Printful.CatalogProductRequest.CatalogPr
         techniques = None
     }
 
-let getProductVariants (_variantId: int) : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
+let getProductVariants (_variantId: int) : Cmd<Shared.SharedShop.ShopMsg> =
+    Cmd.OfAsync.either
+        Client.Api.productsApi.getProductVariants
+        _variantId
+        GotProductVariants
+        FailedProductVariants
+        
+
 
 // --------------------------------
 // Init
@@ -509,7 +521,9 @@ let init () : Shared.SharedShop.Model * Cmd<Shared.SharedShop.ShopMsg> =
         customerAddressForm = defaultCustomerAddressForm
         validationResults = []
         allProducts = None
-        productVariants = None 
+        productVariants = None
+        productTemplates = None
+        buildYourOwn = None
     }, getAllProducts defaultProductsRequest
     //  getHomeGif
 
@@ -549,21 +563,21 @@ let checkProductSelectionsAreValidVariant (model: Shared.SharedShop.Model) (sync
     newModel, Cmd.none
 
 // Add/merge shopping-bag quantities instead of duplicating line items
-let addVariantToShoppingBag (variant: SyncProductVariant) (bag: (SyncProductVariant*int) list) : (SyncProductVariant*int) list =
-    let eq v1 v2 = v1.externalSyncVariantId = v2.externalSyncVariantId
-    let existing, others = bag |> List.partition (fun (v,_) -> eq v variant)
-    match existing with
-    | (v, qty) :: _ -> (v, qty + 1) :: others
-    | [] -> (variant, 1) :: bag
+// let addVariantToShoppingBag (variant: SyncProductVariant) (bag: (SyncProductVariant*int) list) : (SyncProductVariant*int) list =
+//     let eq v1 v2 = v1.externalSyncVariantId = v2.externalSyncVariantId
+//     let existing, others = bag |> List.partition (fun (v,_) -> eq v variant)
+//     match existing with
+//     | (v, qty) :: _ -> (v, qty + 1) :: others
+//     | [] -> (variant, 1) :: bag
 
-let adjustLineItemQuantity (adj: QuantityAdjustment) (itemVariant: SyncProductVariant) (bag: (SyncProductVariant*int) list) : (SyncProductVariant*int) list =
-    bag
-    |> List.map (fun (v, q) ->
-        if v = itemVariant then
-            match adj with
-            | Increment -> v, q + 1
-            | Decrement -> v, (if q - 1 <= 0 then 1 else q - 1)
-        else v, q)
+// let adjustLineItemQuantity (adj: QuantityAdjustment) (itemVariant: SyncProductVariant) (bag: (SyncProductVariant*int) list) : (SyncProductVariant*int) list =
+//     bag
+//     |> List.map (fun (v, q) ->
+//         if v = itemVariant then
+//             match adj with
+//             | Increment -> v, q + 1
+//             | Decrement -> v, (if q - 1 <= 0 then 1 else q - 1)
+//         else v, q)
 
 // --------------------------------
 // Update
@@ -572,7 +586,10 @@ let adjustLineItemQuantity (adj: QuantityAdjustment) (itemVariant: SyncProductVa
 let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.SharedShop.ShopMsg> =
     match msg with
     | NavigateTo section ->
+        // need to do url here
+
         { model with section = section }, Cmd.none
+        // Navigation.newUrl (toPath (Some Landing))
 
     | UpdateCustomerForm fld ->
         updateCustomerField model fld, Cmd.none
@@ -617,15 +634,19 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
         let m' = { model with productVariationOptionsSelected = (mc, ms') }
         checkProductSelectionsAreValidVariant m' syncProduct
 
-    | AddVariantToShoppingBag variant ->
-        { model with shoppingBag = addVariantToShoppingBag variant model.shoppingBag }, Cmd.none
 
-    | DeleteVariantFromShoppingBag variant ->
-        let bag' = model.shoppingBag |> List.filter (fun (p,_) -> p.externalSyncVariantId <> variant.externalSyncVariantId)
-        { model with shoppingBag = bag' }, Cmd.none
+    | ShopMsg.RemoveProductFromBag variantId ->
+        { model with shoppingBag = model.shoppingBag |> List.filter (fun (v, _) -> v.id <> variantId) }, Cmd.none
 
-    | AdjustLineItemQuantity (adj, bagLineItem) ->
-        { model with shoppingBag = adjustLineItemQuantity adj bagLineItem model.shoppingBag }, Cmd.none
+    // | AddVariantToShoppingBag variant ->
+    //     { model with shoppingBag = addVariantToShoppingBag variant model.shoppingBag }, Cmd.none
+
+    // | DeleteVariantFromShoppingBag variant ->
+    //     let bag' = model.shoppingBag |> List.filter (fun (p,_) -> p.externalSyncVariantId <> variant.externalSyncVariantId)
+    //     { model with shoppingBag = bag' }, Cmd.none
+
+    // | AdjustLineItemQuantity (adj, bagLineItem) ->
+    //     { model with shoppingBag = adjustLineItemQuantity adj bagLineItem model.shoppingBag }, Cmd.none
 
     | GotResult result ->
         match result with
@@ -667,6 +688,16 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
         let id = defaultArg model.payPalOrderReference ""
         model, sendMessage id
 
+    | GetProductTemplates -> 
+        model, getAllProductTemplates defaultProductsRequest
+
+    | GotProductTemplates productResult ->
+        { model with productTemplates = Some productResult }, Cmd.none
+
+    | FailedProductTemplates ex ->
+        Console.WriteLine $"ex: {ex.Message}"
+        model, Cmd.none
+        
     | GetAllProducts -> 
         model, getAllProducts defaultProductsRequest
 
@@ -682,6 +713,18 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
     | GotProductVariants variantResult ->
         { model with productVariants = Some variantResult }, Cmd.none
 
+    | ShopMsg.BuildYourOwnProductMsg msg ->
+        let byoUpdated =
+            match model.buildYourOwn with
+            | None -> BuildYourOwnProduct.initialState (model.allProducts |> Option.defaultValue []) 
+            | Some byo -> CreateYourOwnProduct.update msg byo
+        let updatedModel = { model with buildYourOwn = Some byoUpdated; }
+        match msg with
+        | BuildYourOwnProduct.Msg.AddProductToBag product ->
+            { updatedModel with shoppingBag = [ (product, 1) ] }, Cmd.none
+        | _ ->
+            updatedModel, Cmd.none
+            
 open Feliz
 
 let pathToTitleString (path: string) =
@@ -762,8 +805,6 @@ let homeView (homeGifUrls: string list) dispatch =
                 prop.src link
             ]
         )
-
-
     Html.div [
         prop.className "centeredView flex flex-col items-center gap-6 p-6"
         prop.children [
@@ -783,13 +824,8 @@ let homeView (homeGifUrls: string list) dispatch =
                     Html.p [ prop.text "It would be dangerous to go alone...better grab a suitcase with some gear, some beer and call up the crew!!" ]
                     Html.button [
                         prop.className "btn btn-primary"
-                        prop.onClick (fun _ -> dispatch (ShopMsg.NavigateTo (ShopSection.Catalog "limited")))
-                        prop.text "LIMITED COLLECTION"
-                    ]
-                    Html.button [
-                        prop.className "btn btn-primary"
-                        prop.onClick (fun _ -> dispatch (ShopMsg.NavigateTo (ShopSection.Catalog "unlimited")))
-                        prop.text "UNLIMITED COLLECTION"
+                        prop.onClick (fun _ -> dispatch (NavigateTo Storefront))
+                        prop.text "Collections"
                     ]
                 ]
             ]
@@ -973,7 +1009,8 @@ let productView dispatch (syncProductId: int) (model: Model) collection =
             match model.validSyncVariantId with
             | Some id ->
                 model.shoppingBag
-                |> List.tryFind (fun (v, _) -> v.externalSyncVariantId = id)
+                |> List.tryFind (fun (v, _) -> v.id.ToString() = id)
+                // |> List.tryFind (fun (v, _) -> v.externalSyncVariantId = id)
                 |> Option.isSome
             | None -> false
 
@@ -981,7 +1018,7 @@ let productView dispatch (syncProductId: int) (model: Model) collection =
 
         Html.div [
             prop.children [
-                contentHeader product.name (Some (headerLink ("/shop/" + collectionTagToString product.collectionTag)))
+                contentHeader product.name (Some (headerLink ("/shop/" + product.collectionTag.toString())))
                 Html.div [
                     prop.className "contentBackground"
                     prop.children [
@@ -1083,7 +1120,8 @@ let shoppingBagItem dispatch (variant, qty: int) =
 let shoppingBagView (model: Model) dispatch =
     let orderTotal =
         model.shoppingBag
-        |> List.map (fun (v, q) -> v.variantPrice * float q)
+        // |> List.map (fun (v, q) -> v.variantPrice * float q)
+        |> List.map (fun (v, q) -> 20.0 * float q)
         |> List.sum
 
     let checkoutButton =
@@ -1094,7 +1132,8 @@ let shoppingBagView (model: Model) dispatch =
         Html.div [ 
             prop.className "contentBackground" 
             prop.children [
-                (model.shoppingBag |> List.map (shoppingBagItem dispatch) |> React.fragment)
+                // (model.shoppingBag |> List.map (shoppingBagItem dispatch) |> React.fragment)
+                // (model.shoppingBag |> List.map (shoppingBagItem dispatch) |> React.fragment)
                 contentHeader (sprintf "Order Bag Total: %.2f" orderTotal) checkoutButton
             ]
         ]
@@ -1152,9 +1191,10 @@ let createCustomerDraftOrderDetails (model: Model)
     let orderItems =
         model.shoppingBag
         |> List.map (fun (variant, qty) -> {
-            externalVariantId = variant.externalSyncVariantId
+            externalVariantId = variant.id.ToString()
+            // externalVariantId = variant.externalSyncVariantId
             itemQuantity = qty
-            itemRetailPrice = floatToString variant.variantPrice
+            itemRetailPrice = floatToString 28.0 // variant.variantPrice
         })
 
     {
@@ -1203,7 +1243,8 @@ let createDraftOrderButton (draft: CustomerDraftOrder) (dispatch: Shared.SharedS
     ]
 
 let checkoutView (model: Model) (dispatch: Shared.SharedShop.ShopMsg -> unit) =
-    let bagTotal = calculateOrderBagTotal model.shoppingBag
+    // let bagTotal = calculateOrderBagTotal model.shoppingBag
+    let bagTotal = 100.0
     let taxOpt, shippingOpt = model.checkoutTaxShipping
 
     let submitOrderButton =
@@ -1362,49 +1403,58 @@ let contactView =
 //         Components.Footer.view model dispatch
 //     ]
 
-let shopCatalogLink2 (product: CatalogProduct) =
-    let title, category =
-        product.name.Split " - "
-        |> fun details ->
-            let t = Array.tryItem 0 details |> Option.defaultValue "TITLE MISSING"
-            let c = Array.tryItem 2 details |> Option.defaultValue "CATEGORY MISSING"
-            t, c
+// let shopCatalogLink2 (product: CatalogProduct) =
+//     let title, category =
+//         if String.IsNullOrWhiteSpace product.name
+//         then "", ""
+//         else
+//             product.name.Split " - "
+//             |> fun details ->
+//                 let t = Array.tryItem 0 details |> Option.defaultValue "TITLE MISSING"
+//                 let c = if details.Length > 2 then Array.tryItem 2 details |> Option.defaultValue "CATEGORY MISSING" else ""
+//                 t, c
 
-    Html.div [
-        prop.className "catalogProductTile"
-        prop.children [
-            Html.a [
-                prop.href ("/shop/" + category + "/" + string product.id)
-                prop.children [
-                    Html.div [
-                        prop.children [
-                            Html.img [
-                                prop.className "catalogProductImage"
-                                prop.src product.thumbnailURL
-                            ]
-                        ]
-                    ]
-                    Html.div [
-                        prop.className "navigationLink"
-                        prop.children [ Html.text title ]
-                    ]
-                ]
-            ]
-        ]
-    ]
+//     Html.div [
+//         prop.className "catalogProductTile"
+//         prop.children [
+//             Html.a [
+//                 prop.href ("/shop/" + category + "/" + string product.id)
+//                 prop.children [
+//                     Html.div [
+//                         prop.children [
+//                             Html.img [
+//                                 prop.className "catalogProductImage"
+//                                 prop.src product.thumbnailURL
+//                             ]
+//                         ]
+//                     ]
+//                     Html.div [
+//                         prop.className "navigationLink"
+//                         prop.children [ Html.text title ]
+//                     ]
+//                 ]
+//             ]
+//         ]
+//     ]
 
 //dispatch
-let catalogView2 collectionString (model: Model) =
+let catalogView2 collectionString (model: Model) dispatch =
     match model.allProducts with
     | Some products ->
         Html.div [
             prop.children [
                 // Optional header, uncomment if needed
-                contentHeader ((collectionString) + " collection") (Some (headerLink "/shop"))
-                Html.div [
-                    prop.className "productCatalogGrid"
-                    prop.children (products |> List.map shopCatalogLink2)
+                // contentHeader ((collectionString) + " collection") (Some (headerLink "/shop"))
+                Html.h1 [
+                    prop.className "clash-font text-4xl text-center mb-12 text-primary"
+                    prop.text (collectionString + " Collection")
                 ]
+                Components.FSharp.Layout.Elements.ProductGrid.ProductGrid products (fun catalogProduct -> ShopMsg.GetProductVariants catalogProduct.id |> dispatch)
+                // Html.div [
+                //     prop.className "productCatalogGrid"
+                //     prop.children (products |> List.map )
+                //     // prop.children (products |> List.map shopCatalogLink2)
+                // ]
             ]
         ]
     | None ->
@@ -1412,15 +1462,15 @@ let catalogView2 collectionString (model: Model) =
             prop.children [ Html.text "No Products found" ]
         ]
 
-let shopCategoryLink collectionTag dispatch =
-    let collectionString = collectionTagToString collectionTag
+let shopCategoryLink (collectionTag: CollectionTag) dispatch =
+    let collectionString = collectionTag.toString()
     Html.div [
         prop.className "contentBackground"
         prop.children [
             Html.button [
                 // prop.href ("/shop/" + collectionString)
                 // prop.href ("/shop/" + collectionString)
-                prop.onClick ( fun _ -> (NavigateTo (ShopSection.Catalog "Limited")) |> dispatch )
+                prop.onClick ( fun _ -> (NavigateTo (ShopSection.Catalog collectionString)) |> dispatch )
                 prop.children [
                     Html.div [
                         prop.className "navigationLink"
@@ -1437,16 +1487,40 @@ let shopCategoryLink collectionTag dispatch =
         ]
     ]
 
+let categoryHeroCard imageUrl collectionName (description: string) dispatch =
+    Html.div [ 
+        prop.className "card bg-base-200 shadow-xl image-full w-full max-w-md"  
+        prop.children [
+            Html.figure [ Html.img [ prop.src imageUrl; prop.alt collectionName ] ]
+            Html.div [ 
+                prop.className "card-body" 
+                prop.children [
+                    Html.h2 [ prop.className "card-title text-white"; prop.text collectionName ]
+                    Html.p [ prop.className "text-white"; prop.text description ]
+                    Html.div [ 
+                        prop.className "card-actions"
+                        prop.children [
+                            Html.button [ 
+                                prop.className "btn btn-primary"
+                                prop.text "Shop Now" 
+                                prop.onClick ( fun _ -> (NavigateTo (ShopSection.Catalog collectionName)) |> dispatch )
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ]
         
 let collectionView dispatch =
     Html.div [
         prop.children [
-            contentHeader "BROWSE BY COLLECTION" (Some (headerLink "/home"))
+            // contentHeader "BROWSE BY COLLECTION" (Some (headerLink "/shop/landing"))
+            Html.h1 "Collections"
             Html.div [
-                prop.className "navigationControls"
                 prop.children [
-                    shopCategoryLink Limited dispatch
-                    shopCategoryLink Unlimited dispatch
+                    categoryHeroCard "" (Limited.toString()) "Get 'em while they're hot" dispatch
+                    categoryHeroCard "" (Unlimited.toString()) "Find your next favorite thing" dispatch
                 ]
             ]
         ]
@@ -1455,7 +1529,12 @@ let collectionView dispatch =
 
 // View dispatcher: select page content based on Model.CurrentPage
 let view (model: Shared.SharedShop.Model) (dispatch: Shared.SharedShop.ShopMsg -> unit) =
-    React.useEffectOnce ( fun _ -> dispatch GetAllProducts )
+    React.useEffectOnce ( 
+        fun _ -> 
+            dispatch GetAllProducts
+            dispatch GetProductTemplates
+        // , [| |] 
+    )
     Html.div [
         match model.section with
         | ShopLanding ->
@@ -1480,7 +1559,24 @@ let view (model: Shared.SharedShop.Model) (dispatch: Shared.SharedShop.ShopMsg -
         | Storefront ->
             collectionView dispatch
         | Catalog catalogName ->
-            catalogView2 catalogName model
+            // catalogView2 catalogName model dispatch
+            match model.productTemplates with
+            | None ->
+                Html.div "Loading..."
+            | Some pt ->
+                Components.FSharp.Pages.ProductTemplateBrowser.ProductTemplateBrowser {
+                    templates = pt.result.items |> Array.toList
+                    total = Array.length pt.result.items
+                    limit = Array.length pt.result.items
+                    offset = 0
+                    loadTemplate = fun x -> printfn "Load product: %i" x
+                    setPage = fun x -> printfn "Load Page: %i" x
+                }
+            // CreateYourOwnProduct.render 
+            //     (match model.buildYourOwn with
+            //     | None -> BuildYourOwnProduct.initialState (model.allProducts |> Option.defaultValue []) 
+            //     | Some byo -> byo)
+            //     (BuildYourOwnProductMsg >> dispatch) 
         | Product (productName, productId) ->
             productView (fun msg -> dispatch msg ) productId model shirtCollection
         | ShoppingBag ->

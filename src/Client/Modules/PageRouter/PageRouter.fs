@@ -111,14 +111,17 @@ let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebApp
         Navigation.newUrl (toPath (Some (Portfolio PortfolioSection.PortfolioLanding)))
     | Some (SharedPage.Page.Services section) ->
         { model with CurrentAreaModel = SharedWebAppModels.Services (SharedServices.getInitialModel section) },
-        
         Navigation.newUrl (toPath (Some (Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding)))
     | Some SharedPage.Page.Resume ->
         { model with CurrentAreaModel = SharedWebAppModels.Resume },
         Navigation.newUrl (toPath (Some Resume))
     | Some (SharedPage.Page.Shop area) ->
-        { model with CurrentAreaModel = SharedWebAppModels.Shop (getInitialModel area)  },
-        Navigation.newUrl (toPath (Some (Shop area)))
+        match model.CurrentAreaModel with
+        | SharedWebAppModels.Shop shop ->
+            { model with CurrentAreaModel = SharedWebAppModels.Shop { shop with section = area } }
+        | _ ->
+            { model with CurrentAreaModel = SharedWebAppModels.Shop (getInitialModel area)  }
+        , Navigation.newUrl (toPath (Some (Shop area)))
     | Some SharedPage.Page.Welcome ->
         { model with CurrentAreaModel = SharedWebAppModels.Welcome },
         Navigation.newUrl (toPath (Some Welcome))

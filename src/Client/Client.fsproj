@@ -30,12 +30,18 @@
         <Compile Include="Components\FSharp\Interop\TSXCanvas.fs" />
 
         <!-- F# Components -->
+        <Compile Include="Components\FSharp\Layout\Elements\Pagination.fs" />
+        <Compile Include="Components\FSharp\Layout\Elements\ProductCard.fs" />
+        <Compile Include="Components\FSharp\Layout\Elements\ProductGrid.fs" />
+        <Compile Include="Components\FSharp\Layout\Elements\ProductBrowser.fs" />
+        <Compile Include="Components\FSharp\Layout\Elements\ProductTemplateBrowser.fs" />
         <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\GoalRoll\GoalRoll.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\PivotPoints\PivotPoints.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\TileSort\TileSort.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\TileTap\TileTap.fs" />
         <Compile Include="Components\FSharp\Layout\Elements\MultiContent.fs" />
+        <Compile Include="Components\FSharp\Shop\CreateYourOwnProduct.fs" />
 
         <!-- F# Component Pages -->
         <Compile Include="Components\FSharp\About\About.fs" />
@@ -56,7 +62,6 @@
         
         <!-- Main Application Entry Point & Index -->
         <Compile Include="Components\FSharp\Layout\NavigationMenu.fs" />
-        <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
         <Compile Include="Components\FSharp\Layout\PageLayout.fs" />
         <Compile Include="Index.fs" />
         <Compile Include="App.fs" />

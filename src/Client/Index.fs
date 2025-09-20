@@ -28,8 +28,11 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
         model, Cmd.none
 
     | ShopMsg msg, Shop shopModel ->
-        let updatedModel, com = Components.FSharp.Shop.update msg shopModel
-        { model with CurrentAreaModel = Shop updatedModel }, Cmd.map ShopMsg com
+        match msg with
+        | SharedShop.ShopMsg.NavigateTo section -> urlUpdate ( Some (SharedPage.Shop section) ) model
+        | _ -> 
+            let updatedModel, com = Components.FSharp.Shop.update msg shopModel
+            { model with CurrentAreaModel = Shop updatedModel }, Cmd.map ShopMsg com
 
     // PORTFOLIO PAGE
     | PortfolioMsg msg, Portfolio pm ->
@@ -85,6 +88,7 @@ let areaStringToAppSection string =
     | "Projects" ->  SharedWebAppViewSections.AppView.PortfolioAppLandingView
     | "Resume" ->  SharedWebAppViewSections.AppView.ResumeAppView
     | "Welcome" ->  SharedWebAppViewSections.AppView.WelcomeAppView
+    | "Shop" ->  SharedWebAppViewSections.AppView.ShopAppView
     | "Services" ->  SharedWebAppViewSections.AppView.ProfessionalServicesAppView SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding
     | _ -> SharedWebAppViewSections.AppView.WelcomeAppView
 

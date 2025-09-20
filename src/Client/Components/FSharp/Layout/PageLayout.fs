@@ -29,7 +29,11 @@ let PageLayout (props: PageLayoutProps) =
                 | Resume -> "Resume"
                 | Services _ -> "Services"
                 | Contact -> "Contact"
-                | _ -> "Home"
+                | Shop _ -> "Shop"
+                // NYI
+                | Landing -> ""
+                | Help -> "Help"
+                | Settings -> "Settings"
             )
 
        , [| box props.model.CurrentAreaModel |]
@@ -120,7 +124,7 @@ let PageLayout (props: PageLayoutProps) =
                             Html.h1 [
                                 // prop.className "text-lg font-semibold manrope-x-heavy text-primary"
                                 prop.className "clash-font text-4xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent"
-                                prop.text "Sean Wilken"
+                                prop.text (if activeItem = "Shop" then "Xero Effort" else "Sean Wilken")
                             ]
 
                             Html.button [

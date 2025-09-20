@@ -6,17 +6,17 @@ open Bindings.FramerMotion
 
 let navIconFor label =
     match label with
-    | "About" -> LucideIcon.UserCircle "w-6 h-6 pr-4"
-    | "AI" -> LucideIcon.Bot "w-6 h-6 pr-4"
-    | "Contact" -> LucideIcon.Mail "w-6 h-6 pr-4"
-    | "Help" -> LucideIcon.CircleQuestionMark "w-6 h-6 pr-4"
-    | "Home" -> LucideIcon.Home "w-6 h-6 pr-4"
-    | "Projects" -> LucideIcon.Briefcase "w-6 h-6 pr-4"
-    | "Resume" -> LucideIcon.File "w-6 h-6 pr-4"
-    | "Settings" -> LucideIcon.Cog "w-6 h-6 pr-4"
-    | "Theme" -> LucideIcon.Palette "w-6 h-6 pr-4"
-    | "Shop" -> LucideIcon.ShoppingCart "w-6 h-6 pr-4"
-    | "Services" -> LucideIcon.HandPlatter "w-6 h-6 pr-4"
+    | "About" -> LucideIcon.UserCircle "w-6 h-6"
+    | "AI" -> LucideIcon.Bot "w-6 h-6"
+    | "Contact" -> LucideIcon.Mail "w-6 h-6"
+    | "Help" -> LucideIcon.CircleQuestionMark "w-6 h-6"
+    | "Home" -> LucideIcon.Home "w-6 h-6"
+    | "Projects" -> LucideIcon.Briefcase "w-6 h-6"
+    | "Resume" -> LucideIcon.File "w-6 h-6"
+    | "Settings" -> LucideIcon.Cog "w-6 h-6"
+    | "Theme" -> LucideIcon.Palette "w-6 h-6"
+    | "Shop" -> LucideIcon.ShoppingCart "w-6 h-6"
+    | "Services" -> LucideIcon.HandPlatter "w-6 h-6"
     | _ -> Html.none
 
 let navItem (label: string) icon isActive expandedMenu onSelect isEnd =
@@ -82,6 +82,8 @@ type NavigationMenuProps = {|
 let NavigationMenu (props: NavigationMenuProps) =
     let (isHovered, setHovered) = React.useState false
 
+    printfn $"CURRENT ACTIVE AREA: -{props.activeItem}-"
+
     React.useEffect (
         fun () ->
             if props.menuOpen
@@ -109,7 +111,7 @@ let NavigationMenu (props: NavigationMenuProps) =
                                 "transition-all duration-300 ease-in-out whitespace-nowrap " +
                                 (if isHovered then "opacity-0 max-w-0 overflow-hidden" else "opacity-100  max-w-full")
                             )
-                            prop.text "S W"
+                            prop.text (if props.activeItem = "Shop" then "X E" else "S W")
 
                         ]
                         Html.h1 [
@@ -118,7 +120,7 @@ let NavigationMenu (props: NavigationMenuProps) =
                                 "transition-all duration-300 ease-in-out whitespace-nowrap " +
                                 (if isHovered then "opacity-100 max-w-full" else "opacity-0 max-w-0 overflow-hidden")
                             )
-                            prop.text "Sean Wilken"
+                            prop.text (if props.activeItem = "Shop" then "Xero Effort" else "Sean Wilken")
                         ]
                     ]
                 ]

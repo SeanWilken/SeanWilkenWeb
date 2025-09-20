@@ -969,6 +969,71 @@ module SharedWelcome =
 
 module SharedShopDomain =
 
+
+    /// Simplified type for displaying catalog products in your app
+    type CatalogProduct = {
+        id: int
+        name: string
+        thumbnailURL: string
+        description: string option
+        brand: string option
+        model: string option
+        variantCount: int
+        isDiscontinued: bool
+        sizes: string list
+        colors: {| Color : string; ColorCodeOpt : string option |} list
+    }
+
+    module BuildYourOwnProduct =    
+        type Step =
+            | SelectProduct
+            | SelectVariant
+            | SelectDesign
+            | ConfigurePlacement
+            | Review
+
+        type Model = {
+            products: CatalogProduct list
+            // total: int
+            // limit: int
+            // offset: int
+            // query: Printful.CatalogProductRequest.CatalogProductsQuery
+            currentStep: Step
+            selectedProduct: CatalogProduct option
+            selectedVariantSize: string option
+            selectedVariantColor: string option
+            selectedDesign: string option
+            placements: (string * string) list // placement, url
+        }
+
+        // type Msg =
+        //     | LoadProducts
+        //     | ProductsLoaded of CatalogProduct list * int
+        //     | SetPage of int
+        // | SetPage newOffset ->
+        //     { model with offset = newOffset; query = { model.query with offset = Some newOffset } },
+        //     Cmd.ofMsg LoadProducts
+
+        type Msg =
+            | Next
+            | Back
+            | ChooseProduct of CatalogProduct
+            // | ChooseProduct of string
+            | ChooseVariantSize of string
+            | ChooseVariantColor of string
+            | ChooseDesign of string
+            | TogglePlacement of string * string
+            | AddProductToBag of CatalogProduct
+
+        let initialState products = {
+            products = products
+            currentStep = SelectProduct
+            selectedProduct = None
+            selectedVariantSize = None
+            selectedVariantColor = None
+            selectedDesign = None
+            placements = []
+        }
     
     type ProductColor =
         | White
@@ -1019,9 +1084,10 @@ module SharedShopDomain =
         | Limited
         | Unlimited
 
-    let collectionTagToString = function
-        | Limited -> "limited"
-        | Unlimited -> "unlimited"
+        member x.toString() =
+            match x with
+            | Limited -> "Limited"
+            | Unlimited -> "Unlimited"
 
     type ProductClass =
         | TShirts
@@ -1031,19 +1097,6 @@ module SharedShopDomain =
         | Hats
         | NoClass
 
-    /// Simplified type for displaying catalog products in your app
-    type CatalogProduct = {
-        id: int
-        name: string
-        thumbnailURL: string
-        description: string option
-        brand: string option
-        model: string option
-        variantCount: int
-        isDiscontinued: bool
-        sizes: string list
-        colors: string list
-    }
 
     type PlacementDimension = {
         placement: string
@@ -1311,6 +1364,72 @@ module Api =
                 last: string option
             }
 
+        module ProductTemplate =
+
+            // Fable-safe DTOs only
+            type OptionData = {
+                id    : string
+                value : string array
+            }
+
+            type Color = {
+                color_name  : string
+                color_codes : string array
+            }
+
+            type PlacementOption = {
+                placement               : string
+                display_name            : string
+                technique_key           : string
+                technique_display_name  : string
+                options                 : string array
+            }
+
+            type PlacementOptionData = {
+                ``type`` : string
+                options  : string array
+            }
+
+            type ProductTemplate = {
+                id                    : int
+                product_id            : int
+                external_product_id   : string option
+                title                 : string
+                available_variant_ids : int array
+                option_data           : OptionData array
+                colors                : Color array
+                sizes                 : string array
+                mockup_file_url       : string
+                placements            : PlacementOption array
+                created_at            : int64
+                updated_at            : int64
+                placement_option_data : PlacementOptionData array
+                design_id             : string option
+            }
+
+            type ProductTemplatePaging = {
+                total  : int
+                limit  : int
+                offset : int
+            }
+
+            type ProductTemplateResult = {
+                items : ProductTemplate array
+            }
+
+            type ProductTemplateResponse = {
+                code   : int
+                result : ProductTemplateResult
+                extra  : string array
+                paging : Common.PagingInfoDTO
+            }
+
+            type ProductTemplateCatalog = {
+                result : ProductTemplateResult
+                paging : Common.PagingInfoDTO
+            }
+
+
         module CatalogProduct =
 
             open SharedShopDomain
@@ -1325,8 +1444,8 @@ module Api =
 
             type Color = {
                 name : string
-                code : string option
-                image : string option
+                value : string option
+                // image : string option
             }
 
             type Technique = {
@@ -1375,8 +1494,13 @@ module Api =
                 paging : Paging
                 _links : ProductLinks
             }
-
             let mapPrintfulProduct (p: PrintfulProduct) : SharedShopDomain.CatalogProduct =
+                System.Console.WriteLine($"Mapping product: {p.name} with id {p.id}")
+                p.colors |> Array.iter (fun (c: Color) -> 
+                    System.Console.WriteLine $"COLOR: {c.name} with code {c.value}"
+                )
+
+                
                 { 
                     id = p.id
                     name = p.name
@@ -1387,9 +1511,44 @@ module Api =
                     variantCount = p.variant_count
                     isDiscontinued = p.is_discontinued
                     sizes = p.sizes |> List.ofArray
-                    colors = p.colors |> Array.map (fun c -> c.name) |> List.ofArray
+                    colors = p.colors |> Array.map (fun c -> {| Color = c.name; ColorCodeOpt = c.value |} ) |> Array.toList
                 }
 
+            type StorefrontProduct = {
+                    id: int
+                    external_id: string
+                    name: string
+                    variants: int
+                    synced: int
+                    thumbnail_url: string
+                    is_ignored: bool
+                }
+            
+            type PrintfulStoreProductResponse = {
+                code    : int
+                result  : StorefrontProduct array
+                paging : Paging
+                extra : obj array
+            }
+
+            let mapPrintfulStoreProduct (p: StorefrontProduct) : SharedShopDomain.CatalogProduct =
+                { 
+                    id = p.id
+                    name = p.name
+                    thumbnailURL = p.thumbnail_url
+                    description = None //Some p.description
+                    brand = None // p.brand
+                    model = None // p.model
+                    variantCount = p.variants
+                    isDiscontinued = p.is_ignored
+                    sizes = [] // p.sizes |> List.ofArray
+                    colors = [] // p.colors |> Array.map (fun c -> c.name) |> List.ofArray
+                }
+
+            // type PrintfulStoreProductResponseDto = {
+            //     products  : SharedShopDomain.CatalogProduct array
+            //     paging : Paging
+            // }
 
             ///// ACTUALLY GO OVER THE WIRE
            
@@ -1418,6 +1577,27 @@ module Api =
                             next = r._links.next |> Option.map (fun l -> l.href)
                             first = r._links.first |> Option.map (fun l -> l.href)
                             last = r._links.last |> Option.map (fun l -> l.href)
+                        } 
+                }
+
+            let mapPrintfulStoreResponse (r: PrintfulStoreProductResponse) : CatalogResponseDTO =
+                { 
+                    products = 
+                        r.result
+                        |> Array.map mapPrintfulStoreProduct
+                        |> List.ofArray
+                    paging =
+                        { 
+                            total = r.paging.total
+                            offset = r.paging.offset
+                            limit = r.paging.limit
+                        }
+                    links =
+                        { 
+                            self = "" // r._links.self.href
+                            next = None // r._links.next |> Option.map (fun l -> l.href)
+                            first = None // r._links.first |> Option.map (fun l -> l.href)
+                            last = None // r._links.last |> Option.map (fun l -> l.href)
                         } 
                 }
 
@@ -1473,6 +1653,8 @@ module Api =
     type ProductApi = {
         getProducts : 
             Printful.CatalogProductRequest.CatalogProductsQuery -> Async<Printful.CatalogProduct.CatalogResponseDTO>
+        getProductTemplates : 
+            Printful.CatalogProductRequest.CatalogProductsQuery -> Async<Printful.ProductTemplate.ProductTemplateCatalog>
         getProductVariants : int -> Async<SharedShopDomain.CatalogVariant list>
     }
 
@@ -1512,6 +1694,10 @@ module SharedShop =
         | GetShippingRateResult of Result<CheckoutShippingRate list, HttpError>
         | GotShippingRateResult of CheckoutShippingRate list
         | FailedShippingRateResult of exn
+        // Product Templates
+        | GetProductTemplates
+        | GotProductTemplates of Api.Printful.ProductTemplate.ProductTemplateCatalog
+        | FailedProductTemplates of exn
         // Product Catalog
         | GetAllProducts
         | GotAllProducts of Api.Printful.CatalogProduct.CatalogResponseDTO
@@ -1521,6 +1707,10 @@ module SharedShop =
         | GotProductVariants of SharedShopDomain.CatalogVariant list
         | FailedProductVariants of exn
 
+        // Build Your Own
+        | BuildYourOwnProductMsg of BuildYourOwnProduct.Msg
+        | RemoveProductFromBag of int
+
     type Model = {
         section: ShopSection
         customer : Customer option
@@ -1528,7 +1718,8 @@ module SharedShop =
         validSyncVariantId : String option
         // -- make this paypal order reference, only set by return of the GotDraftResults, if there is a value, can render the JS Paypal button
         payPalOrderReference :  String option 
-        shoppingBag : List<SyncProductVariant * int>
+        shoppingBag : List<CatalogProduct * int>
+        // shoppingBag : List<SyncProductVariant * int>
         // -- ( Variant Line Item, Qty )
         checkoutTaxShipping : float option * float option 
         // -- Tax, Shipping 
@@ -1538,8 +1729,10 @@ module SharedShop =
         customerSignUpForm : CustomerSignUpForm 
         customerAddressForm : CustomerAddressForm 
         validationResults : List<RequestResponse>
-        allProducts : List<CatalogProduct> option
+        allProducts : CatalogProduct list option
         productVariants : List<CatalogVariant> option
+        productTemplates : Api.Printful.ProductTemplate.ProductTemplateCatalog option
+        buildYourOwn: SharedShopDomain.BuildYourOwnProduct.Model option
     }
 
     let getInitialModel shopSection = {
@@ -1556,6 +1749,8 @@ module SharedShop =
         validationResults = []
         allProducts = None
         productVariants = None
+        productTemplates = None
+        buildYourOwn = None
     }
         
 
