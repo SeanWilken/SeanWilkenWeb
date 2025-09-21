@@ -20,39 +20,42 @@ let getAllProducts (request: Shared.Api.Printful.CatalogProductRequest.CatalogPr
         ShopBuildYourOwnProductWizardMsg.GotAllProducts
         ShopBuildYourOwnProductWizardMsg.FailedAllProducts
 
-let update (msg: Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg) (state: Shared.SharedShopV2.BuildYourOwnProductWizard.Model) : Shared.SharedShopV2.BuildYourOwnProductWizard.Model =
+let update (msg: Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg) (state: Shared.SharedShopV2.BuildYourOwnProductWizard.Model) : Shared.SharedShopV2.BuildYourOwnProductWizard.Model * Cmd<Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg> =
     match msg with
     | ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
-        state
+        state, Cmd.none
     | ShopBuildYourOwnProductWizardMsg.Next ->
         match state.currentStep with
-        | SelectProduct -> { state with currentStep = SelectVariant }
-        | SelectVariant -> { state with currentStep = SelectDesign }
-        | SelectDesign -> { state with currentStep = ConfigurePlacement }
-        | ConfigurePlacement -> { state with currentStep = Review }
-        | Review -> state
+        | SelectProduct -> { state with currentStep = SelectVariant }, Cmd.none
+        | SelectVariant -> { state with currentStep = SelectDesign }, Cmd.none
+        | SelectDesign -> { state with currentStep = ConfigurePlacement }, Cmd.none
+        | ConfigurePlacement -> { state with currentStep = Review }, Cmd.none
+        | Review -> state, Cmd.none
     | ShopBuildYourOwnProductWizardMsg.Back ->
         match state.currentStep with
-        | SelectProduct -> state
-        | SelectVariant -> { state with currentStep = SelectProduct }
-        | SelectDesign -> { state with currentStep = SelectVariant }
-        | ConfigurePlacement -> { state with currentStep = SelectDesign }
-        | Review -> { state with currentStep = ConfigurePlacement }
+        | SelectProduct -> state, Cmd.none
+        | SelectVariant -> { state with currentStep = SelectProduct }, Cmd.none
+        | SelectDesign -> { state with currentStep = SelectVariant }, Cmd.none
+        | ConfigurePlacement -> { state with currentStep = SelectDesign }, Cmd.none
+        | Review -> { state with currentStep = ConfigurePlacement }, Cmd.none
     | ShopBuildYourOwnProductWizardMsg.AddProductToBag catalogProduct ->
-        state
-
+        state, Cmd.none
 
     | ShopBuildYourOwnProductWizardMsg.ChooseProduct product ->
         { state with selectedProduct = Some product; currentStep = SelectVariant }
+        , Cmd.none
 
     | ShopBuildYourOwnProductWizardMsg.ChooseVariantSize size ->
         { state with selectedVariantSize = Some size } //; currentStep = SelectDesign }
-    
+        , Cmd.none
+
     | ShopBuildYourOwnProductWizardMsg.ChooseVariantColor color ->
         { state with selectedVariantColor = Some color } // ; currentStep = SelectDesign }
+        , Cmd.none
 
     | ShopBuildYourOwnProductWizardMsg.ChooseDesign designId ->
         { state with selectedDesign = Some designId; currentStep = ConfigurePlacement }
+        , Cmd.none
 
     | ShopBuildYourOwnProductWizardMsg.TogglePlacement (placement, status) ->
         let placements =
@@ -61,15 +64,22 @@ let update (msg: Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg) (st
             else
                 (placement, status) :: state.placements
         { state with placements = placements }
+        , Cmd.none
 
     | ShopBuildYourOwnProductWizardMsg.GetAllProducts ->
-        state
+        state,
+        Shared.Api.Printful.CatalogProductRequest.toApiQuery
+            state.paging
+            state.query
+        |> getAllProducts
     
     | ShopBuildYourOwnProductWizardMsg.GotAllProducts catalogResponse ->
-        state
+        { state with products = catalogResponse.products; paging = catalogResponse.paging }
+        , Cmd.none
 
     | ShopBuildYourOwnProductWizardMsg.FailedAllProducts failure ->
-        state
+        state, Cmd.none
+
 type ColorOption = {
     Name: string
     Hex: string
@@ -227,20 +237,6 @@ let VariantSelectors
             ]
         ]
     ]
-// let view (model: Model) (dispatch: Msg -> unit) =
-//     Html.div [
-//         progressBar model.step
-
-//         match model.step with
-//         | SelectProduct ->
-            
-//         | SelectImage ->
-//             Html.div [ Html.h2 "Step 2: Pick an image (coming soon)" ]
-//         | ConfigurePlacement ->
-//             Html.div [ Html.h2 "Step 3: Configure placement" ]
-//         | Review ->
-//             Html.div [ Html.h2 "Step 4: Review & confirm" ]
-//     ]
 
 open Feliz
 open Feliz.DaisyUI
@@ -284,6 +280,15 @@ let DesignSelector (designs: Design list) (selectedDesign: string option) (onSel
     ]
 
 let render (model: Model) dispatch =
+    React.useEffectOnce (
+        fun _ ->
+            dispatch GetAllProducts
+            // let request =
+            //     Shared.Api.Printful.CatalogProductRequest.toApiQuery
+            //         model.paging
+            //         model.query
+            // getAllProducts request |> dispatch 
+    )
     Html.div [
         // Progress bar
         Daisy.progress [

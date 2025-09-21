@@ -214,8 +214,8 @@ module Api =
                 |> Map.ofList
 
             let configureClient (client: HttpClient) (headers: Map<string, string>) =
-                if not (client.DefaultRequestHeaders.Contains("X-PF-Store-ID")) then
-                    headers |> Map.iter (fun k v -> client.DefaultRequestHeaders.Add(k, v))
+                // if not (client.DefaultRequestHeaders.Contains("X-PF-Store-ID")) then
+                //     headers |> Map.iter (fun k v -> client.DefaultRequestHeaders.Add(k, v))
                 if client.DefaultRequestHeaders.Authorization = null then
                     client.DefaultRequestHeaders.Authorization <-
                         // AuthenticationHeaderValue("Bearer", "CtxfvCP31MacEZMVh8th76TwH2IflQBoFN6viKrE")
@@ -317,9 +317,8 @@ module Api =
                     configureClient printfulV2HttpClient storeHeaders
 
                     System.Console.WriteLine $"URL: {url}"
-
-                    // let! response = printfulV2HttpClient.GetAsync("catalog-products/" + url) |> Async.AwaitTask
-                    let! response = printfulV2HttpClient.GetAsync("store/products") |> Async.AwaitTask
+// + url
+                    let! response = printfulV2HttpClient.GetAsync("catalog-products/" ) |> Async.AwaitTask
                     // 291981984 - Handsy
                     System.Console.WriteLine $"RESPONSE: {response}"
 

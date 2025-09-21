@@ -610,11 +610,22 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
 
     | ShopMsg.ShopBuildYourOwnWizard msg ->
         match model.Section with
-        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow -> 
-            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (CreateYourOwnProduct.update msg byow) }
-        | _ -> 
-            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) }
-        , Cmd.none
+        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow ->
+            let newModel, childCmd = CreateYourOwnProduct.update msg byow
+            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard newModel },
+            Cmd.map ShopMsg.ShopBuildYourOwnWizard childCmd
+
+        | _ ->
+            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) },
+            Cmd.none
+
+    // | ShopMsg.ShopBuildYourOwnWizard msg ->
+    //     match model.Section with
+    //     | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow ->
+    //         let newModel, newMsg = CreateYourOwnProduct.update msg byow
+    //         { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard newModel }, Cmd.map newMsg
+    //     | _ -> 
+    //         { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) }, Cmd.none
 
     | ShopMsg.ShopStoreProductTemplates msg ->
         // match model.Section with
