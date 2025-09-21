@@ -619,21 +619,16 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
             { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) },
             Cmd.none
 
-    // | ShopMsg.ShopBuildYourOwnWizard msg ->
-    //     match model.Section with
-    //     | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow ->
-    //         let newModel, newMsg = CreateYourOwnProduct.update msg byow
-    //         { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard newModel }, Cmd.map newMsg
-    //     | _ -> 
-    //         { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) }, Cmd.none
-
     | ShopMsg.ShopStoreProductTemplates msg ->
-        // match model.Section with
-        // | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser ptb -> 
-        //     { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (CreateYourOwnProduct.update msg ptb) }
-        // | _ -> 
-        //     { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) }
-        model, Cmd.none
+        match model.Section with
+        | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser ptb ->
+            let newModel, childCmd = Components.FSharp.Pages.ProductTemplateBrowser.update msg ptb
+            { model with Section = Shared.SharedShopV2.ShopSection.ProductTemplateBrowser newModel },
+            Cmd.map ShopMsg.ShopStoreProductTemplates childCmd
+
+        | _ ->
+            { model with Section = Shared.SharedShopV2.ShopSection.ProductTemplateBrowser (Shared.SharedShopV2.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
+            Cmd.none
 
     // | UpdateCustomerForm fld ->
     //     updateCustomerField model fld, Cmd.none
@@ -1647,6 +1642,9 @@ let view (model: Shared.SharedShop.Model) (dispatch: Shared.SharedShop.ShopMsg -
         | Shared.SharedShopV2.BuildYourOwnWizard byow ->
             // collectionView dispatch
             CreateYourOwnProduct.render byow (ShopMsg.ShopBuildYourOwnWizard >> dispatch)
+        | Shared.SharedShopV2.ProductTemplateBrowser ptb ->
+            // collectionView dispatch
+            Components.FSharp.Pages.ProductTemplateBrowser.ProductTemplateBrowser ptb (ShopMsg.ShopStoreProductTemplates >> dispatch)
         // | Catalog catalogName ->
         //     // catalogView2 catalogName model dispatch
         //     match model.productTemplates with

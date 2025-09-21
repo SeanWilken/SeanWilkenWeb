@@ -3,11 +3,20 @@ module Components.FSharp.Pages.ProductTemplateBrowser
 open Feliz
 open Feliz.DaisyUI
 open Shared.SharedShopDomain
+open Elmish
 open Shared
 open Components.FSharp.Layout.Elements.Pagination
 
+
+let getAllProductTemplates (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =
+    Cmd.OfAsync.either
+        ( fun x -> Client.Api.productsApi.getProductTemplates x )
+        request
+        SharedShopV2Domain.ShopProductTemplatesMsg.GotProductTemplates
+        SharedShopV2Domain.ShopProductTemplatesMsg.FailedProductTemplates
+
 type Props = {
-    templates : Api.Printful.ProductTemplate.ProductTemplate list
+    templates : SharedShopV2.ProductTemplate.ProductTemplate list
     total : int
     limit : int
     offset : int
@@ -15,10 +24,65 @@ type Props = {
     setPage : int -> unit        // pagination handler
 }
 
-[<ReactComponent>]
-let ProductTemplateBrowser (props: Props) =
-    let (selected, setSelected) = React.useState<Api.Printful.ProductTemplate.ProductTemplate option>(None)
+let update (msg: Shared.SharedShopV2Domain.ShopProductTemplatesMsg) (model: Shared.SharedShopV2.ProductTemplate.ProductTemplateBrowser.Model) : SharedShopV2.ProductTemplate.ProductTemplateBrowser.Model * Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =
+    match msg with
+    | SharedShopV2Domain.ShopProductTemplatesMsg.GetProductTemplates ->
+        model,  
+        Shared.Api.Printful.CatalogProductRequest.toApiQuery
+            model.Paging
+            model.Filters
+        |> getAllProductTemplates
 
+    | SharedShopV2Domain.ShopProductTemplatesMsg.GotProductTemplates response ->
+        { model with 
+            Templates = response.templateItems
+            Paging = response.paging
+            Error = None
+        }, Cmd.none
+
+    | SharedShopV2Domain.ShopProductTemplatesMsg.FailedProductTemplates ex ->
+        { model with Error = Some ex.Message }, Cmd.none
+
+    | SharedShopV2Domain.ShopProductTemplatesMsg.ViewProductTemplate template ->
+        { model with SelectedTemplate = Some template }, Cmd.none
+
+    | SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection _ ->
+        { model with SelectedTemplate = None }, Cmd.none
+
+    | SharedShopV2Domain.ShopProductTemplatesMsg.Next ->
+        let newOffset = model.Paging.offset + model.Paging.limit
+        { model with Paging = { model.Paging with offset = newOffset } },
+        Cmd.ofMsg SharedShopV2Domain.ShopProductTemplatesMsg.GetProductTemplates
+
+    | SharedShopV2Domain.ShopProductTemplatesMsg.Back ->
+        let newOffset = max 0 (model.Paging.offset - model.Paging.limit)
+        { model with Paging = { model.Paging with offset = newOffset } },
+        Cmd.ofMsg SharedShopV2Domain.ShopProductTemplatesMsg.GetProductTemplates
+        
+    | SharedShopV2Domain.ShopProductTemplatesMsg.ChooseVariantSize size ->
+        // You may want to track this in the model later
+        model, Cmd.none
+
+    | SharedShopV2Domain.ShopProductTemplatesMsg.ChooseVariantColor color ->
+        // Same idea here
+        model, Cmd.none
+
+    | SharedShopV2Domain.ShopProductTemplatesMsg.AddProductToBag template ->
+        // Hook into your bag/cart domain
+        model, Cmd.none
+
+[<ReactComponent>]
+let ProductTemplateBrowser (props: SharedShopV2.ProductTemplate.ProductTemplateBrowser.Model) dispatch =
+    let (selected, setSelected) = React.useState<SharedShopV2.ProductTemplate.ProductTemplate option>(None)
+    React.useEffectOnce (
+        fun _ ->
+            dispatch SharedShopV2Domain.ShopProductTemplatesMsg.GetProductTemplates
+            // let request =
+            //     Shared.Api.Printful.CatalogProductRequest.toApiQuery
+            //         model.paging
+            //         model.query
+            // getAllProducts request |> dispatch 
+    )
     match selected with
     | Some template ->
         Html.div [
@@ -117,7 +181,7 @@ let ProductTemplateBrowser (props: Props) =
             Html.div [
                 prop.className "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
                 prop.children (
-                    props.templates
+                    props.Templates
                     |> List.map (fun template ->
                         Daisy.card [
                             prop.className "shadow-md hover:shadow-lg transition-transform hover:scale-[1.02] rounded-lg overflow-hidden"
@@ -149,10 +213,10 @@ let ProductTemplateBrowser (props: Props) =
                 prop.className "mt-8 flex justify-center"
                 prop.children [
                     Pagination {
-                        total = props.total
-                        limit = props.limit
-                        offset = props.offset
-                        onPageChange = props.setPage
+                        total = props.Paging.total
+                        limit = props.Paging.limit
+                        offset = props.Paging.offset
+                        onPageChange = fun i -> printfn "Page change: %i" i
                     }
                 ]
             ]

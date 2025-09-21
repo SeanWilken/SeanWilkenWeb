@@ -1270,6 +1270,34 @@ module SharedShopV2 =
             colors: {| Color : string; ColorCodeOpt : string option |} list
         }
 
+        type Filters = {
+            Categories: int list
+            Colors: string list
+            Sizes: string list
+            Placements: string list
+            Techniques: string list
+            OnlyNew: bool
+            SellingRegion: string option
+            DestinationCountry: string option
+            SortDirection: string option
+            SortType: string option
+        }
+
+        let defaultFilters : Filters = {
+            Categories = []
+            Colors = []
+            Sizes = []
+            Placements = []
+            Techniques = []
+            OnlyNew = false
+            SellingRegion = None
+            DestinationCountry = None
+            SortDirection = None
+            SortType = None
+        }
+
+    open PrintfulCatalog
+
     module ProductTemplate =
 
         // Fable-safe DTOs only
@@ -1326,35 +1354,7 @@ module SharedShopV2 =
             paging : PrintfulCommon.PagingInfoDTO
         }
 
-
         module ProductTemplateBrowser =
-
-            type Filters = {
-                Categories: int list
-                Colors: string list
-                Sizes: string list
-                Placements: string list
-                Techniques: string list
-                OnlyNew: bool
-                SellingRegion: string option
-                DestinationCountry: string option
-                SortDirection: string option
-                SortType: string option
-            }
-
-            let defaultFilters = {
-                Categories = []
-                Colors = []
-                Sizes = []
-                Placements = []
-                Techniques = []
-                OnlyNew = false
-                SellingRegion = None
-                DestinationCountry = None
-                SortDirection = None
-                SortType = None
-            }
-
 
             type Model = {
                 Filters: Filters
@@ -1410,7 +1410,7 @@ module SharedShopV2 =
         type Model = {
             products: PrintfulCatalog.CatalogProduct list
             paging: PrintfulCommon.PagingInfoDTO
-            query: CatalogProductsFilters
+            query: Filters
             currentStep: Step
             selectedProduct: PrintfulCatalog.CatalogProduct option
             selectedVariantSize: string option
@@ -1424,7 +1424,7 @@ module SharedShopV2 =
         let initialState () = {
             products = []
             paging = PrintfulCommon.emptyPaging
-            query = defaultCatalogProductsFilters
+            query = defaultFilters
             currentStep = SelectProduct
             selectedProduct = None
             selectedVariantSize = None
@@ -1633,18 +1633,18 @@ module Api =
                 destination_country: string option
             }
 
-            let toApiQuery (paging: PrintfulCommon.PagingInfoDTO) (stateFilters: SharedShopV2.BuildYourOwnProductWizard.CatalogProductsFilters) : CatalogProductsQuery =
+            let toApiQuery (paging: PrintfulCommon.PagingInfoDTO) (stateFilters: SharedShopV2.PrintfulCatalog.Filters) : CatalogProductsQuery =
                 {
-                    category_ids = if stateFilters.SelectedCategories |> List.isEmpty then None else Some stateFilters.SelectedCategories
-                    colors = if stateFilters.SelectedColors |> List.isEmpty then None else Some stateFilters.SelectedColors
+                    category_ids = if stateFilters.Categories |> List.isEmpty then None else Some stateFilters.Categories
+                    colors = if stateFilters.Colors |> List.isEmpty then None else Some stateFilters.Colors
                     limit = Some paging.limit
                     offset = Some paging.offset
                     newOnly = Some stateFilters.OnlyNew
-                    placements = if stateFilters.SelectedPlacements |> List.isEmpty then None else Some stateFilters.SelectedPlacements
+                    placements = if stateFilters.Placements |> List.isEmpty then None else Some stateFilters.Placements
                     selling_region_name = stateFilters.SellingRegion
                     sort_direction = stateFilters.SortDirection
                     sort_type = stateFilters.SortType
-                    techniques = if stateFilters.SelectedTechniques |> List.isEmpty then None else Some stateFilters.SelectedTechniques
+                    techniques = if stateFilters.Techniques |> List.isEmpty then None else Some stateFilters.Techniques
                     destination_country = stateFilters.DestinationCountry
                 }
 

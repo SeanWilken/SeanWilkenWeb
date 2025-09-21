@@ -77,6 +77,30 @@ module Api =
                 paging : PrintfulCommon.PagingInfoDTO
             }
 
+            type RawColorV2 = {
+                name  : string
+                value : string
+            }
+
+            type RawProductTemplateV2 = {
+                id                        : int
+                external_id               : string option
+                name                      : string
+                catalog_product_id        : int
+                created_at                : string
+                updated_at                : string
+                available_catalog_variants: int array
+                sizes                     : string array
+                colors                    : RawColorV2 array
+                // _links we can ignore or add if needed
+            }
+
+            type RawProductTemplateResponseV2 = {
+                data   : RawProductTemplateV2 array
+                extra  : string array
+                paging : PrintfulCommon.PagingInfoDTO
+            }
+
             // --- Shared DTOs (reuse types from client) ---
             type OptionData = {
                 id    : string
@@ -193,6 +217,32 @@ module Api =
                     paging = r.paging 
                 }
 
+            let mapProductTemplateV2 (raw: RawProductTemplateV2) : SharedShopV2.ProductTemplate.ProductTemplate =
+                { 
+                    id = raw.id
+                    product_id = raw.catalog_product_id
+                    external_product_id = raw.external_id
+                    title = raw.name
+                    available_variant_ids = raw.available_catalog_variants
+                    option_data = [||] // not returned in v2 list endpoint
+                    colors = 
+                        raw.colors 
+                        |> Array.map (fun c -> { color_name = c.name; color_codes = [| c.value |] })
+                    sizes = raw.sizes
+                    mockup_file_url = "" // not returned in v2 list endpoint
+                    placements = [||]
+                    created_at = System.DateTime.Parse(raw.created_at).Ticks
+                    updated_at = System.DateTime.Parse(raw.updated_at).Ticks
+                    placement_option_data = [||]
+                    design_id = None 
+                }
+
+            let mapPrintfulTemplateResponseV2 (r: RawProductTemplateResponseV2) : ProductTemplateResponse.ProductTemplatesResponse =
+                { 
+                    templateItems = r.data |> Array.map mapProductTemplateV2 |> Array.toList
+                    paging = r.paging
+                }
+
             open System.Net.Http.Headers
 
             // let private printfulHttpClient =
@@ -214,8 +264,8 @@ module Api =
                 |> Map.ofList
 
             let configureClient (client: HttpClient) (headers: Map<string, string>) =
-                // if not (client.DefaultRequestHeaders.Contains("X-PF-Store-ID")) then
-                //     headers |> Map.iter (fun k v -> client.DefaultRequestHeaders.Add(k, v))
+                if not (client.DefaultRequestHeaders.Contains("X-PF-Store-ID")) then
+                    headers |> Map.iter (fun k v -> client.DefaultRequestHeaders.Add(k, v))
                 if client.DefaultRequestHeaders.Authorization = null then
                     client.DefaultRequestHeaders.Authorization <-
                         // AuthenticationHeaderValue("Bearer", "CtxfvCP31MacEZMVh8th76TwH2IflQBoFN6viKrE")
@@ -259,15 +309,18 @@ module Api =
                 // V1 only
                 let fetchProductTemplates (queryParams: Printful.CatalogProductRequest.CatalogProductsQuery) = async {
                     let url = queryString queryParams
-                    configureClient printfulV1HttpClient storeHeaders
+                    configureClient printfulV2HttpClient storeHeaders
                     // let! response = printfulV1HttpClient.GetAsync("product-templates/" + url) |> Async.AwaitTask
-                    let! response = printfulV1HttpClient.GetAsync("product-templates/" + url) |> Async.AwaitTask
+                    // + url
+                    let! response = printfulV2HttpClient.GetAsync("product-templates/" ) |> Async.AwaitTask
                     // response.EnsureSuccessStatusCode() |> ignore
                     System.Console.WriteLine $"RESPONSE: {response}"
                     let! body = response.Content.ReadAsStringAsync() |> Async.AwaitTask
                     System.Console.WriteLine $"BODY: {body}"
-                    let raw = JsonSerializer.Deserialize<RawProductTemplateResponse>(body)
-                    return mapPrintfulTemplateResponse raw
+                    // let raw = JsonSerializer.Deserialize<RawProductTemplateResponse>(body)
+                    // return mapPrintfulTemplateResponse raw
+                    let raw = JsonSerializer.Deserialize<RawProductTemplateResponseV2>(body)
+                    return mapPrintfulTemplateResponseV2 raw
                 }
 
                 // V2 only

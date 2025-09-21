@@ -35,8 +35,8 @@
         <Compile Include="Components\FSharp\Layout\Elements\ProductGrid.fs" />
         <!-- 
         <Compile Include="Components\FSharp\Layout\Elements\ProductBrowser.fs" />
-        <Compile Include="Components\FSharp\Layout\Elements\ProductTemplateBrowser.fs" />
         -->
+        <Compile Include="Components\FSharp\Layout\Elements\ProductTemplateBrowser.fs" />
         <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\GoalRoll\GoalRoll.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\PivotPoints\PivotPoints.fs" />
