@@ -609,8 +609,10 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
             model, Cmd.ofMsg (NavigateTo section)
 
     | ShopMsg.ShopBuildYourOwnWizard msg ->
-        match model.Section with
-        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow ->
+        match model.Section, msg with
+        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard _, Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
+            model, Cmd.ofMsg (NavigateTo section)
+        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow, _ ->
             let newModel, childCmd = CreateYourOwnProduct.update msg byow
             { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard newModel },
             Cmd.map ShopMsg.ShopBuildYourOwnWizard childCmd
@@ -620,12 +622,14 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
             Cmd.none
 
     | ShopMsg.ShopStoreProductTemplates msg ->
-        match model.Section with
-        | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser ptb ->
+
+        match model.Section, msg with
+        | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser _, Shared.SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection section ->
+            model, Cmd.ofMsg (NavigateTo section)
+        | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser ptb, _ ->
             let newModel, childCmd = Components.FSharp.Pages.ProductTemplateBrowser.update msg ptb
             { model with Section = Shared.SharedShopV2.ShopSection.ProductTemplateBrowser newModel },
             Cmd.map ShopMsg.ShopStoreProductTemplates childCmd
-
         | _ ->
             { model with Section = Shared.SharedShopV2.ShopSection.ProductTemplateBrowser (Shared.SharedShopV2.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
             Cmd.none

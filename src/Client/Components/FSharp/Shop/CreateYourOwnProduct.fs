@@ -290,6 +290,12 @@ let render (model: Model) dispatch =
             // getAllProducts request |> dispatch 
     )
     Html.div [
+        Daisy.button.button [
+            prop.className "btn-sm btn-outline mb-6"
+            prop.text "← Back to Shop Type"
+            prop.onClick (fun _ ->  dispatch (Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg.SwitchSection Shared.SharedShopV2.ShopSection.ShopTypeSelector))
+        ]
+
         // Progress bar
         Daisy.progress [
             prop.className "progress progress-primary w-full mb-6"

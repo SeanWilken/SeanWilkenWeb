@@ -1237,7 +1237,7 @@ module PrintfulCommon =
     let emptyPaging = {
         total = 0
         offset = 0
-        limit = 0
+        limit = 20
     }
 
     /// Navigation links (HATEOAS from Printful)

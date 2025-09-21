@@ -167,6 +167,12 @@ let ProductTemplateBrowser (props: SharedShopV2.ProductTemplate.ProductTemplateB
 
     | None ->
         Html.div [
+            Daisy.button.button [
+                prop.className "btn-sm btn-outline mb-6"
+                prop.text "← Back to Shop Type"
+                prop.onClick (fun _ ->  dispatch (SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection SharedShopV2.ShopSection.ShopTypeSelector))
+            ]
+
             Html.div [
                 prop.className "mb-6 flex justify-between items-center"
                 prop.children [

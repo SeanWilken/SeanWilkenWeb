@@ -309,18 +309,20 @@ module Api =
                 // V1 only
                 let fetchProductTemplates (queryParams: Printful.CatalogProductRequest.CatalogProductsQuery) = async {
                     let url = queryString queryParams
-                    configureClient printfulV2HttpClient storeHeaders
-                    // let! response = printfulV1HttpClient.GetAsync("product-templates/" + url) |> Async.AwaitTask
+                    configureClient printfulV1HttpClient storeHeaders
+                    let! response = printfulV1HttpClient.GetAsync("product-templates/" + url) |> Async.AwaitTask
                     // + url
-                    let! response = printfulV2HttpClient.GetAsync("product-templates/" ) |> Async.AwaitTask
+                    // "product-templates/"
+                    // configureClient printfulV2HttpClient storeHeaders
+                    // let! response = printfulV2HttpClient.GetAsync( "product-templates/33880554" ) |> Async.AwaitTask
                     // response.EnsureSuccessStatusCode() |> ignore
                     System.Console.WriteLine $"RESPONSE: {response}"
                     let! body = response.Content.ReadAsStringAsync() |> Async.AwaitTask
                     System.Console.WriteLine $"BODY: {body}"
-                    // let raw = JsonSerializer.Deserialize<RawProductTemplateResponse>(body)
-                    // return mapPrintfulTemplateResponse raw
-                    let raw = JsonSerializer.Deserialize<RawProductTemplateResponseV2>(body)
-                    return mapPrintfulTemplateResponseV2 raw
+                    let raw = JsonSerializer.Deserialize<RawProductTemplateResponse>(body)
+                    return mapPrintfulTemplateResponse raw
+                    // let raw = JsonSerializer.Deserialize<RawProductTemplateResponseV2>(body)
+                    // return mapPrintfulTemplateResponseV2 raw
                 }
 
                 // V2 only
