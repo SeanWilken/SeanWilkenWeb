@@ -2,81 +2,73 @@ module Components.FSharp.Pages.ProductTemplateBrowser
 
 open Feliz
 open Feliz.DaisyUI
-open Shared.SharedShopDomain
-open Elmish
 open Shared
+open Elmish
+open Shared.SharedShopV2
+open Shared.SharedShopV2.ProductTemplate.ProductTemplateBrowser
+open Shared.SharedShopV2Domain
 open Components.FSharp.Layout.Elements.Pagination
 
-
-let getAllProductTemplates (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =
+let getAllProductTemplates (request: Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =
     Cmd.OfAsync.either
         ( fun x -> Client.Api.productsApi.getProductTemplates x )
         request
-        SharedShopV2Domain.ShopProductTemplatesMsg.GotProductTemplates
-        SharedShopV2Domain.ShopProductTemplatesMsg.FailedProductTemplates
+        GotProductTemplates
+        FailedProductTemplates
 
-type Props = {
-    templates : SharedShopV2.ProductTemplate.ProductTemplate list
-    total : int
-    limit : int
-    offset : int
-    loadTemplate : int -> unit   // load one by ID
-    setPage : int -> unit        // pagination handler
-}
-
-let update (msg: Shared.SharedShopV2Domain.ShopProductTemplatesMsg) (model: Shared.SharedShopV2.ProductTemplate.ProductTemplateBrowser.Model) : SharedShopV2.ProductTemplate.ProductTemplateBrowser.Model * Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =
+let update (msg: ShopProductTemplatesMsg) (model: ProductTemplate.ProductTemplateBrowser.Model) : ProductTemplate.ProductTemplateBrowser.Model * Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =
     match msg with
-    | SharedShopV2Domain.ShopProductTemplatesMsg.GetProductTemplates ->
+    | GetProductTemplates ->
         model,  
         Shared.Api.Printful.CatalogProductRequest.toApiQuery
             model.Paging
             model.Filters
         |> getAllProductTemplates
 
-    | SharedShopV2Domain.ShopProductTemplatesMsg.GotProductTemplates response ->
+    | GotProductTemplates response ->
         { model with 
             Templates = response.templateItems
             Paging = response.paging
             Error = None
         }, Cmd.none
 
-    | SharedShopV2Domain.ShopProductTemplatesMsg.FailedProductTemplates ex ->
+    | FailedProductTemplates ex ->
         { model with Error = Some ex.Message }, Cmd.none
 
-    | SharedShopV2Domain.ShopProductTemplatesMsg.ViewProductTemplate template ->
+    | ViewProductTemplate template ->
         { model with SelectedTemplate = Some template }, Cmd.none
 
-    | SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection _ ->
+    | SwitchSection _ ->
         { model with SelectedTemplate = None }, Cmd.none
 
-    | SharedShopV2Domain.ShopProductTemplatesMsg.Next ->
+    | Next ->
         let newOffset = model.Paging.offset + model.Paging.limit
         { model with Paging = { model.Paging with offset = newOffset } },
-        Cmd.ofMsg SharedShopV2Domain.ShopProductTemplatesMsg.GetProductTemplates
+        Cmd.ofMsg GetProductTemplates
 
-    | SharedShopV2Domain.ShopProductTemplatesMsg.Back ->
+    | Back ->
         let newOffset = max 0 (model.Paging.offset - model.Paging.limit)
         { model with Paging = { model.Paging with offset = newOffset } },
-        Cmd.ofMsg SharedShopV2Domain.ShopProductTemplatesMsg.GetProductTemplates
+        Cmd.ofMsg GetProductTemplates
         
-    | SharedShopV2Domain.ShopProductTemplatesMsg.ChooseVariantSize size ->
+    | ChooseVariantSize size ->
         // You may want to track this in the model later
         model, Cmd.none
 
-    | SharedShopV2Domain.ShopProductTemplatesMsg.ChooseVariantColor color ->
+    | ChooseVariantColor color ->
         // Same idea here
         model, Cmd.none
 
-    | SharedShopV2Domain.ShopProductTemplatesMsg.AddProductToBag template ->
+    | AddProductToBag template ->
         // Hook into your bag/cart domain
         model, Cmd.none
 
 [<ReactComponent>]
-let ProductTemplateBrowser (props: SharedShopV2.ProductTemplate.ProductTemplateBrowser.Model) dispatch =
-    let (selected, setSelected) = React.useState<SharedShopV2.ProductTemplate.ProductTemplate option>(None)
+let ProductTemplateBrowser (props: ProductTemplate.ProductTemplateBrowser.Model) dispatch =
+    let (selected, setSelected) = React.useState<ProductTemplate.ProductTemplate option>(None)
     React.useEffectOnce (
         fun _ ->
-            dispatch SharedShopV2Domain.ShopProductTemplatesMsg.GetProductTemplates
+            dispatch GetProductTemplates
             // let request =
             //     Shared.Api.Printful.CatalogProductRequest.toApiQuery
             //         model.paging
@@ -170,7 +162,7 @@ let ProductTemplateBrowser (props: SharedShopV2.ProductTemplate.ProductTemplateB
             Daisy.button.button [
                 prop.className "btn-sm btn-outline mb-6"
                 prop.text "← Back to Shop Type"
-                prop.onClick (fun _ ->  dispatch (SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection SharedShopV2.ShopSection.ShopTypeSelector))
+                prop.onClick (fun _ ->  dispatch (SwitchSection ShopTypeSelector))
             ]
 
             Html.div [
