@@ -16,6 +16,7 @@ export default defineConfig({
     ],
     build: {
         outDir: "../../deploy/public",
+        emptyOutDir: true,
     },
     server: {
         port: 8080,

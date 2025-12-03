@@ -1,4 +1,4 @@
-name: Build SAFE app and deploy to GitHub Pages
+name: Build SAFE app (FAKE) and deploy to GitHub Pages
 
 on:
   push:
@@ -22,19 +22,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # --- .NET build (same idea as your local dotnet run, but Release) ---
+      # 1) Setup .NET and local tools (Fable, Fantomas, etc.)
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"  # or 7.x if that's what you're on
+          dotnet-version: "8.0.x"  # match your SAFE template
 
-      - name: Restore .NET
-        run: dotnet restore
+      - name: Restore dotnet tools
+        run: dotnet tool restore
+        # this should restore dotnet-fable etc. from .config/dotnet-tools.json
 
-      - name: Build .NET (Release)
-        run: dotnet build -c Release
-
-      # --- Node + pnpm for the Vite/Fable client ---
+      # 2) Setup Node + pnpm (needed by the build.fs targets)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -46,24 +44,16 @@ jobs:
       - name: Show pnpm version
         run: pnpm --version
 
-      - name: Install client dependencies
-        working-directory: src/Client     # ⬅️ adjust if your package.json is elsewhere
-        run: pnpm install --frozen-lockfile
+      # 3) Run the FAKE build target "Bundle"
+      # This is the CI equivalent of: dotnet run bundle
+      - name: Run FAKE Bundle target
+        run: dotnet run bundle
+        # run from repo root so paths like src/Client, deploy, etc. line up
 
-      - name: Build client (Vite)
-        working-directory: src/Client     # ⬅️ same here
-        run: pnpm run build
-        # This should use your vite.config and output to ../../deploy/public
-
-      # If you're doing SPA-style routing and want deep links to work, you can uncomment:
-      # - name: SPA fallback
-      #   run: cp deploy/public/index.html deploy/public/404.html
-
+      # 4) Upload static site at deploy/public for GitHub Pages
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # Must match your Vite build.outDir from the repo root
-          # vite.config: outDir: "../../deploy/public" → repo path: ./deploy/public
           path: ./deploy/public
 
   deploy:

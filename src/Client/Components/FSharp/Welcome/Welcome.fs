@@ -48,7 +48,7 @@ let viewMain (dispatch: Msg -> unit) =
                 prop.className "hero-content flex-col lg:flex-row-reverse"
                 prop.children [
                     Html.img [
-                        prop.src "./imgs/Harlot.jpeg"
+                        prop.src "./img/SeanWilkenProfile.png"
                         prop.className "max-w-sm rounded-full shadow-2xl w-48 h-48 object-cover mb-6 lg:mb-0"
                         prop.alt "Profile Picture"
                     ]
