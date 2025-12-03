@@ -609,20 +609,30 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
             model, Cmd.ofMsg (NavigateTo section)
 
     | ShopMsg.ShopBuildYourOwnWizard msg ->
-        match model.Section with
-        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow -> 
-            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (CreateYourOwnProduct.update msg byow) }
-        | _ -> 
-            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) }
-        , Cmd.none
+        match model.Section, msg with
+        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard _, Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
+            model, Cmd.ofMsg (NavigateTo section)
+        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow, _ ->
+            let newModel, childCmd = CreateYourOwnProduct.update msg byow
+            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard newModel },
+            Cmd.map ShopMsg.ShopBuildYourOwnWizard childCmd
+
+        | _ ->
+            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) },
+            Cmd.none
 
     | ShopMsg.ShopStoreProductTemplates msg ->
-        // match model.Section with
-        // | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser ptb -> 
-        //     { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (CreateYourOwnProduct.update msg ptb) }
-        // | _ -> 
-        //     { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) }
-        model, Cmd.none
+
+        match model.Section, msg with
+        | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser _, Shared.SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection section ->
+            model, Cmd.ofMsg (NavigateTo section)
+        | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser ptb, _ ->
+            let newModel, childCmd = Components.FSharp.Pages.ProductTemplateBrowser.update msg ptb
+            { model with Section = Shared.SharedShopV2.ShopSection.ProductTemplateBrowser newModel },
+            Cmd.map ShopMsg.ShopStoreProductTemplates childCmd
+        | _ ->
+            { model with Section = Shared.SharedShopV2.ShopSection.ProductTemplateBrowser (Shared.SharedShopV2.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
+            Cmd.none
 
     // | UpdateCustomerForm fld ->
     //     updateCustomerField model fld, Cmd.none
@@ -1636,6 +1646,9 @@ let view (model: Shared.SharedShop.Model) (dispatch: Shared.SharedShop.ShopMsg -
         | Shared.SharedShopV2.BuildYourOwnWizard byow ->
             // collectionView dispatch
             CreateYourOwnProduct.render byow (ShopMsg.ShopBuildYourOwnWizard >> dispatch)
+        | Shared.SharedShopV2.ProductTemplateBrowser ptb ->
+            // collectionView dispatch
+            Components.FSharp.Pages.ProductTemplateBrowser.ProductTemplateBrowser ptb (ShopMsg.ShopStoreProductTemplates >> dispatch)
         // | Catalog catalogName ->
         //     // catalogView2 catalogName model dispatch
         //     match model.productTemplates with

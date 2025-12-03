@@ -934,282 +934,6 @@ module SharedWelcome =
 
 
 module SharedShopDomain =
-
-    /// Simplified type for displaying catalog products in your app
-    // type CatalogProduct = {
-    //     id: int
-    //     name: string
-    //     thumbnailURL: string
-    //     description: string option
-    //     brand: string option
-    //     model: string option
-    //     variantCount: int
-    //     isDiscontinued: bool
-    //     sizes: string list
-    //     colors: {| Color : string; ColorCodeOpt : string option |} list
-    // }
-
-    
-    
-    // type ProductColor =
-    //     | White
-    //     | Black
-    //     | Ash
-    //     | Asphalt
-    //     | Aqua
-    //     | CharcoalGray
-    //     | Gold
-    //     | Maroon
-    //     | Mustard
-    //     | Navy
-    //     | Red
-    //     | Silver
-    //     | AthleticHeather
-    //     | BlackHeather
-    //     | DarkGreyHeather
-    //     | DeepHeather
-    //     | HeatherDarkGray
-    //     | HeatherOlive
-    //     | HeatherBlue
-    //     | HeatherNavy
-    //     | DarkHeather
-    //     | HeatherRaspberry
-    //     | HeatherDust
-    //     | HeatherDeepTeal
-    //     | NoColor of string
-
-    // type ProductSize =
-    //     | XS
-    //     | S
-    //     | XS_S
-    //     | M
-    //     | L
-    //     | M_L
-    //     | XL
-    //     | XXL
-    //     | XXXL
-    //     | XXXXL
-    //     | OSFA
-    //     | NoSize of string
-
-    // type ProductOption =
-    //     | ProductSize
-    //     | ProductColor
-
-    // type CollectionTag =
-    //     | Limited
-    //     | Unlimited
-
-    //     member x.toString() =
-    //         match x with
-    //         | Limited -> "Limited"
-    //         | Unlimited -> "Unlimited"
-
-    // type ProductClass =
-    //     | TShirts
-    //     | LongSleeves
-    //     | Sweaters
-    //     | Hoodies
-    //     | Hats
-    //     | NoClass
-
-
-    // type PlacementDimension = {
-    //     placement: string
-    //     height: float
-    //     width: float
-    //     orientation: string
-    // }
-
-    // type HateoasLink = {
-    //     href : string
-    // }
-
-    // type VariantLinks = {
-    //     self: HateoasLink
-    //     productVariants: HateoasLink
-    //     productDetails: HateoasLink
-    //     variantPrices: HateoasLink
-    //     variantImages: HateoasLink
-    // }
-
-    // type ProductVariant = {
-    //     name: string
-    //     id: int
-    //     price: string
-    // }
-
-    // type CatalogVariant = {
-    //     id: int
-    //     productId: int
-    //     name: string
-    //     size: string
-    //     color: string option
-    //     imageUrl: string
-    //     placements: PlacementDimension array
-    //     links: VariantLinks
-    // }
-
-    // type StateCode =
-    //     | NY
-    //     | CA
-    //     | FL
-    //     | TX
-    //     | NO_STATE
-
-    // type CountryCode =
-    //     | US
-    //     | MEX
-    //     | CAN
-    //     | NO_COUNTRY
-
-    // type CustomerAddress = {
-    //     firstName: string
-    //     lastName: string
-    //     streetAddress: string
-    //     city: string
-    //     stateCode: StateCode
-    //     countryCode: CountryCode
-    //     zipCode: int
-    // }
-
-    // type OrderType =
-    //     | Order
-    //     | Draft
-
-    // type Customer = {
-    //     firstName: string
-    //     lastName: string
-    //     userName: string
-    //     password: string
-    //     savedShippingAddress: CustomerAddress option
-    //     orders: (OrderType * int) list
-    // }
-
-    // type CustomerSignUpForm = {
-    //     firstName: string
-    //     lastName: string
-    //     userName: string
-    //     password: string
-    //     confirmPassword: string
-    // }
-
-    // let defaultCustomerSignUpForm = {
-    //     firstName = ""
-    //     lastName = ""
-    //     userName = ""
-    //     password = ""
-    //     confirmPassword = ""
-    // }
-
-    // type CustomerAddressForm = {
-    //     firstName: string
-    //     lastName: string
-    //     streetAddress: string
-    //     city: string
-    //     stateCode: string
-    //     countryCode: string
-    //     zipCode: string
-    // }
-
-    // let defaultCustomerAddressForm = {
-    //     firstName = ""
-    //     lastName = ""
-    //     streetAddress = ""
-    //     city = ""
-    //     stateCode = ""
-    //     countryCode = ""
-    //     zipCode = ""
-    // }
-
-    // type RequestResponse =
-    //     | SuccessfulRequest of string
-    //     | FailedRequest of string
-
-    // type SignUpRequestResponse =
-    //     | SignUpSuccess of Customer
-    //     | SignUpFailed of RequestResponse list
-
-    // type UserSignUpFormField =
-    //     | FirstNameField of string
-    //     | LastNameField of string
-    //     | UserNameField of string
-    //     | PasswordField of string
-    //     | ConfirmPasswordField of string
-
-    // type CustomerAddressFormField =
-    //     | ShippingFirstNameField of string
-    //     | ShippingLastNameField of string
-    //     | ShippingStreetAddressField of string
-    //     | ShippingCityField of string
-    //     | ShippingStateCodeField of string
-    //     | ShippingCountryCodeField of string
-    //     | ShippingZipCodeField of string
-
-    // type OrderItem = {
-    //     externalVariantId : string
-    //     itemQuantity : int
-    //     itemRetailPrice : string
-    // }
-
-    // type OrderCosts = {
-    //     orderSubTotal : string
-    //     orderShipping : string
-    //     orderTaxRate : string
-    //     orderTax : string
-    //     orderTotal : string
-    // }
-
-    // type CustomerDraftOrder = {
-    //     recipient : CustomerAddressForm
-    //     orderItems : OrderItem list
-    //     orderCosts : OrderCosts
-    // }
-
-
-    // type SyncProductVariant = {
-    //     externalSyncVariantId : string
-    //     variantName : string
-    //     variantSize : ProductSize
-    //     variantColor : ProductColor
-    //     variantPrice : float
-    //     variantHeroImagePath : string
-    //     variantAltImagePaths : string list
-    // }
-
-    // type SyncProduct = {
-    //     name : string
-    //     collectionTag : CollectionTag
-    //     syncProductId : int
-    //     syncProductHeroImagePath : string
-    //     syncProductAltImagePaths : string list
-    //     productVariations : SyncProductVariant list
-    // }
-
-    // type ProductCollection = {
-    //     collectionName : string
-    //     collectionTag : CollectionTag
-    //     products : SyncProduct list
-    // }
-
-    // type SyncVariationLookup =
-    //     | Successful of SyncProductVariant
-    //     | Failed of string
-
-    // type ShopSection =
-    //     | ShopLanding
-    //     | Storefront
-    //     | ProductTemplates
-    //     | Customize
-    //     | Catalog of string
-    //     | Product of string * int
-    //     | ShoppingBag
-    //     | Checkout
-    //     | Payment
-    //     | Social
-    //     | Contact
-    //     | NotFound
-
         
     type QuantityAdjustment =
         | Increment
@@ -1237,7 +961,7 @@ module PrintfulCommon =
     let emptyPaging = {
         total = 0
         offset = 0
-        limit = 0
+        limit = 20
     }
 
     /// Navigation links (HATEOAS from Printful)
@@ -1269,6 +993,34 @@ module SharedShopV2 =
             sizes: string list
             colors: {| Color : string; ColorCodeOpt : string option |} list
         }
+
+        type Filters = {
+            Categories: int list
+            Colors: string list
+            Sizes: string list
+            Placements: string list
+            Techniques: string list
+            OnlyNew: bool
+            SellingRegion: string option
+            DestinationCountry: string option
+            SortDirection: string option
+            SortType: string option
+        }
+
+        let defaultFilters : Filters = {
+            Categories = []
+            Colors = []
+            Sizes = []
+            Placements = []
+            Techniques = []
+            OnlyNew = false
+            SellingRegion = None
+            DestinationCountry = None
+            SortDirection = None
+            SortType = None
+        }
+
+    open PrintfulCatalog
 
     module ProductTemplate =
 
@@ -1326,35 +1078,7 @@ module SharedShopV2 =
             paging : PrintfulCommon.PagingInfoDTO
         }
 
-
         module ProductTemplateBrowser =
-
-            type Filters = {
-                Categories: int list
-                Colors: string list
-                Sizes: string list
-                Placements: string list
-                Techniques: string list
-                OnlyNew: bool
-                SellingRegion: string option
-                DestinationCountry: string option
-                SortDirection: string option
-                SortType: string option
-            }
-
-            let defaultFilters = {
-                Categories = []
-                Colors = []
-                Sizes = []
-                Placements = []
-                Techniques = []
-                OnlyNew = false
-                SellingRegion = None
-                DestinationCountry = None
-                SortDirection = None
-                SortType = None
-            }
-
 
             type Model = {
                 Filters: Filters
@@ -1410,7 +1134,7 @@ module SharedShopV2 =
         type Model = {
             products: PrintfulCatalog.CatalogProduct list
             paging: PrintfulCommon.PagingInfoDTO
-            query: CatalogProductsFilters
+            query: Filters
             currentStep: Step
             selectedProduct: PrintfulCatalog.CatalogProduct option
             selectedVariantSize: string option
@@ -1424,7 +1148,7 @@ module SharedShopV2 =
         let initialState () = {
             products = []
             paging = PrintfulCommon.emptyPaging
-            query = defaultCatalogProductsFilters
+            query = defaultFilters
             currentStep = SelectProduct
             selectedProduct = None
             selectedVariantSize = None
@@ -1458,7 +1182,6 @@ module SharedShopV2Domain =
         
         module CatalogProduct =
 
-            open SharedShopDomain
             open PrintfulCommon
 
             type ProductLinks = {
@@ -1533,7 +1256,6 @@ module SharedShopV2Domain =
                 sizes = p.sizes |> List.ofArray
                 colors = p.colors |> Array.map (fun c -> {| Color = c.name; ColorCodeOpt = c.value |} ) |> Array.toList
             }
-
         
         /// API response shaped for the client
         type CatalogProductsResponse = {
@@ -1633,18 +1355,18 @@ module Api =
                 destination_country: string option
             }
 
-            let toApiQuery (paging: PrintfulCommon.PagingInfoDTO) (stateFilters: SharedShopV2.BuildYourOwnProductWizard.CatalogProductsFilters) : CatalogProductsQuery =
+            let toApiQuery (paging: PrintfulCommon.PagingInfoDTO) (stateFilters: SharedShopV2.PrintfulCatalog.Filters) : CatalogProductsQuery =
                 {
-                    category_ids = if stateFilters.SelectedCategories |> List.isEmpty then None else Some stateFilters.SelectedCategories
-                    colors = if stateFilters.SelectedColors |> List.isEmpty then None else Some stateFilters.SelectedColors
+                    category_ids = if stateFilters.Categories |> List.isEmpty then None else Some stateFilters.Categories
+                    colors = if stateFilters.Colors |> List.isEmpty then None else Some stateFilters.Colors
                     limit = Some paging.limit
                     offset = Some paging.offset
                     newOnly = Some stateFilters.OnlyNew
-                    placements = if stateFilters.SelectedPlacements |> List.isEmpty then None else Some stateFilters.SelectedPlacements
+                    placements = if stateFilters.Placements |> List.isEmpty then None else Some stateFilters.Placements
                     selling_region_name = stateFilters.SellingRegion
                     sort_direction = stateFilters.SortDirection
                     sort_type = stateFilters.SortType
-                    techniques = if stateFilters.SelectedTechniques |> List.isEmpty then None else Some stateFilters.SelectedTechniques
+                    techniques = if stateFilters.Techniques |> List.isEmpty then None else Some stateFilters.Techniques
                     destination_country = stateFilters.DestinationCountry
                 }
 
@@ -1666,7 +1388,6 @@ module Api =
     }
 
 module SharedShop =
-    open SharedShopDomain
 
     type CartItem =
         | Template of SharedShopV2.ProductTemplate.ProductTemplate * qty:int
