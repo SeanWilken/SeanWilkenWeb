@@ -9,6 +9,7 @@ const proxyTarget = "http://localhost:" + proxyPort;
 
 // https://vitejs.dev/config/
 export default defineConfig({
+    base: "/",
     plugins: [
         tailwindcss(),
         react(),
