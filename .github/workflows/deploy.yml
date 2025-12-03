@@ -3,7 +3,7 @@ name: Deploy Vite app (pnpm) to GitHub Pages
 on:
   push:
     branches:
-      - main  # change if your default branch is different
+      - main   # change if your default branch is different
 
 permissions:
   contents: read
@@ -26,31 +26,32 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'pnpm'
+          cache: 'npm'   # cache npm so pnpm install is faster
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9 # or your pnpm major version
-          run_install: false
+      - name: Install pnpm globally
+        run: npm install -g pnpm
+
+      - name: Show pnpm version (debug)
+        run: pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-        # make sure pnpm-lock.yaml is at the repo root
-        # if your package.json is in a subfolder, we can add `working-directory: ...`
+        # if your package.json is NOT in the repo root, add:
+        # working-directory: path/to/your/frontend
 
       - name: Build Vite app
         run: pnpm run build
-        # this runs Vite, which should emit to ../../deploy/public from your vite.config
+        # add working-directory here too if needed
 
-      # If you have SPA-style routing and want all routes to hit index.html:
+      # If you're doing SPA-style routing, uncomment this so deep links work:
       # - name: SPA fallback
       #   run: cp deploy/public/index.html deploy/public/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: ./deploy/public  # must match your Vite outDir from repo root
+          # must match your Vite build.outDir from the repo root
+          path: ./deploy/public
 
   deploy:
     needs: build
