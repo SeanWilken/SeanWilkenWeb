@@ -1,4 +1,4 @@
-name: Deploy Vite app (pnpm) to GitHub Pages
+name: Build SAFE app and deploy to GitHub Pages
 
 on:
   push:
@@ -22,45 +22,31 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ---- .NET setup ----
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'   # or 7.x if your SAFE template is on 7
+
+      # ---- Node + pnpm for Fable/Vite ----
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'   # cache npm so pnpm install is faster
 
       - name: Install pnpm globally
         run: npm install -g pnpm
 
-      - name: Show pnpm version (debug)
+      - name: Show pnpm version
         run: pnpm --version
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        # if your package.json is NOT in the repo root, add:
-        # working-directory: path/to/your/frontend
+      # ---- Restore and build .NET solution ----
+      - name: Restore .NET
+        run: dotnet restore
+        # if you have multiple solutions, you can specify:
+        # run: dotnet restore YourSolution.sln
 
-      - name: Build Vite app
-        run: pnpm run build
-        # add working-directory here too if needed
-
-      # If you're doing SPA-style routing, uncomment this so deep links work:
-      # - name: SPA fallback
-      #   run: cp deploy/public/index.html deploy/public/404.html
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          # must match your Vite build.outDir from the repo root
-          path: ./deploy/public
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Build .NET (Release)
+        run: dotnet build -c Release
+        # if your build script is fake, replace these two with:
+        # run: dotne
