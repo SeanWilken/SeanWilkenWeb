@@ -21,7 +21,7 @@ let tileContents: TileContent list = [
             Beyond the technical, this site reflects my commitment to clarity, usability, and developer experience. Every page is crafted to be both informative and interactive, with real code experiments and demos you can launch and explore.
         """
         Icon = LucideIcon.BookOpen "w-6 h-6"
-        Image = Some "/img/josh-boak-unsplash-overview.jpg"
+        Image = Some "./img/josh-boak-unsplash-overview.jpg"
     }
     {
         Title = "Industry"
@@ -34,7 +34,7 @@ let tileContents: TileContent list = [
             Whether it's mentoring junior developers, leading code reviews, or architecting new features, I bring a focus on quality, communication, and long-term value. My experience covers web, cloud, and desktop, with a passion for automation and developer tooling.
         """
         Icon = LucideIcon.Briefcase "w-6 h-6"
-        Image = Some "/img/bernd-dittrich-unsplash-office.jpg"
+        Image = Some "./img/bernd-dittrich-unsplash-office.jpg"
     }
     {
         Title = "Personal"
@@ -47,7 +47,7 @@ let tileContents: TileContent list = [
             My personal philosophy is simple: stay curious, help others, and never stop improving. Life is best lived with a sense of adventure and a willingness to try new things.
         """
         Icon = LucideIcon.UserCircle "w-6 h-6"
-        Image = Some "/img/sailing-1.JPG"
+        Image = Some "./img/sailing-1.JPG"
     }
 ]
 
@@ -129,12 +129,12 @@ let view (model: Shared.SharedServices.Model) dispatch =
             //                 prop.className "flex flex-wrap gap-4 justify-center items-center pt-4"
             //                 prop.children [
             //                     Html.img [
-            //                         prop.src "/img/project-1-thumb.jpg"
+            //                         prop.src "./img/project-1-thumb.jpg"
             //                         prop.className "rounded-lg max-h-24 w-auto object-cover shadow"
             //                         prop.alt "Project preview"
             //                     ]
             //                     Html.img [
-            //                         prop.src "/img/project-2-thumb.jpg"
+            //                         prop.src "./img/project-2-thumb.jpg"
             //                         prop.className "rounded-lg max-h-24 w-auto object-cover shadow"
             //                         prop.alt "Project preview"
             //                     ]

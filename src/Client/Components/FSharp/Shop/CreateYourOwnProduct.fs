@@ -307,8 +307,8 @@ let render (model: Model) dispatch =
                     [
                         { id = "1"; name = "Bowing Bubbles"; imageUrl = "img/artwork/BowingBubbles.jpg" }
                         { id = "2"; name = "Caution Very Hot Colorless"; imageUrl = "img/artwork/CautionVeryHotColorless.jpg" }
-                        { id = "3"; name = "Misfortune"; imageUrl = "/img/artwork/Misfortune.png" }
-                        { id = "4"; name = "Out for Blood"; imageUrl = "/img/artwork/Out for Blood.png" }
+                        { id = "3"; name = "Misfortune"; imageUrl = "./img/artwork/Misfortune.png" }
+                        { id = "4"; name = "Out for Blood"; imageUrl = "./img/artwork/Out for Blood.png" }
                     ]
                     model.selectedDesign
                     (fun designId -> dispatch (ChooseDesign designId))

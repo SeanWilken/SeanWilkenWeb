@@ -85,7 +85,7 @@ let artCard (title: string, description: string) =
             Html.figure [
                 prop.children [
                     Html.img [
-                        prop.src ($"/img/artwork/{title}.jpeg")
+                        prop.src ($"./img/artwork/{title}.jpeg")
                         prop.alt title
                         prop.className "w-full h-64 object-cover rounded-t"
                     ]

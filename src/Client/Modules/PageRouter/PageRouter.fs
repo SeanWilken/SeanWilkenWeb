@@ -99,7 +99,6 @@ let urlParser location =
 
 let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebAppModel) : SharedWebAppModels.WebAppModel * Cmd<SharedWebAppModels.WebAppMsg> =
     match result with
-    | None
     | Some SharedPage.Page.Landing ->
         { model with CurrentAreaModel = SharedWebAppModels.Landing },
         Navigation.newUrl (toPath (Some Landing))
@@ -140,6 +139,7 @@ let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebApp
         | _ ->
             { model with CurrentAreaModel = SharedWebAppModels.Shop (SharedShop.getInitialModel area)  }
         , Navigation.newUrl (toPath (Some (Shop area)))
+    | None
     | Some SharedPage.Page.Welcome ->
         { model with CurrentAreaModel = SharedWebAppModels.Welcome },
         Navigation.newUrl (toPath (Some Welcome))

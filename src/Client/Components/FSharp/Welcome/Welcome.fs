@@ -87,26 +87,26 @@ let view2 (dispatch: Msg -> unit) =
                 prop.className "grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 justify-items-center"
                 prop.children [
                     indexTile 
-                        "/img/ales-nesetril-unsplash-dev.jpg" 
+                        "./img/ales-nesetril-unsplash-dev.jpg" 
                         SharedWebAppViewSections.AboutAppView 
                         "About: Learn more about the site and its purpose." 
                         dispatch
 
                     indexTile 
-                        "/img/walkator-unsplash-code.jpg" 
+                        "./img/walkator-unsplash-code.jpg" 
                         SharedWebAppViewSections.PortfolioAppCodeView 
                         "Code: Check out some mini games or code gists." 
                         dispatch
 
                     indexTile 
-                        "/img/nikola-duza-unsplash-shop.jpg" 
+                        "./img/nikola-duza-unsplash-shop.jpg" 
                         SharedWebAppViewSections.PortfolioAppDesignView 
                         "Designs: Check out some drawings I've done recently." 
                         dispatch
 
                     indexTile
-                        // "/img/mike-meyers-unsplash-contact.jpg" 
-                        "/img/jakub-zerdzicki-unsplash-contact.jpg"
+                        // "./img/mike-meyers-unsplash-contact.jpg" 
+                        "./img/jakub-zerdzicki-unsplash-contact.jpg"
                         SharedWebAppViewSections.ContactAppView 
                         "Contact: Let's hear it already!" 
                         dispatch
