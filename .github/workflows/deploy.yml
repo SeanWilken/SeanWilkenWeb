@@ -1,9 +1,9 @@
-name: Deploy Vite (Fable) app to GitHub Pages
+name: Deploy Vite app (pnpm) to GitHub Pages
 
 on:
   push:
     branches:
-      - main   # change if your default branch is different
+      - main  # change if your default branch is different
 
 permissions:
   contents: read
@@ -26,24 +26,27 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
+          cache: 'pnpm'
+
+      - name: Enable corepack
+        run: corepack enable
 
       - name: Install dependencies
-        run: pnpm install
-        # or: npm install / pnpm install / yarn install - match your project
+        run: pnpm install --frozen-lockfile
+        # make sure you have a pnpm-lock.yaml at the repo root
 
       - name: Build Vite app
         run: pnpm run build
-        # This should run your Vite build, which writes to ../../deploy/public relative to vite.config
+        # this will run "vite build" and output to ../../deploy/public
 
-      # OPTIONAL: SPA fallback if you use client-side routing
+      # If you have SPA-style routing and want a 404 fallback, uncomment:
       # - name: SPA fallback
       #   run: cp deploy/public/index.html deploy/public/404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # IMPORTANT: this path is from the repo root and must match your outDir
+          # IMPORTANT: this must match your Vite outDir from the repo root
           path: ./deploy/public
 
   deploy:
@@ -52,7 +55,7 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
+  
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
