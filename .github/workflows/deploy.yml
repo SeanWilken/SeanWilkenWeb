@@ -1,9 +1,9 @@
-name: Build SAFE app (FAKE) and deploy to GitHub Pages
+name: Build SAFE app and deploy to GitHub Pages
 
 on:
   push:
     branches:
-      - main  # change if your default branch is different
+      - main
 
 permissions:
   contents: read
@@ -22,17 +22,14 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 1) Setup .NET and local tools (Fable, Fantomas, etc.)
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: "8.0.x"  # match your SAFE template
+          dotnet-version: "8.0.x"
 
       - name: Restore dotnet tools
         run: dotnet tool restore
-        # this should restore dotnet-fable etc. from .config/dotnet-tools.json
 
-      # 2) Setup Node + pnpm (needed by the build.fs targets)
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -44,13 +41,9 @@ jobs:
       - name: Show pnpm version
         run: pnpm --version
 
-      # 3) Run the FAKE build target "Bundle"
-      # This is the CI equivalent of: dotnet run bundle
-      - name: Run FAKE Bundle target
+      - name: Run Bundle target
         run: dotnet run bundle
-        # run from repo root so paths like src/Client, deploy, etc. line up
 
-      # 4) Upload static site at deploy/public for GitHub Pages
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
