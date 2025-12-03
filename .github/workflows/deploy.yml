@@ -40,13 +40,10 @@ jobs:
       - name: Show pnpm version
         run: pnpm --version
 
-      # ---- Restore and build .NET solution ----
-      - name: Restore .NET
-        run: dotnet restore
-        # if you have multiple solutions, you can specify:
-        # run: dotnet restore YourSolution.sln
+      - name: Restore .NET tools
+        run: dotnet tool restore
+      
+      - name: Run FAKE bundle target
+        run: dotnet fake build -t Bundle
 
-      - name: Build .NET (Release)
-        run: dotnet build -c Release
-        # if your build script is fake, replace these two with:
-        # run: dotne
+
