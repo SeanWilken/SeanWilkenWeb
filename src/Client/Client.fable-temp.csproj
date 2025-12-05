@@ -1,0 +1,73 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--This is a temporary file used by Fable to restore dependencies.
+If you see this file in your project, you can delete it safely-->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <DefineConstants>FABLE_COMPILER</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Source Files -->
+    <None Include="postcss.config.js" />
+    <None Include="tailwind.config.js" />
+    <None Include="index.html" />
+    <None Include="paket.references" />
+    <!-- F# TSX Bindings -->
+    <Compile Include="Components\Typescript\Bindings\FramerMotion.fs" />
+    <Compile Include="Components\Typescript\Bindings\LucideIcons.fs" />
+    <Compile Include="Components\Typescript\Bindings\ParallaxComponentPortfolio.fs" />
+    <Compile Include="Components\Typescript\Bindings\PhysicsSimulation.fs" />
+    <Compile Include="Components\Typescript\Bindings\Resume.fs" />
+    <Compile Include="Components\Typescript\Bindings\ThemePicker.fs" />
+    <!-- Shared -->
+    <Compile Include="Modules\Shared\Shared.fs" />
+    <!-- Api -->
+    <Compile Include="Modules\Remoting\Api.fs" />
+    <!-- TSX Component Bindings -->
+    <Compile Include="Components\FSharp\Interop\TSXCanvas.fs" />
+    <!-- F# Components -->
+    <Compile Include="Components\FSharp\Layout\Elements\Pagination.fs" />
+    <Compile Include="Components\FSharp\Layout\Elements\ProductCard.fs" />
+    <Compile Include="Components\FSharp\Layout\Elements\ProductGrid.fs" />
+    <!-- 
+        <Compile Include="Components\FSharp\Layout\Elements\ProductBrowser.fs" />
+        -->
+    <Compile Include="Components\FSharp\Layout\Elements\ProductTemplateBrowser.fs" />
+    <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
+    <Compile Include="Components\FSharp\Portfolio\Games\GoalRoll\GoalRoll.fs" />
+    <Compile Include="Components\FSharp\Portfolio\Games\PivotPoints\PivotPoints.fs" />
+    <Compile Include="Components\FSharp\Portfolio\Games\TileSort\TileSort.fs" />
+    <Compile Include="Components\FSharp\Portfolio\Games\TileTap\TileTap.fs" />
+    <Compile Include="Components\FSharp\Layout\Elements\MultiContent.fs" />
+    <Compile Include="Components\FSharp\Shop\CreateYourOwnProduct.fs" />
+    <!-- F# Component Pages -->
+    <Compile Include="Components\FSharp\About\About.fs" />
+    <Compile Include="Components\FSharp\Services\AIAutomation\AISalesDeck.fs" />
+    <Compile Include="Components\FSharp\Services\Services.fs" />
+    <Compile Include="Components\FSharp\Portfolio\Art\ArtGallery.fs" />
+    <Compile Include="Components\FSharp\Contact\Contact.fs" />
+    <Compile Include="Components\FSharp\Portfolio\Games\CodeGallery.fs" />
+    <Compile Include="Components\FSharp\Shop\Shop.fs" />
+    <Compile Include="Components\FSharp\Portfolio\PortfolioLanding.fs" />
+    <Compile Include="Components\FSharp\Services\ServicesLanding.fs" />
+    <Compile Include="Components\FSharp\Welcome\Welcome.fs" />
+    <!-- TSX => F# Binding Pages -->
+    <Compile Include="Components\FSharp\Interop\Resume.fs" />
+    <!-- Page Router -->
+    <Compile Include="Modules\PageRouter\PageRouter.fs" />
+    <!-- Main Application Entry Point & Index -->
+    <Compile Include="Components\FSharp\Layout\NavigationMenu.fs" />
+    <Compile Include="Components\FSharp\Layout\PageLayout.fs" />
+    <Compile Include="Index.fs" />
+    <Compile Include="App.fs" />
+    <!-- Vite -->
+    <None Include="vite.config.mts" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Shared\Shared.fsproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Fable.Elmish.Browser" Version="4.1.0" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

@@ -78,11 +78,24 @@
 .terminal-output {
   opacity: 0;
   animation: fadeInOutput 0.4s ease-in forwards;
-  animation-delay: 2.2s;
+  /* animation-delay: 2.2s; */
 }
 
 .terminal-hidden {
   display: none;
+}
+
+.terminal-cursor {
+  display: inline-block;
+  width: 0.6rem;
+  height: 1rem;
+  margin-left: 2px;
+  background-color: #22c55e; /* green-500-ish */
+  animation: terminal-blink 1s step-end infinite;
+}
+
+@keyframes terminal-blink {
+  50% { opacity: 0; }
 }
 
 .powerline-prompt {

@@ -142,6 +142,20 @@ let view (dispatch: Msg -> unit) =
                             { Heading = "Maintenance & Support"; Icon = "🛠️"; Description = "Providing ongoing maintenance and support services." }
                         ]
                     }
+                    
+                    Components.Layout.LayoutElements.SectionList {
+                            Title = "🖥️ Site Stack 🖥️"
+                            Items = [
+                                "F#"
+                                "Fable"
+                                "TypeScript"
+                                "Tailwind"
+                                "DaisyUI"
+                                "Azure"
+                                "Digital Ocean"
+                                "Kubernetes"
+                            ]
+                        }
 
                     Components.Layout.LayoutElements.SectionCarousel {|
                         Title = "📰 Coming Soon 📰"
@@ -174,19 +188,6 @@ let view (dispatch: Msg -> unit) =
                         ]
                     |}
 
-                    Components.Layout.LayoutElements.SectionList {
-                            Title = "🖥️ Site Stack 🖥️"
-                            Items = [
-                                "F#"
-                                "Fable"
-                                "TypeScript"
-                                "Tailwind"
-                                "DaisyUI"
-                                "Azure"
-                                "Digital Ocean"
-                                "Kubernetes"
-                            ]
-                        }
                 ]
             ]
         ]

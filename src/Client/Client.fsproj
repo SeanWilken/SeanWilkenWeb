@@ -47,7 +47,7 @@
 
         <!-- F# Component Pages -->
         <Compile Include="Components\FSharp\About\About.fs" />
-        <Compile Include="Components\FSharp\Services\AIAutomation\AISalesDeck.fs" />
+        <Compile Include="Components\FSharp\Services\Service.fs" />
         <Compile Include="Components\FSharp\Portfolio\Art\ArtGallery.fs" />
         <Compile Include="Components\FSharp\Contact\Contact.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\CodeGallery.fs" />

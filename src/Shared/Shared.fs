@@ -862,6 +862,50 @@ module SharedDesignGallery =
 
 module SharedServices =
 
+    type ServiceFeature = { 
+        Title: string
+        Description: string 
+    }
+
+    type ServiceTier = { 
+        Name: string
+        Items: string list
+    }
+
+    type ServicePricingPlan = {
+        Name: string
+        Setup: string
+        Monthly: string
+    }
+
+    type StatTrend =
+        | Up
+        | Down
+
+    type ServiceStat = {
+        Label: string
+        Value: string 
+        Trend : StatTrend
+    }
+
+    type ServicePageModel = { 
+        Id: string
+        Name: string
+        HeroTitle: string
+        HeroSubtitle: string
+        HeroBadge: string option
+        HeroGradientClass: string
+        CoreSectionTitle: string
+        CoreFeatures: ServiceFeature list
+        TierSectionTitle: string
+        Tiers: ServiceTier list
+        PricingSectionTitle: string
+        PricingPlans: ServicePricingPlan list
+        StatsSectionTitle: string
+        Stats: ServiceStat list
+        CtaText: string 
+    }
+
     type Industry =
         | Contractor
         | Lawyer

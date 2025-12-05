@@ -5,7 +5,9 @@ open Feliz
 open Shared
 open Bindings.LucideIcon
 open Components.FSharp.Portfolio
-
+open Feliz
+open Fable.React
+open Browser.Dom
 
 let init (): SharedPortfolioGallery.Model * Cmd<SharedWebAppModels.WebAppMsg> =
     SharedPortfolioGallery.PortfolioGallery, Cmd.none
@@ -32,122 +34,194 @@ let update (msg: SharedPortfolioGallery.Msg) (model: SharedPortfolioGallery.Mode
     | _ -> SharedPortfolioGallery.PortfolioGallery, Cmd.none
 
 
-type PortfolioSplitCardStyle =
-    | SplitCodeCard
-    | SplitDesignCard
-
-let styleCardBySplitStyle cardStyle =
-    match cardStyle with
-    | SplitCodeCard -> "CODE", "generalPortfolioCodeCard"
-    | SplitDesignCard -> "DESIGN", "generalPortfolioDesignCard"
-
-// let header (title: string) (blurbs: string list) =
-//     Html.div [
-//         prop.className "text-center mb-12"
-//         prop.children [
-//             Html.h1 [ 
-//                 prop.className "text-4xl font-bold text-primary"
-//                 prop.text title
-//             ]
-//             for b in blurbs do
-//                 Html.h2 [
-//                     prop.className "text-lg text-secondary"
-//                     prop.text b
-//                 ]
-//         ]
-//     ]
+type Step =
+    { Command: string
+      Output: string
+      AfterOutputDelayMs: int }
 
 
-let headerControls dispatch =
-    Html.div [
-        prop.className "flex justify-between items-center mb-8"
-        prop.children [
-            Html.button [
-                prop.className "btn btn-ghost"
-                prop.onClick (fun _ -> dispatch SharedDesignGallery.BackToPortfolio)
-                prop.children [
-                    LucideIcon.ChevronLeft "w-6 h-6"
-                    Html.span "Back"
-                ]
-            ]
-            Html.a [
-                prop.href "https://www.instagram.com/xeroeffort/"
-                prop.target "_blank"
-                prop.className "btn btn-ghost"
-                prop.children [
-                    LucideIcon.Instagram "w-6 h-6"
-                    Html.span "Instagram"
-                ]
-            ]
-        ]
-    ]
+let steps : Step array =
+    [|
+        { Command = "dotnet tool restore"
+          Output = "restored 4 tools"
+          AfterOutputDelayMs = 2000 }
+
+        { Command = "pnpm install"
+          Output = "packages installed successfully"
+          AfterOutputDelayMs = 2000 }
+
+        { Command = "dotnet run deploy"
+          Output = "Building... OK ✅"
+          AfterOutputDelayMs = 2000 }
+
+        { Command = ""
+          Output = "Deploying to the cloud 🚀"
+          AfterOutputDelayMs = 2000 }
+
+        { Command = ""
+          Output = "Done!"
+          AfterOutputDelayMs = 0 }
+    |]
 
 [<ReactComponent>]
 let TerminalTypingAnimation () =
-    Html.div [
-        prop.className "bg-black text-green-500 font-mono rounded-lg p-4 max-w-lg mx-auto shadow-md text-sm leading-relaxed border border-green-600"
-        prop.children [
-            Html.div [
-                prop.className "terminal-line typing-line-1"
-                prop.text "> dotnet fable watch"
-            ]
-            Html.div [
-                prop.className "terminal-output"
-                prop.text "watch mode enabled..."
-            ]
-            Html.div [
-                prop.className "terminal-line typing-line-2"
-                prop.text "> pnpm install"
-            ]
-            Html.div [
-                prop.className "terminal-output"
-                prop.text "packages installed successfully"
-            ]
-            Html.div [
-                prop.className "terminal-line typing-line-3"
-                prop.text "> fake build"
-            ]
-            Html.div [
-                prop.className "terminal-output"
-                prop.text "Building... OK\nDeploying to Azure... Done"
-            ]
-            Html.span [
-                prop.className "cursor"
-            ]
-        ]
-    ]
+    let stepIndex, setStepIndex = React.useStateWithUpdater(0)
+    let charIndex, setCharIndex = React.useStateWithUpdater(0)
+    let outputShown, setOutputShown = React.useStateWithUpdater(false)
 
-[<ReactComponent>]
-let TerminalCard () =
-    Html.div [
-        prop.className "terminal-card w-full max-w-xl h-60 mx-auto overflow-hidden"
-        prop.children [
-            Html.div [
-                prop.className "terminal-header"
-                prop.children [
-                    Html.span [ prop.text "░▒▓   …/SeanWilkenWeb   main !?   v24.3.0   11:56 " ]
-                ]
-            ]
-            Html.div [
-                prop.className "terminal-body"
-                prop.children [
-                    Html.div [ prop.text "➜ echo 'Deploying project...'" ]
-                    Html.div [ prop.text "Deploying project..." ]
-                    Html.div [ prop.text "Uploading files..." ]
-                    Html.div [ prop.text "Done ✅" ]
-                    Html.div [ 
-                        prop.text "➜ "
-                        prop.className "cursor-blink"
+    // Single effect that drives the entire state machine
+    React.useEffect(
+        (fun () ->
+            if stepIndex >= steps.Length then
+                React.createDisposable ignore
+            else
+                let step = steps[stepIndex]
+                let cmdLen = step.Command.Length
+                let hasCommand =
+                    not (System.String.IsNullOrWhiteSpace step.Command)
+
+                let timeoutId =
+                    // 1) Typing the command
+                    if not outputShown && hasCommand && charIndex < cmdLen 
+                    then
+                        window.setTimeout(
+                            (fun _ ->
+                                setCharIndex(fun i -> i + 1)
+                            ),
+                            60  // typing speed
+                        )
+                    else
+                        window.setTimeout(
+                            (fun _ ->
+                                printfn "Showing output"
+                                setOutputShown(fun _ -> true)
+                            ),
+                            0
+                        )
+                React.createDisposable(fun () ->
+                    window.clearTimeout(timeoutId)
+                )
+        ),
+        [| box stepIndex; box charIndex;|]
+    )
+
+    React.useEffect(
+        (fun () ->
+            if stepIndex >= steps.Length then
+                React.createDisposable ignore
+            else
+                let step = steps[stepIndex]
+
+                let timeoutId =
+                    window.setTimeout(
+                        (fun _ ->
+                            printfn "Advancing to next step"
+                            setCharIndex(fun _ -> 0)
+                            setOutputShown(fun _ -> false)
+                            setStepIndex(fun i -> i + 1)
+                        ),
+                        step.AfterOutputDelayMs
+                    )
+
+                React.createDisposable(fun () ->
+                    window.clearTimeout(timeoutId)
+                )
+        ),
+        [| box outputShown |]
+    )
+
+    // Render all fully completed steps (command + output)
+    let completedSteps =
+        [
+            for i in 0 .. stepIndex - 1 do
+                let step = steps[i]
+                if not (System.String.IsNullOrWhiteSpace step.Command) then
+                    Html.div [
+                        prop.key (sprintf "cmd-%d" i)
+                        prop.className "terminal-line text-green-400"
+                        prop.text ("root@sean > " + step.Command)
                     ]
+                Html.div [
+                    prop.key (sprintf "out-%d" i)
+                    prop.className "text-green-500 whitespace-pre-line"
+                    prop.text step.Output
+                ]
+        ]
+
+    // Render current step (strictly sequential)
+    let currentStepView =
+        if stepIndex < steps.Length then
+            let step = steps[stepIndex]
+            let cmdLen = step.Command.Length
+            let hasCommand =
+                not (System.String.IsNullOrWhiteSpace step.Command)
+
+            let typed =
+                if hasCommand && charIndex <= cmdLen then
+                    step.Command.Substring(0, charIndex)
+                else
+                    step.Command
+                |> fun x -> "root@sean > " + x
+
+            React.fragment [
+                // Show command line only if we actually have one
+                if hasCommand then
+                    Html.div [
+                        prop.key "current-cmd"
+                        prop.className "terminal-line text-green-400"
+                        prop.children [
+                            Html.span [ prop.text typed ]
+                            // Cursor only on the command line while we're before the output
+                            if not outputShown then
+                                Html.span [ prop.className "terminal-cursor" ]
+                        ]
+                    ]
+
+                // Show output ONLY when outputShown = true
+                if outputShown then
+                    Html.div [
+                        prop.key "current-out"
+                        prop.className "terminal-output text-green-500 whitespace-pre-line"
+                        prop.text step.Output
+                    ]
+
+                // For output-only steps, show cursor on its own line while waiting
+                if not hasCommand && not outputShown then
+                    Html.div [
+                        prop.key "current-wait"
+                        prop.className "terminal-line text-green-400"
+                        prop.children [
+                            Html.span [ prop.text "> " ]
+                            Html.span [ prop.className "terminal-cursor" ]
+                        ]
+                    ]
+            ]
+        else
+            // All steps done – final prompt
+            Html.div [
+                prop.key "final-prompt"
+                prop.className "terminal-line text-green-400"
+                prop.children [
+                    Html.span [ prop.text "> " ]
+                    Html.span [ prop.className "terminal-cursor" ]
                 ]
             ]
+
+    Html.div [
+        prop.className
+            "bg-black text-green-500 font-mono rounded-lg p-4 max-w-lg mx-auto shadow-md text-sm leading-relaxed border border-green-600 text-left"
+        prop.style [
+            style.custom ("width", "-webkit-fill-available")
+            style.custom ("height", "-webkit-fill-available")
         ]
+        prop.children (completedSteps @ [ currentStepView ])
     ]
 
 [<ReactComponent>]
 let DesignGlassCard () =
     Html.div [
         prop.className "w-full max-w-xl h-60 mx-auto p-6 rounded-xl flex items-center justify-center glass-card"
+        prop.style [ style.custom ("width", "-webkit-fill-available"); style.custom ("height", "-webkit-fill-available"); ]
         prop.children [
             Html.h1 [
                 prop.className "text-4xl font-bold design-word tracking-wide"

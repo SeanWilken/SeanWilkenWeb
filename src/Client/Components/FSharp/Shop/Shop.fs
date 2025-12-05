@@ -862,9 +862,8 @@ let homeView (homeGifUrls: string list) dispatch =
             Html.div [
                 prop.className "homeContent satorshi-font text-lg flex flex-col gap-3"
                 prop.children [
-                    Html.p [ prop.text "Good job making it this far, but this is just the beginning." ]
                     Html.p [ prop.text "Let's just say that light you're seeing...It AIN'T the end of the tunnel...." ]
-                    Html.p [ prop.text "It would be dangerous to go alone...better grab a suitcase with some gear, some beer and call up the crew!!" ]
+                    Html.p [ prop.text "You've made it this far, now here's the gift shop..." ]
                     Html.button [
                         prop.className "btn btn-primary"
                         prop.onClick (fun _ -> dispatch (NavigateTo Shared.SharedShopV2.ShopSection.ShopTypeSelector))
@@ -1585,26 +1584,36 @@ let shopTypeSelectorView (dispatch: ShopTypeSelectorMsg -> unit) =
             ]
 
             Html.div [
-                prop.className "grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-3xl"
+                prop.className "grid grid-cols-1 gap-6 w-full max-w-3xl"
                 prop.children [
 
                     Html.div [
                         prop.className "p-6 border rounded-2xl shadow hover:shadow-lg cursor-pointer transition"
                         prop.onClick (fun _ -> dispatch (ShopTypeSelectorMsg.SwitchSection (ShopSection.BuildYourOwnWizard (BuildYourOwnProductWizard.initialState ()))))
                         prop.children [
-                            Html.h3 [ prop.className "text-xl font-semibold"; prop.text "🛠️ Build Your Own" ]
-                            Html.p [ prop.className "text-sm opacity-70"; prop.text "Customize products step by step with your own designs." ]
+                            Html.h3 [ prop.className "text-xl font-semibold"; prop.text "📅 We'll be right back!" ]
+                            // Html.hr [ prop.className "my-4" ]
+                            Html.p [ prop.className "text-md opacity-70 text-center p-2"; prop.text "Currently disabled, while we upgrade to API v2!" ]
                         ]
                     ]
 
-                    Html.div [
-                        prop.className "p-6 border rounded-2xl shadow hover:shadow-lg cursor-pointer transition"
-                        prop.onClick (fun _ -> dispatch (ShopTypeSelectorMsg.SwitchSection (ShopSection.ProductTemplateBrowser (ProductTemplate.ProductTemplateBrowser.initialModel()))))
-                        prop.children [
-                            Html.h3 [ prop.className "text-xl font-semibold"; prop.text "🛍️ Browse Store Templates" ]
-                            Html.p [ prop.className "text-sm opacity-70"; prop.text "Pick from pre-made product templates and order quickly." ]
-                        ]
-                    ]
+                    // Html.div [
+                    //     prop.className "p-6 border rounded-2xl shadow hover:shadow-lg cursor-pointer transition"
+                    //     // prop.onClick (fun _ -> dispatch (ShopTypeSelectorMsg.SwitchSection (ShopSection.BuildYourOwnWizard (BuildYourOwnProductWizard.initialState ()))))
+                    //     prop.children [
+                    //         Html.h3 [ prop.className "text-xl font-semibold text-left"; prop.text "🛠️ Build Your Own" ]
+                    //         Html.p [ prop.className "text-md opacity-70 text-center p-2"; prop.text "Customize products step by step with your own designs." ]
+                    //     ]
+                    // ]
+
+                    // Html.div [
+                    //     prop.className "p-6 border rounded-2xl shadow hover:shadow-lg cursor-pointer transition"
+                    //     // prop.onClick (fun _ -> dispatch (ShopTypeSelectorMsg.SwitchSection (ShopSection.ProductTemplateBrowser (ProductTemplate.ProductTemplateBrowser.initialModel()))))
+                    //     prop.children [
+                    //         Html.h3 [ prop.className "text-xl font-semibold text-left"; prop.text "🛍️ Browse Store Templates" ]
+                    //         Html.p [ prop.className "text-md opacity-70 text-center p-2"; prop.text "Pick from pre-made product templates and order quickly." ]
+                    //     ]
+                    // ]
                 ]
             ]
         ]

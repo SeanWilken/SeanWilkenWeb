@@ -73,6 +73,7 @@ let shopParser : Parser<SharedShopV2.ShopSection->Page,_> =
 //             map (Page.Shop ) (s "shop" </> shopParser)
 //             map Page.Welcome ( s "welcome" )
 //         ]
+
 let pageParser : Parser<Page -> Page,_> =
     oneOf [
         map Page.About (s "about")
@@ -91,7 +92,6 @@ let pageParser : Parser<Page -> Page,_> =
         map Page.Welcome (s "welcome")
         map Page.Shop (s "shop" </> shopParser)
     ]
-
 
 let urlParser location = 
     // printfn "url is: %A" location
