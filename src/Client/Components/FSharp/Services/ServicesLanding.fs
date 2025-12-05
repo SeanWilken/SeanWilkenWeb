@@ -8,36 +8,78 @@ open Shared.SharedWebAppViewSections
 open Components.FSharp.Layout.MultiContent
 
 [<ReactComponent>]
-let view (model: Shared.SharedServices.Model) dispatch =
-    Html.div [
-        prop.className ""
-        prop.children [
+let view (model: Shared.SharedServices.Model) (dispatch: WebAppMsg -> unit) =
+    React.useEffectOnce (fun () ->
+        let el = Browser.Dom.document.getElementById("inner-main-content")
+        if not (isNull el) 
+        then el.scrollTop <- 0.0
+    )
 
-            // Components.Layout.LayoutElements.SectionGrid {
-            //     Title = "🛠️ Services 🛠️"
-            //     Items = [
-            //         { Heading = "Web Development"; Icon = "🌐"; Description = "Building responsive and performant web applications." }
-            //         { Heading = "UI/UX Design"; Icon = "🎨"; Description = "Creating user-friendly interfaces and experiences." }
-            //         { Heading = "Software Integration"; Icon = "🔗"; Description = "Connecting different software systems and APIs." }
-            //         { Heading = "E-Commerce"; Icon = "🛒"; Description = "Developing online stores and payment solutions." }
-            //         { Heading = "AI Solutions"; Icon = "🤖"; Description = "Implementing AI and machine learning technologies." }
-            //         { Heading = "LLM Training"; Icon = "📚"; Description = "Training large language models for specific tasks." }
-            //         { Heading = "Cloud Deployment"; Icon = "☁️"; Description = "Deploying applications to cloud platforms." }
-            //         { Heading = "Analytics"; Icon = "📊"; Description = "Managing and optimizing data analytics processes." }
-            //         { Heading = "API Development"; Icon = "🔃"; Description = "Creating and maintaining APIs for applications." }
-            //         { Heading = "Performance Optimization"; Icon = "⚡"; Description = "Improving application performance and speed." }
-            //         { Heading = "Security Enhancements"; Icon = "🔒"; Description = "Implementing security best practices and measures." }
-            //         { Heading = "Maintenance & Support"; Icon = "🛠️"; Description = "Providing ongoing maintenance and support services." }
-            //     ]
-            // }
+    Html.div [
+        prop.children [
+            
+            if not (model.CurrentSection = ServicesLanding)
+            then
+                Html.button [
+                    prop.className "
+                        mb-10
+                        inline-flex items-center gap-2
+                        px-4 py-2
+                        rounded-xl
+                        backdrop-blur
+                        bg-base-content/10
+                        border border-base-content/20
+                        text-base-content
+                        shadow-sm
+                        hover:shadow-md
+                        hover:-translate-y-0.5
+                        transition-all duration-200
+                    "
+                    prop.onClick (fun _ -> SwitchToOtherApp(ProfessionalServicesAppView ServicesLanding) |> dispatch)
+                    prop.children [
+                        Html.span [ prop.text "←" ]
+                        Html.span [ prop.text "Back to Services" ]
+                    ]
+                ]
 
 
             match model.CurrentSection with
-            | AI ->
-                Components.FSharp.Service.AiSalesPage () // (ServicesMsg >> dispatch)
-            | _ ->
-                Components.FSharp.Service.AiSalesPage () // (ServicesMsg >> dispatch)
-                // Components.FSharp.Services.AIAutomation.AISalesDeck.AiSalesPage (ServicesMsg >> dispatch)
+            | ServicesLanding ->
+                Components.Layout.LayoutElements.SectionGrid {
+                    Title = "🛠️ Services 🛠️"
+                    Items = [
+                        // WEBSITE
+                        { Heading = "Web Development"; Icon = "🌐"; Description = "Building responsive and performant web applications."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Website) |> dispatch }
+                        { Heading = "UI/UX Design"; Icon = "🎨"; Description = "Designing clear, user-friendly interfaces and flows."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Website) |> dispatch }
+                        { Heading = "E-Commerce Sites"; Icon = "🛒"; Description = "Online stores and product pages that actually convert."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Website) |> dispatch }
+
+                        // SALES PLATFORM
+                        { Heading = "Sales & CRM Platforms"; Icon = "📈"; Description = "CRM, pipelines, and automations that support your sales motion."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView SalesPlatform) |> dispatch }
+
+                        // AI
+                        { Heading = "AI Solutions"; Icon = "🤖"; Description = "AI agents and workflows embedded into your existing tools."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView AI) |> dispatch }
+                        { Heading = "LLM Training & Tuning"; Icon = "📚"; Description = "Training and tuning LLMs around your data and processes."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView AI) |> dispatch }
+
+                        // AUTOMATION
+                        { Heading = "Automation & Workflows"; Icon = "⚙️"; Description = "Automating multi-step business processes across systems."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Automation) |> dispatch }
+
+                        // INTEGRATION
+                        { Heading = "Software Integration"; Icon = "🔗"; Description = "Connecting CRMs, ERPs, EMRs, and other core systems."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Integration) |> dispatch }
+                        { Heading = "API Development"; Icon = "🔃"; Description = "Designing and implementing robust APIs for your platform."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Integration) |> dispatch }
+
+                        // DEVELOPMENT / PLATFORM
+                        { Heading = "Cloud & Platform Delivery"; Icon = "☁️"; Description = "Deploying and running your applications in the cloud."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Development) |> dispatch }
+                        { Heading = "Analytics & Reporting"; Icon = "📊"; Description = "Dashboards and reporting for your product or operations."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Development) |> dispatch }
+                        { Heading = "Performance & Security"; Icon = "⚡"; Description = "Hardening, profiling, and tuning existing applications."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Development) |> dispatch }
+                    ]
+                }
+
+            | AI             -> Components.FSharp.Service.AiSalesPage ()
+            | Automation     -> Components.FSharp.Service.AutomationPage ()
+            | Integration    -> Components.FSharp.Service.IntegrationPage ()
+            | Website        -> Components.FSharp.Service.WebsitePage ()
+            | SalesPlatform  -> Components.FSharp.Service.SalesPlatformPage ()
+            | Development    -> Components.FSharp.Service.EngineeringPage ()
 
             Html.hr [ prop.className "my-16 border-primary/20" ]
 

@@ -28,8 +28,8 @@ let SectionList (props: SectionListProps) =
         ]
     ]
 
-type SectionGridItem = { Heading: string; Icon: string; Description: string }
-type SectionGridProps = { Title: string; Items: SectionGridItem list }
+type SectionGridItem = { Heading: string; Icon: string; Description: string; NavigateTo: unit -> unit  }
+type SectionGridProps = { Title: string; Items: SectionGridItem list; }
 
 let SectionGrid (props: SectionGridProps) =
     Html.div [
@@ -46,6 +46,7 @@ let SectionGrid (props: SectionGridProps) =
                     |> List.map (fun item ->
                         Html.div [
                             prop.className "satoshi-font bg-base-200 rounded-2xl p-8 shadow hover:shadow-lg transition"
+                            prop.onClick (fun _ -> item.NavigateTo())
                             prop.children [
                                 Html.div [
                                     prop.className "text-4xl mb-4"

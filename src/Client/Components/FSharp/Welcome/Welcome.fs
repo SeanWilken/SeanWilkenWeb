@@ -57,11 +57,11 @@ let viewMain (dispatch: Msg -> unit) =
                         prop.children [
                             Html.h1 [
                                 prop.className "clash-font text-5xl font-bold"
-                                prop.text "Welcome"
+                                prop.text "Welcome to the Functional Forge"
                             ]
                             Html.p [
                                 prop.className "py-4 text-lg"
-                                prop.text "Feel free to explore my site, check out some of my projects, art or get in touch!"
+                                prop.text "Feel free to explore my site, check out some projects, mini-games, art or get in touch!"
                             ]
                             Html.button [
                                 prop.className "btn btn-accent btn-lg"
@@ -115,6 +115,9 @@ let view2 (dispatch: Msg -> unit) =
         ]
     ]
 
+open Shared.SharedWebAppModels
+open Shared.SharedWebAppViewSections
+
 let view (dispatch: Msg -> unit) =
     Html.div [
         prop.className "flex flex-col items-center space-y-3 p-6"
@@ -128,18 +131,29 @@ let view (dispatch: Msg -> unit) =
                     Components.Layout.LayoutElements.SectionGrid {
                         Title = "🛠️ Services 🛠️"
                         Items = [
-                            { Heading = "Web Development"; Icon = "🌐"; Description = "Building responsive and performant web applications." }
-                            { Heading = "UI/UX Design"; Icon = "🎨"; Description = "Creating user-friendly interfaces and experiences." }
-                            { Heading = "Software Integration"; Icon = "🔗"; Description = "Connecting different software systems and APIs." }
-                            { Heading = "E-Commerce"; Icon = "🛒"; Description = "Developing online stores and payment solutions." }
-                            { Heading = "AI Solutions"; Icon = "🤖"; Description = "Implementing AI and machine learning technologies." }
-                            { Heading = "LLM Training"; Icon = "📚"; Description = "Training large language models for specific tasks." }
-                            { Heading = "Cloud Deployment"; Icon = "☁️"; Description = "Deploying applications to cloud platforms." }
-                            { Heading = "Analytics"; Icon = "📊"; Description = "Managing and optimizing data analytics processes." }
-                            { Heading = "API Development"; Icon = "🔃"; Description = "Creating and maintaining APIs for applications." }
-                            { Heading = "Performance Optimization"; Icon = "⚡"; Description = "Improving application performance and speed." }
-                            { Heading = "Security Enhancements"; Icon = "🔒"; Description = "Implementing security best practices and measures." }
-                            { Heading = "Maintenance & Support"; Icon = "🛠️"; Description = "Providing ongoing maintenance and support services." }
+                            // WEBSITE
+                            { Heading = "Web Development"; Icon = "🌐"; Description = "Building responsive and performant web applications."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Website) |> dispatch }
+                            { Heading = "UI/UX Design"; Icon = "🎨"; Description = "Designing clear, user-friendly interfaces and flows."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Website) |> dispatch }
+                            { Heading = "E-Commerce Sites"; Icon = "🛒"; Description = "Online stores and product pages that actually convert."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Website) |> dispatch }
+
+                            // SALES PLATFORM
+                            { Heading = "Sales & CRM Platforms"; Icon = "📈"; Description = "CRM, pipelines, and automations that support your sales motion."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView SalesPlatform) |> dispatch }
+
+                            // AI
+                            { Heading = "AI Solutions"; Icon = "🤖"; Description = "AI agents and workflows embedded into your existing tools."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView AI) |> dispatch }
+                            { Heading = "LLM Training & Tuning"; Icon = "📚"; Description = "Training and tuning LLMs around your data and processes."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView AI) |> dispatch }
+
+                            // AUTOMATION
+                            { Heading = "Automation & Workflows"; Icon = "⚙️"; Description = "Automating multi-step business processes across systems."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Automation) |> dispatch }
+
+                            // INTEGRATION
+                            { Heading = "Software Integration"; Icon = "🔗"; Description = "Connecting CRMs, ERPs, EMRs, and other core systems."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Integration) |> dispatch }
+                            { Heading = "API Development"; Icon = "🔃"; Description = "Designing and implementing robust APIs for your platform."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Integration) |> dispatch }
+
+                            // DEVELOPMENT / PLATFORM
+                            { Heading = "Cloud & Platform Delivery"; Icon = "☁️"; Description = "Deploying and running your applications in the cloud."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Development) |> dispatch }
+                            { Heading = "Analytics & Reporting"; Icon = "📊"; Description = "Dashboards and reporting for your product or operations."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Development) |> dispatch }
+                            { Heading = "Performance & Security"; Icon = "⚡"; Description = "Hardening, profiling, and tuning existing applications."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Development) |> dispatch }
                         ]
                     }
                     

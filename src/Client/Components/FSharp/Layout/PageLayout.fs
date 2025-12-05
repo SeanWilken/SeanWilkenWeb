@@ -108,6 +108,7 @@ let PageLayout (props: PageLayoutProps) =
             // Main content
             Html.div [
                 prop.className "flex flex-col flex-1 overflow-y-auto"
+                prop.id "inner-main-content"
                 prop.children [
 
                     // Mobile top nav

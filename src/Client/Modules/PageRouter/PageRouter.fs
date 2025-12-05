@@ -80,8 +80,13 @@ let pageParser : Parser<Page -> Page,_> =
         map Page.Contact (s "contact")
         map Page.Landing (s "landing")
         map Page.Landing (s "index")
-        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.SalesPlatform) (s "services-sales")
+        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.AI) (s "ai-services")
+        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Automation) (s "automation-services")
+        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Development) (s "development-services")
+        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Integration) (s "integration-services")
+        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.SalesPlatform) (s "sales-services")
         map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding) (s "services")
+        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Website) (s "web-services")
         map (Page.Portfolio PortfolioSection.PortfolioLanding) (s "portfolio")
         map (Page.Portfolio (Code CodeSection.CodeLanding)) (s "portfolio-code")
         map (Page.Portfolio Design) (s "portfolio-design")
@@ -128,7 +133,7 @@ let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebApp
         Navigation.newUrl (toPath (Some (Portfolio PortfolioSection.PortfolioLanding)))
     | Some (SharedPage.Page.Services section) ->
         { model with CurrentAreaModel = SharedWebAppModels.Services (SharedServices.getInitialModel section) },
-        Navigation.newUrl (toPath (Some (Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding)))
+        Navigation.newUrl (toPath (Some (Services section)))
     | Some SharedPage.Page.Resume ->
         { model with CurrentAreaModel = SharedWebAppModels.Resume },
         Navigation.newUrl (toPath (Some Resume))

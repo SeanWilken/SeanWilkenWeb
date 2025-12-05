@@ -879,32 +879,56 @@ module SharedServices =
     }
 
     type StatTrend =
-        | Up
-        | Down
+    | Up
+    | Down
 
-    type ServiceStat = {
-        Label: string
-        Value: string 
-        Trend : StatTrend
-    }
+    type ServiceStat =
+        { 
+            Label : string
+            Value : string
+            Trend : StatTrend }
 
-    type ServicePageModel = { 
-        Id: string
-        Name: string
-        HeroTitle: string
-        HeroSubtitle: string
-        HeroBadge: string option
-        HeroGradientClass: string
-        CoreSectionTitle: string
-        CoreFeatures: ServiceFeature list
-        TierSectionTitle: string
-        Tiers: ServiceTier list
-        PricingSectionTitle: string
-        PricingPlans: ServicePricingPlan list
-        StatsSectionTitle: string
-        Stats: ServiceStat list
-        CtaText: string 
-    }
+    type ServiceIndustry =
+        { 
+            Name        : string
+            Summary     : string
+            Outcomes    : string list }
+
+    type ServiceCapability =
+        { 
+            Heading     : string
+            Icon        : string      // emoji for now
+            Description : string }
+
+    type ServicePageModel =
+        { 
+            Id                     : string
+            Name                   : string
+            HeroTitle              : string
+            HeroSubtitle           : string
+            HeroBadge              : string option
+            HeroGradientClass      : string
+
+            CoreSectionTitle       : string
+            CoreFeatures           : ServiceFeature list
+
+            TierSectionTitle       : string
+            Tiers                  : ServiceTier list
+
+            PricingSectionTitle    : string
+            PricingPlans           : ServicePricingPlan list
+
+            StatsSectionTitle      : string
+            Stats                  : ServiceStat list
+
+            // NEW
+            IndustriesSectionTitle : string option
+            Industries             : ServiceIndustry list
+
+            CapabilitiesSectionTitle : string option
+            Capabilities             : ServiceCapability list
+
+            CtaText                : string }
 
     type Industry =
         | Contractor
