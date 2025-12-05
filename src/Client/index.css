@@ -13,10 +13,202 @@
 @tailwind components;
 @tailwind utilities;
 
+
+/* Custom Themes */
+
+@plugin "daisyui/theme" {
+  name: "jade";
+  default: false;
+  prefersdark: false;
+  color-scheme: "dark";
+  --color-base-100: oklch(27% 0.046 192.524);
+  --color-base-200: oklch(38% 0.063 188.416);
+  --color-base-300: oklch(43% 0.078 188.216);
+  --color-base-content: oklch(95% 0.051 180.801);
+  --color-primary: oklch(79% 0.209 151.711);
+  --color-primary-content: oklch(26% 0.065 152.934);
+  --color-secondary: oklch(67% 0.182 276.935);
+  --color-secondary-content: oklch(25% 0.09 281.288);
+  --color-accent: oklch(74% 0.16 232.661);
+  --color-accent-content: oklch(29% 0.066 243.157);
+  --color-neutral: oklch(27% 0.046 192.524);
+  --color-neutral-content: oklch(98% 0.014 180.72);
+  --color-info: oklch(70% 0.165 254.624);
+  --color-info-content: oklch(28% 0.091 267.935);
+  --color-success: oklch(77% 0.152 181.912);
+  --color-success-content: oklch(27% 0.046 192.524);
+  --color-warning: oklch(85% 0.199 91.936);
+  --color-warning-content: oklch(28% 0.066 53.813);
+  --color-error: oklch(71% 0.194 13.428);
+  --color-error-content: oklch(27% 0.105 12.094);
+  --radius-selector: 0.5rem;
+  --radius-field: 2rem;
+  --radius-box: 1rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 1;
+}
+
+
+
+
+@plugin "daisyui/theme" {
+  name: "quietstream";
+  default: false;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(97% 0.014 254.604);
+  --color-base-200: oklch(93% 0.032 255.585);
+  --color-base-300: oklch(88% 0.059 254.128);
+  --color-base-content: oklch(37% 0.146 265.522);
+  --color-primary: oklch(64% 0.2 131.684);
+  --color-primary-content: oklch(98% 0.031 120.757);
+  --color-secondary: oklch(54% 0.245 262.881);
+  --color-secondary-content: oklch(97% 0.014 254.604);
+  --color-accent: oklch(68% 0.162 75.834);
+  --color-accent-content: oklch(98% 0.026 102.212);
+  --color-neutral: oklch(42% 0.199 265.638);
+  --color-neutral-content: oklch(97% 0.014 254.604);
+  --color-info: oklch(54% 0.245 262.881);
+  --color-info-content: oklch(97% 0.014 254.604);
+  --color-success: oklch(59% 0.145 163.225);
+  --color-success-content: oklch(97% 0.021 166.113);
+  --color-warning: oklch(64% 0.222 41.116);
+  --color-warning-content: oklch(98% 0.016 73.684);
+  --color-error: oklch(59% 0.249 0.584);
+  --color-error-content: oklch(97% 0.014 343.198);
+  --radius-selector: 0rem;
+  --radius-field: 0.5rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+
+
+@plugin "daisyui/theme" {
+  name: "morningglow";
+  default: false;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(98% 0.022 95.277);
+  --color-base-200: oklch(96% 0.059 95.617);
+  --color-base-300: oklch(92% 0.12 95.746);
+  --color-base-content: oklch(41% 0.112 45.904);
+  --color-primary: oklch(84% 0.238 128.85);
+  --color-primary-content: oklch(27% 0.072 132.109);
+  --color-secondary: oklch(75% 0.183 55.934);
+  --color-secondary-content: oklch(26% 0.079 36.259);
+  --color-accent: oklch(71% 0.203 305.504);
+  --color-accent-content: oklch(29% 0.149 302.717);
+  --color-neutral: oklch(55% 0.163 48.998);
+  --color-neutral-content: oklch(98% 0.022 95.277);
+  --color-info: oklch(60% 0.126 221.723);
+  --color-info-content: oklch(98% 0.019 200.873);
+  --color-success: oklch(64% 0.2 131.684);
+  --color-success-content: oklch(98% 0.031 120.757);
+  --color-warning: oklch(64% 0.222 41.116);
+  --color-warning-content: oklch(98% 0.016 73.684);
+  --color-error: oklch(57% 0.245 27.325);
+  --color-error-content: oklch(97% 0.013 17.38);
+  --radius-selector: 0.25rem;
+  --radius-field: 0rem;
+  --radius-box: 0.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+
+
+@plugin "daisyui/theme" {
+  name: "midnight";
+  default: false;
+  prefersdark: false;
+  color-scheme: "dark";
+  --color-base-100: oklch(14% 0.005 285.823);
+  --color-base-200: oklch(21% 0.006 285.885);
+  --color-base-300: oklch(27% 0.006 286.033);
+  --color-base-content: oklch(96% 0.001 286.375);
+  --color-primary: oklch(100% 0 0);
+  --color-primary-content: oklch(0% 0 0);
+  --color-secondary: oklch(92% 0.003 48.717);
+  --color-secondary-content: oklch(13% 0.028 261.692);
+  --color-accent: oklch(55% 0.046 257.417);
+  --color-accent-content: oklch(98% 0.003 247.858);
+  --color-neutral: oklch(14% 0 0);
+  --color-neutral-content: oklch(98% 0 0);
+  --color-info: oklch(37% 0.044 257.287);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(92% 0.084 155.995);
+  --color-success-content: oklch(27% 0.046 192.524);
+  --color-warning: oklch(82% 0.189 84.429);
+  --color-warning-content: oklch(27% 0.077 45.635);
+  --color-error: oklch(70% 0.191 22.216);
+  --color-error-content: oklch(25% 0.092 26.042);
+  --radius-selector: 2rem;
+  --radius-field: 2rem;
+  --radius-box: 2rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 1;
+  --noise: 0;
+}
+
+
+@plugin "daisyui/theme" {
+  name: "oatgrain";
+  default: false;
+  prefersdark: false;
+  color-scheme: "dark";
+  --color-base-100: #AA996A;
+  --color-base-200: #C9BC97;
+  --color-base-300: #D8C095;
+  --color-base-content: oklch(98% 0.026 102.212);
+  --color-primary: #D8C095;
+  --color-primary-content: oklch(47% 0.114 61.907);
+  --color-secondary: oklch(98% 0.016 73.684);
+  --color-secondary-content: oklch(0% 0 0);
+  --color-accent: oklch(97% 0.071 103.193);
+  --color-accent-content: oklch(55% 0.135 66.442);
+  --color-neutral: #AA996A;
+  --color-neutral-content: oklch(95% 0.038 75.164);
+  --color-info: #AA978D;
+  --color-info-content: oklch(97% 0.014 254.604);
+  --color-success: #269930;
+  --color-success-content: oklch(98% 0.014 180.72);
+  --color-warning: oklch(66% 0.179 58.318);
+  --color-warning-content: oklch(98% 0.022 95.277);
+  --color-error: oklch(47% 0.157 37.304);
+  --color-error-content: oklch(97% 0.014 343.198);
+  --radius-selector: 0.25rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.25rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+
+
+
+
 /* Target spans inside active buttons on hover */
 .btn-active:hover span {
   transform: scale(1.25);
 }
+
+
 
 .bg-hero-gradient {
   background: linear-gradient(135deg, #6EE7B7 0%, #3B82F6 100%);

@@ -6,11 +6,14 @@ interface ThemePickerProps {
 }
 
 const themes = [
-  "light", "dark", "cupcake", "bumblebee", "emerald", "corporate",
-  "synthwave", "retro", "cyberpunk", "valentine", "halloween", "garden",
-  "forest", "aqua", "lofi", "pastel", "fantasy", "wireframe", "black",
-  "luxury", "dracula", "cmyk", "autumn", "business", "acid", "lemonade",
-  "night", "coffee", "winter", "dim", "nord", "sunset"
+  // light
+  "lofi", "light", "bumblebee", "emerald", "corporate", "fantasy", "garden", "cmyk", "winter",  "nord", "autumn",  "acid", "lemonade", "valentine",
+  // color
+  "cyberpunk", "aqua", "jade", "night", "synthwave", 
+  // dark
+  "dim", "dracula", "dark", "sunset", "halloween", "forest"
+  // , "oatgrain", "midnight", "morningglow", "quietstream"
+  // "cupcake", "retro", "pastel", "wireframe",  "black", "luxury", "business", "coffee",
 ];
 
 export const ThemePickerModal: React.FC<ThemePickerProps> = ({ isOpen, onClose }) => {
