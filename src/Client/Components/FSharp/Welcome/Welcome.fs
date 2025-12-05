@@ -84,12 +84,18 @@ let view2 (dispatch: Msg -> unit) =
                 prop.text "Explore the Site"
             ]
             Html.div [
-                prop.className "grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 justify-items-center"
+                prop.className "grid gap-8 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 justify-items-center"
                 prop.children [
                     indexTile 
                         "./img/ales-nesetril-unsplash-dev.jpg" 
                         SharedWebAppViewSections.AboutAppView 
                         "About: Learn more about the site and its purpose." 
+                        dispatch
+                    
+                    indexTile 
+                        "./img/ian-schneider-services-unsplash.jpg" 
+                        (SharedWebAppViewSections.ProfessionalServicesAppView SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding) 
+                        "Services: Learn more about what you can expect of me." 
                         dispatch
 
                     indexTile 
@@ -102,6 +108,13 @@ let view2 (dispatch: Msg -> unit) =
                         "./img/nikola-duza-unsplash-shop.jpg" 
                         SharedWebAppViewSections.PortfolioAppDesignView 
                         "Designs: Check out some drawings I've done recently." 
+                        dispatch
+
+                    indexTile
+                        // "./img/mike-meyers-unsplash-contact.jpg" 
+                        "./img/joao-ferrao-resume-unsplash.jpg"
+                        SharedWebAppViewSections.ResumeAppView 
+                        "Resume: See what I've been up to professionally." 
                         dispatch
 
                     indexTile

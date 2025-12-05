@@ -79,11 +79,7 @@ let private renderSelectedSection (content: TileContent) =
                                     prop.className "absolute inset-0 w-full h-full object-cover"
                                 ]
                                 Html.div [
-                                    prop.className "
-                                        absolute bottom-0 inset-x-0 h-24
-                                        bg-gradient-to-t from-base-100 via-base-100/40 to-transparent
-                                        pointer-events-none
-                                    "
+                                    prop.className "absolute bottom-0 inset-x-0 h-24 bg-gradient-to-t from-base-100 via-base-100/40 to-transparent pointer-events-none"
                                 ]
                             ]
                         ]
@@ -171,21 +167,21 @@ let view model dispatch =
                                 prop.className "px-3 py-1 rounded-full bg-base-200 flex items-center gap-2"
                                 prop.children [
                                     LucideIcon.Code2 "w-4 h-4 text-primary"
-                                    Html.span "≈ 9+ years building products"
+                                    Html.span "≈ 10+ years building products"
                                 ]
                             ]
                             Html.div [
                                 prop.className "px-3 py-1 rounded-full bg-base-200 flex items-center gap-2"
                                 prop.children [
                                     LucideIcon.Cloud "w-4 h-4 text-secondary"
-                                    Html.span "F#, TypeScript, SAFE stack, Azure"
+                                    Html.span "F#, TypeScript, SAFE stack, Azure, AI"
                                 ]
                             ]
                             Html.div [
                                 prop.className "px-3 py-1 rounded-full bg-base-200 flex items-center gap-2"
                                 prop.children [
                                     LucideIcon.Compass "w-4 h-4 text-accent"
-                                    Html.span "Healthcare, e-commerce, tooling"
+                                    Html.span "Healthcare, e-commerce, automation and tooling"
                                 ]
                             ]
                         ]
@@ -276,24 +272,30 @@ let view model dispatch =
                 prop.children [
                     Html.p [
                         prop.className "text-sm text-base-content/75"
-                        prop.text "If you want to see how all of this shows up in code and products, the portfolio is where the fun starts."
+                        prop.text "If you want to see how all of this shows up in code and products, the portfolio is where the fun starts, or dive right into the services offered."
                     ]
-                    Html.button [
-                        prop.className "btn btn-primary btn-md md:btn-lg"
-                        prop.text "Explore projects & demos"
-                        prop.onClick (fun _ ->
-                            dispatch (
-                                Shared.SharedWebAppModels.WebAppMsg.SwitchToOtherApp
-                                    SharedWebAppViewSections.PortfolioAppLandingView
-                            ))
-                    ]
-                    Html.button [
-                        prop.className "btn btn-primary btn-md md:btn-lg"
-                        prop.text "Explore projects & demos"
-                        prop.onClick (fun _ ->
-                            dispatch (
-                                Shared.SharedWebAppModels.WebAppMsg.SwitchToOtherApp (SharedWebAppViewSections.ProfessionalServicesAppView ServicesLanding)
-                            ))
+                    Html.div [
+                        prop.className "btn-group inline-flex gap-4"
+                        prop.children [
+
+                            Html.button [
+                                prop.className "btn btn-primary btn-md md:btn-lg"
+                                prop.text "Explore projects & demos"
+                                prop.onClick (fun _ ->
+                                    dispatch (
+                                        Shared.SharedWebAppModels.WebAppMsg.SwitchToOtherApp
+                                            SharedWebAppViewSections.PortfolioAppLandingView
+                                    ))
+                            ]
+                            Html.button [
+                                prop.className "btn btn-primary btn-md md:btn-lg"
+                                prop.text "Explore services offered"
+                                prop.onClick (fun _ ->
+                                    dispatch (
+                                        Shared.SharedWebAppModels.WebAppMsg.SwitchToOtherApp (SharedWebAppViewSections.ProfessionalServicesAppView ServicesLanding)
+                                    ))
+                            ]
+                        ]
                     ]
                 ]
             ]
