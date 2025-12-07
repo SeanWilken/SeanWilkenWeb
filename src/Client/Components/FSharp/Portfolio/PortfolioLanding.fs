@@ -209,19 +209,15 @@ let TerminalTypingAnimation () =
 
     Html.div [
         prop.className
-            "bg-black text-green-500 font-mono rounded-lg p-4 max-w-lg mx-auto shadow-md text-sm leading-relaxed border border-green-600 text-left"
-        prop.style [
-            style.custom ("width", "-webkit-fill-available")
-            style.custom ("height", "-webkit-fill-available")
-        ]
+            "bg-black text-green-500 font-mono rounded-xl p-4 w-full h-56 shadow-lg text-sm leading-relaxed border border-green-600 text-left"
         prop.children (completedSteps @ [ currentStepView ])
     ]
 
 [<ReactComponent>]
 let DesignGlassCard () =
     Html.div [
-        prop.className "w-full max-w-xl h-60 mx-auto p-6 rounded-xl flex items-center justify-center glass-card"
-        prop.style [ style.custom ("width", "-webkit-fill-available"); style.custom ("height", "-webkit-fill-available"); ]
+        prop.className
+            "w-full h-56 rounded-xl flex items-center justify-center glass-card shadow-lg"
         prop.children [
             Html.h1 [
                 prop.className "text-4xl font-bold design-word tracking-wide"
@@ -230,36 +226,205 @@ let DesignGlassCard () =
         ]
     ]
 
-let portfolioTile 
-    (title: string) 
-    (description: string) 
-    (msg: SharedPortfolioGallery.Msg) 
-    (dispatch: SharedPortfolioGallery.Msg -> unit) 
-    (bgColor: string) 
-    (svgGraphic: ReactElement) =
-    
+
+[<ReactComponent>]
+let GithubProfileCard () =
     Html.div [
-        prop.className "group card h-[26rem] bg-base-200 shadow-xl cursor-pointer transition-transform hover:scale-[1.02]"
+        prop.className "rounded-2xl border border-base-200 bg-base-100/80 shadow-md flex flex-col overflow-hidden"
+        prop.children [
+            // gradient header strip
+            Html.div [
+                prop.className "h-2 w-full shrink-0 rounded-t-2xl bg-gradient-to-r from-primary via-secondary to-accent"
+            ]
+
+            Html.div [
+                prop.className "p-4 sm:p-5 space-y-4 flex-1 flex flex-col"
+                prop.children [
+
+                    // avatar + name
+                    Html.div [
+                        prop.className "flex items-center gap-3"
+                        prop.children [
+                            Html.div [
+                                prop.className "w-10 h-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-semibold"
+                                prop.text "SW"
+                            ]
+                            Html.div [
+                                prop.children [
+                                    Html.div [
+                                        prop.className "text-sm font-semibold"
+                                        prop.text "Sean Wilken"
+                                    ]
+                                    Html.div [
+                                        prop.className "text-xs text-base-content/70"
+                                        prop.text "@seanwilken"
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+
+                    Html.p [
+                        prop.className "text-xs text-base-content/80"
+                        prop.text "F# / TypeScript engineer building healthcare systems, tools, and playful experiments."
+                    ]
+
+                    // stats row
+                    // Html.div [
+                    //     prop.className "flex gap-6 text-[11px] text-base-content/70"
+                    //     prop.children [
+                    //         Html.div [
+                    //             prop.className "space-y-0.5"
+                    //             prop.children [
+                    //                 Html.div [ prop.className "font-semibold text-sm"; prop.text "120+" ]
+                    //                 Html.div [ prop.text "Repos" ]
+                    //             ]
+                    //         ]
+                    //         Html.div [
+                    //             prop.className "space-y-0.5"
+                    //             prop.children [
+                    //                 Html.div [ prop.className "font-semibold text-sm"; prop.text "40+" ]
+                    //                 Html.div [ prop.text "Pinned projects" ]
+                    //             ]
+                    //         ]
+                    //         Html.div [
+                    //             prop.className "space-y-0.5"
+                    //             prop.children [
+                    //                 Html.div [ prop.className "font-semibold text-sm"; prop.text "10+ yrs" ]
+                    //                 Html.div [ prop.text "In production" ]
+                    //             ]
+                    //         ]
+                    //     ]
+                    // ]
+
+                    // focus areas
+                    Html.div [
+                        prop.className "space-y-1"
+                        prop.children [
+                            Html.div [
+                                prop.className "text-[11px] font-semibold uppercase tracking-wide text-base-content/60"
+                                prop.text "Focus"
+                            ]
+                            Html.div [
+                                prop.className "flex flex-wrap gap-2"
+                                prop.children [
+                                    Html.span [ prop.className "badge badge-ghost badge-xs"; prop.text "Healthcare" ]
+                                    Html.span [ prop.className "badge badge-ghost badge-xs"; prop.text "AI & automation" ]
+                                    Html.span [ prop.className "badge badge-ghost badge-xs"; prop.text "E-Commerce" ]
+                                    Html.span [ prop.className "badge badge-ghost badge-xs"; prop.text "Dev tools" ]
+                                ]
+                            ]
+                        ]
+                    ]
+
+                    // core stack
+                    Html.div [
+                        prop.className "space-y-1"
+                        prop.children [
+                            Html.div [
+                                prop.className "text-[11px] font-semibold uppercase tracking-wide text-base-content/60"
+                                prop.text "Interests"
+                            ]
+                            Html.div [
+                                prop.className "flex flex-wrap gap-1.5 text-[11px]"
+                                prop.children [
+                                    Html.span [ prop.className "badge badge-outline badge-xs"; prop.text "F#" ]
+                                    Html.span [ prop.className "badge badge-outline badge-xs"; prop.text "AI" ]
+                                    Html.span [ prop.className "badge badge-outline badge-xs"; prop.text "Functional programming" ]
+                                    Html.span [ prop.className "badge badge-outline badge-xs"; prop.text "React" ]
+                                ]
+                            ]
+                        ]
+                    ]
+
+                    // currently building
+                    Html.div [
+                        prop.className "space-y-1"
+                        prop.children [
+                            Html.div [
+                                prop.className "text-[11px] font-semibold uppercase tracking-wide text-base-content/60"
+                                prop.text "Currently building"
+                            ]
+                            Html.ul [
+                                prop.className "text-[11px] text-base-content/75 space-y-0.5 list-disc list-inside"
+                                prop.children [
+                                    Html.li [ prop.text "Trauma registry submission tooling" ]
+                                    Html.li [ prop.text "AI-powered automation & reminders" ]
+                                    Html.li [ prop.text "Interactive portfolio & code demos" ]
+                                ]
+                            ]
+                        ]
+                    ]
+
+                    Html.div [
+                        prop.className "pt-2 mt-auto"
+                        prop.children [
+                            Html.a [
+                                prop.className "btn btn-xs sm:btn-sm btn-outline w-full justify-center gap-2"
+                                prop.href "https://github.com/seanwilken"
+                                prop.target "_blank"
+                                prop.children [
+                                    LucideIcon.Github "w-3 h-3"
+                                    Html.span [ prop.text "View GitHub profile" ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+    ]
+
+[<ReactComponent>]
+let ArtworkStrip (title: string) =
+    Html.div [
+        prop.className "w-full rounded-xl glass-card flex items-center justify-center py-3"
+        prop.children [
+            Html.span [
+                prop.className "text-lg font-semibold design-word tracking-wide"
+                prop.text title
+            ]
+        ]
+    ]
+
+let portfolioTile
+    (title: string)
+    (description: string)
+    (msg: SharedPortfolioGallery.Msg)
+    (dispatch: SharedPortfolioGallery.Msg -> unit)
+    (accentClass: string)
+    (icon: ReactElement) =
+
+    Html.div [
+        prop.className
+            "group card bg-base-200/60 border border-base-300/70 shadow-sm hover:shadow-md cursor-pointer transition-transform hover:-translate-y-[2px] h-full"
         prop.onClick (fun _ -> dispatch msg)
         prop.children [
             Html.div [
-                prop.className "card-body items-center text-center justify-between"
+                prop.className "card-body gap-3"
                 prop.children [
-                    svgGraphic
-                    Html.h2 [ 
-                        prop.className $"card-title text-2xl text-{bgColor}"
-                        prop.text title
+                    Html.div [
+                        prop.className "flex items-center gap-3"
+                        prop.children [
+                            Html.div [
+                                prop.className $"inline-flex items-center justify-center w-9 h-9 rounded-full bg-{accentClass}/10 text-{accentClass}"
+                                prop.children [ icon ]
+                            ]
+                            ArtworkStrip title
+                        ]
                     ]
+
                     Html.p [
                         prop.className "text-sm text-base-content/80"
                         prop.text description
                     ]
+
                     Html.div [
-                        prop.className "mt-4"
+                        prop.className "pt-1"
                         prop.children [
                             Html.span [
-                                prop.className $"btn btn-outline btn-{bgColor} btn-sm"
-                                prop.text $"See {title}"
+                                prop.className $"link link-hover text-{accentClass} text-xs font-medium"
+                                prop.text $"Open {title} gallery →"
                             ]
                         ]
                     ]
@@ -271,43 +436,176 @@ let portfolioTile
 let view model dispatch =
     match model with
     | SharedPortfolioGallery.PortfolioGallery ->
-        Html.div [
-            prop.className "max-w-6xl mx-auto px-6 py-16"
+        Html.section [
+            prop.className "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-12"
             prop.children [
                 Html.div [
-                    prop.className "text-center mb-16 space-y-4"
+                    prop.className "card bg-base-100/80 overflow-hidden"
                     prop.children [
-                        Html.h1 [
-                            prop.className "text-5xl font-extrabold tracking-tight text-primary"
-                            prop.text "My Projects"
+                        Html.div [
+                            prop.className "card-body p-6 sm:p-8 lg:p-10 space-y-8"
+                            prop.children [
+
+                                // FULL-WIDTH TOP STRIP (uses that empty space)
+                                Html.div [
+                                    prop.className "flex flex-wrap items-center gap-2 text-xs font-medium"
+                                    prop.children [
+                                        Html.span [
+                                            prop.className "px-3 py-1 rounded-full bg-primary/10 text-primary"
+                                            prop.text "Portfolio"
+                                        ]
+                                        Html.span [
+                                            prop.className "px-3 py-1 rounded-full bg-base-200 text-base-content/80"
+                                            prop.text "Code • Design • Experiments"
+                                        ]
+                                    ]
+                                ]
+
+                                // 2/3 – 1/3 GRID: left copy, right GitHub profile
+                                Html.div [
+                                    // 1 col on mobile, 8 cols from md and up
+                                    prop.className "flex p-2"
+                                    prop.children [
+
+                                        // LEFT: text + CTAs (5/8 ≈ 2/3)
+                                        Html.div [
+                                            prop.className "space-y-6 md:col-span-5"
+                                            prop.children [
+                                                Html.h1 [
+                                                    prop.className "text-4xl sm:text-5xl font-extrabold"
+                                                    prop.text "Ideas that evolve. Builds that ship. Sketches that breathe."
+                                                ]
+
+                                                Html.p [
+                                                    prop.className "text-base-content/80 max-w-xl"
+                                                    prop.text
+                                                        "A living collection of the things I build: production-grade F# systems, playful code experiments, and hand-drawn artwork. Browse by what you care about most, or dive straight into the galleries."
+                                                ]
+
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-3"
+                                                    prop.children [
+                                                        Html.div [
+                                                            prop.className "badge badge-outline gap-1"
+                                                            prop.children [
+                                                                LucideIcon.Code2 "w-3 h-3"
+                                                                Html.span [ prop.text "Engineering" ]
+                                                            ]
+                                                        ]
+                                                        Html.div [
+                                                            prop.className "badge badge-outline gap-1"
+                                                            prop.children [
+                                                                LucideIcon.PenTool "w-3 h-3"
+                                                                Html.span [ prop.text "Design & Art" ]
+                                                            ]
+                                                        ]
+                                                        Html.div [
+                                                            prop.className "badge badge-outline gap-1"
+                                                            prop.children [
+                                                                LucideIcon.FlaskConical "w-3 h-3"
+                                                                Html.span [ prop.text "Experiments" ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-3 pt-2"
+                                                    prop.children [
+                                                        Html.button [
+                                                            prop.className "btn btn-primary btn-lg gap-2"
+                                                            prop.onClick (fun _ ->
+                                                                dispatch (
+                                                                    SharedPortfolioGallery.LoadSection
+                                                                        SharedWebAppViewSections.AppView.PortfolioAppCodeView
+                                                                )
+                                                            )
+                                                            prop.children [
+                                                                LucideIcon.PlayCircle "w-4 h-4"
+                                                                Html.span [ prop.text "Browse code projects" ]
+                                                            ]
+                                                        ]
+
+                                                        Html.button [
+                                                            prop.className "btn btn-ghost btn-lg gap-2"
+                                                            prop.onClick (fun _ ->
+                                                                dispatch (
+                                                                    SharedPortfolioGallery.LoadSection
+                                                                        SharedWebAppViewSections.AppView.PortfolioAppDesignView
+                                                                )
+                                                            )
+                                                            prop.children [
+                                                                LucideIcon.Image "w-4 h-4"
+                                                                Html.span [ prop.text "See design & drawings" ]
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+                                                Html.div [
+                                                    prop.className "text-xs text-base-content/60 pt-2 space-x-4"
+                                                    prop.children [
+                                                        Html.span [ prop.text "10+ years shipping production systems" ]
+                                                        Html.span [ prop.text "F#, TypeScript, SAFE stack" ]
+                                                        Html.span [ prop.text "Healthcare • AI • Tools" ]
+                                                    ]
+                                                ]
+
+                                            ]
+                                        ]
+                                        Html.div [
+                                            prop.className "flex flex-wrap items-center gap-2 text-xs font-medium"
+                                            prop.children [ GithubProfileCard() ]
+                                        ]
+                                    ]
+                                ]
+                            ]
                         ]
-                        Html.p [
-                            prop.className "text-base-content/80 max-w-xl mx-auto"
-                            prop.text "Explore a collection of my work,  from playable code demos to hand-drawn designs and illustrations."
-                        ]
+
                     ]
                 ]
 
+                // BROWSE BY FOCUS (simple cards)
                 Html.div [
-                    prop.className "grid grid-cols-1 md:grid-cols-2 gap-10"
+                    prop.className "space-y-6"
                     prop.children [
 
-                        portfolioTile 
-                            "Code Experiments" 
-                            "Play games, read the source, and peek under the hood."
-                            (SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppCodeView)
-                            dispatch 
-                            "primary" 
-                            // (TerminalCard())
-                            (TerminalTypingAnimation())
+                        Html.div [
+                            prop.className "flex items-center justify-between gap-3"
+                            prop.children [
+                                Html.h2 [
+                                    prop.className "text-sm font-semibold tracking-tight"
+                                    prop.text "Browse by focus"
+                                ]
+                                Html.p [
+                                    prop.className "text-[11px] text-base-content/70"
+                                    prop.text "Pick a lane or hop between them — both galleries share the same underlying story."
+                                ]
+                            ]
+                        ]
 
-                        portfolioTile 
-                            "Design & Drawings" 
-                            "Visual explorations, anatomy, and creative sketches."
-                            (SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppDesignView)
-                            dispatch 
-                            "secondary" 
-                            (DesignGlassCard())
+                        Html.div [
+                            prop.className "grid grid-cols-1 md:grid-cols-2 gap-5"
+                            prop.children [
+                                portfolioTile
+                                    "Code Experiments"
+                                    "Interactive demos, tools, and prototypes. Play with the UI and read the source behind it."
+                                    (SharedPortfolioGallery.LoadSection
+                                        SharedWebAppViewSections.AppView.PortfolioAppCodeView)
+                                    dispatch
+                                    "primary"
+                                    (LucideIcon.Gamepad2 "w-4 h-4")
+
+                                portfolioTile
+                                    "Design & Drawings"
+                                    "Visual explorations, studies, and sketches that inform how I think about UI and products."
+                                    (SharedPortfolioGallery.LoadSection
+                                        SharedWebAppViewSections.AppView.PortfolioAppDesignView)
+                                    dispatch
+                                    "secondary"
+                                    (LucideIcon.PenTool "w-4 h-4")
+                            ]
+                        ]
+                        TerminalTypingAnimation()
                     ]
                 ]
             ]

@@ -175,7 +175,8 @@ let codeModalFooter controlList dispatch =
             )
         )
     ]
-
+    
+// Shared
 type RightHeaderIcon = {
     icon: ReactElement
     label: string
@@ -191,38 +192,41 @@ type GalleryHeaderProps = {
 // Gallery header controls with close and external link buttons
 let galleryHeaderControls (props: GalleryHeaderProps) =
     Html.div [
-        prop.className "flex justify-between items-center p-2"
+        prop.className "flex items-center justify-between mb-8"
         prop.children [
+            // Back button
             Html.button [
-                prop.className "btn btn-square btn-ghost tooltip"
-                prop.custom("data-tip", "Back")
-                // prop.onClick (fun _ -> dispatch msg)
+                prop.className "btn btn-ghost btn-sm gap-2 px-2"
+                prop.custom ("data-tip", "Back")
                 prop.onClick (fun _ -> props.onClose())
                 prop.children [
-                    LucideIcon.ChevronLeft "w-6 h-6 text-base-content"
+                    LucideIcon.ChevronLeft "w-5 h-5"
+                    Html.span [
+                        prop.className "hidden sm:inline text-sm"
+                        prop.text "Back to portfolio"
+                    ]
                 ]
             ]
-            // Html.button [
-            //     prop.className "btn btn-square btn-ghost text-error hover:text-error-content"
-            //     prop.children [
-            //         LucideIcon.ChevronLeft "w-6 h-6"
-            //     ]
-            // ]
+
+            // Right icon (Github / Instagram)
             match props.rightIcon with
             | Some icon ->
                 Html.a [
-                    match icon.externalLink with 
+                    match icon.externalLink with
+                    | Some href -> prop.href href
                     | None -> ()
-                    | Some extLink -> prop.href extLink
                     prop.target "_blank"
-                    prop.className "btn btn-ghost hover:bg-base-200"
-                    prop.title (icon.externalAlt |> Option.defaultValue "External Link")
+                    prop.className "btn btn-ghost btn-sm gap-2 hover:bg-base-200"
+                    prop.title (icon.externalAlt |> Option.defaultValue icon.label)
                     prop.children [
                         icon.icon
-                        Html.span icon.label
+                        Html.span [
+                            prop.className "sm:inline text-sm"
+                            prop.text icon.label
+                        ]
                     ]
                 ]
-            | None -> Html.none
+            | None -> Html.div [] // keeps flex spacing happy
         ]
     ]
 

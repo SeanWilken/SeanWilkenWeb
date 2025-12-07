@@ -837,40 +837,227 @@ let contentHeader (sectionTitle: string) (contentNavigation: ReactElement option
         ]
     ]
 
-let homeView (homeGifUrls: string list) dispatch =
-    let gifView =
+open Feliz
+open Shared
+open Bindings.LucideIcon
+
+// For now, just hard-code your hero video path.
+// Later we can make this configurable or pull from CMS.
+let heroVideoUrl = "/media/xero-effort-hero.mp4"
+
+// Optional: fallback image (poster) if video fails or while loading
+let heroPosterUrl = "/img/xero-effort/hero-poster.jpg"
+
+let private featuredDrops (homeGifUrls: string list) =
+    let cards =
         homeGifUrls
-        |> List.map (
-            fun link ->
-            Html.img [
-                prop.className "homeGif rounded-lg shadow-md"
-                // prop.src "https://media.giphy.com/media/3o85xxSZvFZgD4wXde/giphy.gif"
-                prop.src link
-            ]
-        )
-    Html.div [
-        prop.className "centeredView flex flex-col items-center gap-6 p-6"
+        |> List.mapi (fun idx url ->
+            Html.div [
+                prop.key (string idx)
+                prop.className
+                    "rounded-3xl overflow-hidden shadow-lg border border-base-300/60 \
+                     bg-base-100/90 hover:-translate-y-[3px] hover:shadow-xl transition-transform duration-200"
+                prop.children [
+                    Html.img [
+                        prop.src url
+                        prop.alt (sprintf "Featured drop %d" (idx + 1))
+                        prop.className "w-full h-full object-cover"
+                    ]
+                ]
+            ])
+
+    Html.section [
+        prop.className "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 space-y-4"
         prop.children [
             Html.div [
-                prop.className "contentNavigation clash-font text-xl"
-                prop.text "XERO EFFORT"
-            ]
-            Html.div [
-                prop.className "gifContainer grid md:grid-cols-2 gap-4"
-                prop.children gifView
-            ]
-            Html.div [
-                prop.className "homeContent satorshi-font text-lg flex flex-col gap-3"
+                prop.className "flex items-center justify-between gap-3"
                 prop.children [
-                    Html.p [ prop.text "Let's just say that light you're seeing...It AIN'T the end of the tunnel...." ]
-                    Html.p [ prop.text "You've made it this far, now here's the gift shop..." ]
-                    Html.button [
-                        prop.className "btn btn-primary"
-                        prop.onClick (fun _ -> dispatch (NavigateTo Shared.SharedShopV2.ShopSection.ShopTypeSelector))
-                        prop.text "Collections"
+                    Html.div [
+                        Html.h2 [
+                            prop.className "text-sm font-semibold tracking-wide uppercase"
+                            prop.text "Featured drops"
+                        ]
+                        Html.p [
+                            prop.className "text-[11px] text-base-content/60"
+                            prop.text "Just a taste. Collections go deeper."
+                        ]
                     ]
                 ]
             ]
+            Html.div [
+                prop.className "grid gap-6 md:grid-cols-2"
+                prop.children cards
+            ]
+        ]
+    ]
+
+// let hero dispatch =
+//     Html.section [
+//         prop.className
+//             "relative w-full min-h-[75vh] flex flex-col justify-center items-center \
+//              bg-black text-white overflow-hidden"
+
+//         prop.children [
+
+//             // subtle animated noise overlay (we'll add css below)
+//             Html.div [ prop.className "absolute inset-0 pointer-events-none hero-noise" ]
+
+//             Html.h1 [
+//                 prop.className "text-6xl font-black tracking-tight text-center"
+//                 prop.text "XERO EFFORT"
+//             ]
+
+//             Html.p [
+//                 prop.className "mt-3 text-sm text-white/70 uppercase tracking-[0.15em]"
+//                 prop.text "limited-time drops • never to be heard from again"
+//             ]
+
+//             Html.button [
+//                 prop.className "mt-10 btn btn-sm px-6 bg-white text-black hover:bg-white/80"
+//                 prop.onClick (fun _ -> dispatch (NavigateTo SharedShopV2.ShopSection.ShopTypeSelector))
+//                 prop.text "Enter collections →"
+//             ]
+//         ]
+//     ]
+
+
+let hero dispatch =
+    Html.section [
+        prop.className
+            "relative w-full min-h-[75vh] flex flex-col justify-center items-center \
+             bg-black text-white overflow-hidden"
+
+        prop.children [
+
+            // fog, no PNG
+            Html.div [ prop.className "fog-layer" ]
+
+            Html.h1 [
+                prop.className "text-6xl font-black tracking-tight text-center"
+                prop.text "Xero Effort"
+            ]
+            Html.h5 [
+                prop.className "mt-4 text-sm text-white/60 uppercase  text-center"
+                prop.text  "Streetwear, prints, and digital mischief for people who took one step past the EXIT sign on purpose. Out with the old, in with the new—never to be heard from again."
+            ]
+
+            Html.p [
+                prop.className "mt-4 text-sm text-white/60 uppercase tracking-[0.15em]"
+                prop.children [
+                    Html.strong [ prop.text "Limited-time drops" ]
+                    Html.text " • "
+                    Html.strong [ prop.text "No restocks" ]
+                    Html.text " • "
+                    Html.strong [ prop.text "Get it before it's gone" ]
+                ]
+                // prop.text "Limited-time drops • No restocks • Digital relics"
+            ]
+
+            Html.button [
+                prop.className "mt-10 btn btn-sm px-6 bg-white text-black hover:bg-white/80"
+                prop.onClick (fun _ -> dispatch (NavigateTo SharedShopV2.ShopSection.ShopTypeSelector))
+                prop.text "Enter collections →"
+            ]
+        ]
+    ]
+
+let shopHero dispatch =
+    Html.section [
+        prop.className
+            // "relative w-full min-h-[72vh] sm:min-h-[80vh] overflow-hidden flex items-center justify-center"
+            "relative w-full min-h-[75vh] flex flex-col justify-center items-center \
+             bg-black text-white overflow-hidden"
+        prop.children [
+
+            // 🎥 Background video
+            Html.video [
+                prop.className "absolute inset-0 w-full h-full object-cover hero-video"
+                prop.src "/videos/xero-hero.mp4"      // ⬅️ put your mp4 here
+                prop.autoPlay true
+                prop.loop true
+                prop.muted true
+                prop.playsInline true
+            ]
+
+            // 🌫 theme-tinted scrim so text is readable in all themes
+            Html.div [ prop.className "hero-scrim" ]
+
+            // 🌫 fog + 👁‍🗨 film grain (both theme-tinted via CSS vars)
+            Html.div [ prop.className "fog-layer" ]
+            Html.div [ prop.className "hero-noise" ]
+
+            // 🧊 foreground content (all using DaisyUI utility colors)
+            Html.div [
+                prop.className
+                    "relative z-10 max-w-3xl px-6 py-10 text-center space-y-4 text-base-content"
+                prop.children [
+
+                    // main title
+                    Html.h1 [
+                        prop.className
+                            "text-4xl sm:text-6xl md:text-7xl font-black leading-tight text-primary-content drop-shadow-lg"
+                        prop.text "Xero Effort"
+                    ]
+
+                    Html.h5 [
+                        prop.className "mt-4 text-sm text-white/60 uppercase  text-center"
+                        prop.text  "Streetwear, prints, and digital mischief for people who took one step past the EXIT sign on purpose. Out with the old, in with the new—never to be heard from again."
+                    ]
+                    
+                    Html.div [
+                        prop.className "flex flex-wrap items-center justify-center gap-3 text-[11px]"
+                        prop.children [
+                            Html.div [
+                                prop.className "flex flex-wrap gap-2"
+                                prop.children [
+                                    Html.span [
+                                        prop.className
+                                            "badge badge-sm badge-outline border-white/40 text-white/60"
+                                        prop.text "Limited-run drops"
+                                    ]
+                                    Html.span [
+                                        prop.className
+                                            "badge badge-sm badge-outline border-white/40 text-white/60"
+                                        prop.text "Get it before it's gone"
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+
+                    // CTA
+                    Html.div [
+                        prop.className "pt-4"
+                        prop.children [
+                            Html.button [
+                                prop.className
+                                    "btn btn-primary rounded-full px-8 gap-2 shadow-lg shadow-primary/40"
+                                prop.text "Enter collections"
+                                prop.onClick (fun _ ->
+                                    dispatch (NavigateTo Shared.SharedShopV2.ShopSection.ShopTypeSelector))
+                            ]
+                        ]
+                    ]
+
+                    // tiny disclaimer line
+                    Html.p [
+                        prop.className "text-[11px]  text-white/60 uppercase pt-2"
+                        prop.text "Limited runs. Once it's gone, it only lives in screenshots and regrets."
+                    ]
+                ]
+            ]
+        ]
+    ]
+
+
+
+let homeView (homeGifUrls: string list) dispatch =
+    Html.div [
+        prop.className "space-y-0" // hero + content stack
+        prop.children [
+            // hero dispatch
+            shopHero dispatch
+            featuredDrops homeGifUrls
         ]
     ]
 
