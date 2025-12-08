@@ -4,8 +4,8 @@ open Feliz
 open Feliz.DaisyUI
 open Shared
 open Shared.SharedShopV2
-open Client.Domain.SharedShopV2Domain
-open Client.Domain.SharedShopV2.BuildYourOwnProductWizard
+open Client.Domain.Store
+open BuildYourOwnProductWizard
 open Elmish
 
 let stepToIndex = function
@@ -253,7 +253,7 @@ let render (model: Model) dispatch =
         Daisy.button.button [
             prop.className "btn-sm btn-outline mb-6"
             prop.text "← Back to Shop Type"
-            prop.onClick (fun _ ->  dispatch (ShopBuildYourOwnProductWizardMsg.SwitchSection Client.Domain.SharedShopV2.ShopSection.ShopTypeSelector))
+            prop.onClick (fun _ ->  dispatch (ShopBuildYourOwnProductWizardMsg.SwitchSection Client.Domain.Store.ShopSection.ShopTypeSelector))
         ]
 
         // Progress bar

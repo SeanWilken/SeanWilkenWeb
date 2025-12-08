@@ -6,7 +6,7 @@ namespace Client.Components.Shop.Collection
 open Elmish
 open Feliz
 open Shared
-open Client.Domain.SharedShopV2.Collection
+open Client.Domain.Store.Collection
 open Shared.SharedShopV2.PrintfulCatalog
 
 module State =
@@ -586,19 +586,19 @@ module Collection =
         ]
 
 // Client.Domain.SharedShopV2.Collection.Msg.FeaturedClick
-    let collectionView (model: Model) (dispatch: Client.Domain.SharedShop.ShopMsg -> unit) : ReactElement =
+    let collectionView (model: Model) (dispatch: Client.Domain.Store.ShopMsg -> unit) : ReactElement =
         view {
             Products        = model.Products
             TotalCount      = model.TotalCount
-            OnViewProduct   = (fun p -> dispatch (Client.Domain.SharedShop.ShopMsg.ShopCollectionMsg (ViewProduct p)))
+            OnViewProduct   = (fun p -> dispatch (Client.Domain.Store.ShopMsg.ShopCollectionMsg (ViewProduct p)))
             OnFeaturedClick = (fun pOpt -> 
-                Client.Domain.SharedShopV2.Collection.Msg.FeaturedClick pOpt
-                |> Client.Domain.SharedShop.ShopMsg.ShopCollectionMsg 
+                FeaturedClick pOpt
+                |> Client.Domain.Store.ShopMsg.ShopCollectionMsg 
                 |> dispatch 
             )
             OnLoadMore      = (fun _ -> 
-                Client.Domain.SharedShopV2.Collection.Msg.LoadMore
-                |> Client.Domain.SharedShop.ShopMsg.ShopCollectionMsg 
+                LoadMore
+                |> Client.Domain.Store.ShopMsg.ShopCollectionMsg 
                 |> dispatch
             )
         }

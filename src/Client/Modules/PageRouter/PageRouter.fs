@@ -27,28 +27,29 @@ let toPath =
     | Some ( Services section ) -> section.toUrlString
     | Some Resume -> "/resume"
     | Some Welcome -> "/welcome"
-    | Some (Shop SharedShopV2.ShopSection.ShopLanding) -> "/shop/landing"
-    | Some (Shop SharedShopV2.ShopSection.ShopTypeSelector) -> "/shop/select"
-    | Some (Shop (SharedShopV2.ShopSection.ProductTemplateBrowser _)) -> "/shop/templates"
-    | Some (Shop (SharedShopV2.ShopSection.BuildYourOwnWizard _)) -> "/shop/build"
-    | Some (Shop SharedShopV2.ShopSection.ShoppingBag) -> "/shop/shoppingBag"
-    | Some (Shop SharedShopV2.ShopSection.Checkout) -> "/shop/checkout"
-    | Some (Shop SharedShopV2.ShopSection.Payment) -> "/shop/payment"
-    | Some (Shop SharedShopV2.ShopSection.Contact) -> "/shop/contact"
-    | Some (Shop SharedShopV2.ShopSection.Social) -> "/shop/social"
-    | Some (Shop SharedShopV2.ShopSection.NotFound) -> "/notFound"
+    | Some (Shop Store.ShopSection.ShopLanding) -> "/shop/landing"
+    | Some (Shop Store.ShopSection.ShopTypeSelector) -> "/shop/select"
+    | Some (Shop (Store.ShopSection.ProductTemplateBrowser _)) -> "/shop/templates"
+    | Some (Shop (Store.ShopSection.BuildYourOwnWizard _)) -> "/shop/build"
+    | Some (Shop Store.ShopSection.ShoppingBag) -> "/shop/shoppingBag"
+    | Some (Shop Store.ShopSection.Checkout) -> "/shop/checkout"
+    | Some (Shop Store.ShopSection.Payment) -> "/shop/payment"
+    | Some (Shop Store.ShopSection.Contact) -> "/shop/contact"
+    | Some (Shop Store.ShopSection.Social) -> "/shop/social"
+    | Some (Shop Store.ShopSection.NotFound) -> "/notFound"
     | None -> "/"
 
 
-let shopParser : Parser<SharedShopV2.ShopSection->Page,_> =
+let shopParser : Parser<Store.ShopSection->Page,_> =
     oneOf [
-        map SharedShopV2.ShopLanding (s "landing")
-        map SharedShopV2.ShopTypeSelector (s "select")
-        map (SharedShopV2.ProductTemplateBrowser (SharedShopV2.ProductTemplate.ProductTemplateBrowser.initialModel())) (s "templates")
-        map (SharedShopV2.BuildYourOwnWizard (SharedShopV2.BuildYourOwnProductWizard.initialState ())) (s "build")
-        map SharedShopV2.ShoppingBag (s "shoppingBag")
-        map SharedShopV2.Checkout (s "checkout")
-        map SharedShopV2.Payment (s "payment")
+        map Store.ShopSection.ShopLanding (s "landing")
+        map Store.ShopSection.ShopTypeSelector (s "select")
+        map (Store.ShopSection.CollectionBrowser  (Store.Collection.initModel()) ) (s "collection")
+        map (Store.ShopSection.ProductTemplateBrowser (Store.ProductTemplate.ProductTemplateBrowser.initialModel())) (s "templates")
+        map (Store.ShopSection.BuildYourOwnWizard (Store.BuildYourOwnProductWizard.initialState ())) (s "build")
+        map Store.ShopSection.ShoppingBag (s "shoppingBag")
+        map Store.ShopSection.Checkout (s "checkout")
+        map Store.ShopSection.Payment (s "payment")
     ]
 
 
@@ -141,7 +142,7 @@ let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebApp
         | SharedWebAppModels.Shop shop ->
             { model with CurrentAreaModel = SharedWebAppModels.Shop { shop with Section = area } }
         | _ ->
-            { model with CurrentAreaModel = SharedWebAppModels.Shop (SharedShop.getInitialModel area)  }
+            { model with CurrentAreaModel = SharedWebAppModels.Shop (Store.getInitialModel area)  }
         , Navigation.newUrl (toPath (Some (Shop area)))
     | None
     | Some SharedPage.Page.Welcome ->

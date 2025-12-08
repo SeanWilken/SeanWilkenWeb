@@ -9,7 +9,7 @@ open Fable.Core
 open Fable.Core.JsInterop
 open Feliz
 open Shared.SharedShopDomain
-open Client.Domain.SharedShop
+open Client.Domain.Store
 open Client.Domain
 
 
@@ -17,7 +17,7 @@ let sendMessage (_paypalOrderRef: string) : Cmd<ShopMsg> = Cmd.none
 
 
 let init shopSection =
-    Client.Domain.SharedShop.getInitialModel shopSection
+    Client.Domain.Store.getInitialModel shopSection
     , Cmd.none // getAllProducts defaultProductsRequest
 
 
@@ -25,7 +25,7 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
     match msg with
     | ShopCollectionMsg subMsg ->
         match model.Section with
-        | Client.Domain.SharedShopV2.CollectionBrowser cb ->
+        | Client.Domain.Store.CollectionBrowser cb ->
             let collectionModel, cmd' =
                 Client.Components.Shop.Collection.State.update subMsg cb
                 // Client.Components.Shop.Collection.State.update subMsg cb
@@ -34,12 +34,12 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
             { model with
                 // If you have a dedicated section for collection, use that here.
                 // For now I’ll leave Section as-is so navigation is controlled by NavigateTo.
-                Section = SharedShopV2.CollectionBrowser collectionModel },
+                Section = Store.CollectionBrowser collectionModel },
             cmd' |> Cmd.map ShopCollectionMsg
         | _ ->
             printfn $"HANDLE ME: SHOP V2: UPDATE"
             let landingModel, msg = Client.Components.Shop.Collection.State.init None
-            { model with Section = SharedShopV2.ShopSection.CollectionBrowser landingModel },
+            { model with Section = Store.ShopSection.CollectionBrowser landingModel },
             Cmd.map ShopCollectionMsg msg
     | NavigateTo section ->
         // need to do url here
@@ -49,38 +49,38 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
 
     | ShopMsg.ShopLanding msg ->
         match msg with
-        | SharedShopV2Domain.ShopLandingMsg.SwitchSection section ->
+        | Store.ShopLandingMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
 
     | ShopMsg.ShopTypeSelection msg ->
         match msg with
-        | SharedShopV2Domain.ShopTypeSelectorMsg.SwitchSection section ->
+        | Store.ShopTypeSelectorMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
 
     | ShopMsg.ShopBuildYourOwnWizard msg ->
         match model.Section, msg with
-        | SharedShopV2.ShopSection.BuildYourOwnWizard _, SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
+        | Store.ShopSection.BuildYourOwnWizard _, Store.ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
-        | SharedShopV2.ShopSection.BuildYourOwnWizard byow, _ ->
+        | Store.ShopSection.BuildYourOwnWizard byow, _ ->
             let newModel, childCmd = CreateYourOwnProduct.update msg byow
-            { model with Section = SharedShopV2.ShopSection.BuildYourOwnWizard newModel },
+            { model with Section = Store.ShopSection.BuildYourOwnWizard newModel },
             Cmd.map ShopMsg.ShopBuildYourOwnWizard childCmd
 
         | _ ->
-            { model with Section = SharedShopV2.ShopSection.BuildYourOwnWizard (SharedShopV2.BuildYourOwnProductWizard.initialState ()) },
+            { model with Section = Store.ShopSection.BuildYourOwnWizard (Store.BuildYourOwnProductWizard.initialState ()) },
             Cmd.none
 
     | ShopMsg.ShopStoreProductTemplates msg ->
 
         match model.Section, msg with
-        | SharedShopV2.ShopSection.ProductTemplateBrowser _, SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection section ->
+        | Store.ShopSection.ProductTemplateBrowser _, Store.ShopProductTemplatesMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
-        | SharedShopV2.ShopSection.ProductTemplateBrowser ptb, _ ->
+        | Store.ShopSection.ProductTemplateBrowser ptb, _ ->
             let newModel, childCmd = Components.FSharp.Pages.ProductTemplateBrowser.update msg ptb
-            { model with Section = SharedShopV2.ShopSection.ProductTemplateBrowser newModel },
+            { model with Section = Store.ShopSection.ProductTemplateBrowser newModel },
             Cmd.map ShopMsg.ShopStoreProductTemplates childCmd
         | _ ->
-            { model with Section = SharedShopV2.ShopSection.ProductTemplateBrowser (SharedShopV2.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
+            { model with Section = Store.ShopSection.ProductTemplateBrowser (Store.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
             Cmd.none
 
 let pathToTitleString (path: string) =
@@ -205,7 +205,7 @@ let hero dispatch =
 
             Html.button [
                 prop.className "mt-10 btn btn-sm px-6 bg-white text-black hover:bg-white/80"
-                prop.onClick (fun _ -> dispatch (NavigateTo SharedShopV2.ShopSection.ShopTypeSelector))
+                prop.onClick (fun _ -> dispatch (NavigateTo Store.ShopSection.ShopTypeSelector))
                 prop.text "Enter collections →"
             ]
         ]
@@ -284,7 +284,7 @@ let shopHero dispatch =
                                     "btn btn-primary rounded-full px-8 gap-2 shadow-lg shadow-primary/40"
                                 prop.text "Enter collections"
                                 prop.onClick (fun _ ->
-                                    dispatch (NavigateTo SharedShopV2.ShopSection.ShopTypeSelector))
+                                    dispatch (NavigateTo Store.ShopSection.ShopTypeSelector))
                             ]
                         ]
                     ]
@@ -358,7 +358,7 @@ let roundedGrandTotal (bag: float) (tax: float) (ship: float) : string =
 
 
 // Social page
-let socialView (dispatch: Client.Domain.SharedShop.ShopMsg -> unit) =
+let socialView (dispatch: Client.Domain.Store.ShopMsg -> unit) =
     Html.div [
         contentHeader "SOCIAL SHIT SHOW" None
         Html.div [
@@ -434,13 +434,6 @@ let contactView =
     ]
 
 
-
-// open Feliz
-open SharedShopV2
-open SharedShopV2Domain
-open Client.Domain.SharedShopV2Domain
-open Client.Domain.SharedShopV2
-
 let shopTypeSelectorView (dispatch: ShopTypeSelectorMsg -> unit) =
     Html.div [
         prop.className "flex flex-col items-center justify-center gap-8 p-8"
@@ -495,7 +488,7 @@ open Client.Components.Shop.Collection
 open Client.Components.Shop.ShopHero
 
 module LuxuryMockup =
-    open Client.Domain.SharedShopV2
+    open Client.Domain.Store
 
     type Tab =
         | Hero
@@ -506,7 +499,7 @@ module LuxuryMockup =
         | Checkout
 
     [<ReactComponent>]
-    let view model (dispatch: Client.Domain.SharedShop.ShopMsg -> unit) =
+    let view model (dispatch: Client.Domain.Store.ShopMsg -> unit) =
         let (tab, setTab) = React.useState Tab.Hero
 
         let productDetails : Product.ProductDetails =
@@ -625,6 +618,6 @@ module LuxuryMockup =
         ]
 
 // View dispatcher: select page content based on Model.CurrentPage
-let view (model: Client.Domain.SharedShop.Model) (dispatch: Client.Domain.SharedShop.ShopMsg -> unit) =
+let view (model: Client.Domain.Store.Model) (dispatch: Client.Domain.Store.ShopMsg -> unit) =
     LuxuryMockup.view model (dispatch)
        

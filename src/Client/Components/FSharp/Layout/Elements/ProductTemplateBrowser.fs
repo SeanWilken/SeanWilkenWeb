@@ -5,19 +5,18 @@ open Feliz.DaisyUI
 open Client.Domain
 open Elmish
 open Shared
-open SharedShopV2
-open SharedShopV2.ProductTemplate.ProductTemplateBrowser
-open SharedShopV2Domain
+open Store
+open Store.ProductTemplate.ProductTemplateBrowser
 open Components.FSharp.Layout.Elements.Pagination
 
-let getAllProductTemplates (request: Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =
+let getAllProductTemplates (request: Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<ShopProductTemplatesMsg> =
     Cmd.OfAsync.either
         ( fun x -> Client.Api.productsApi.getProductTemplates x )
         request
         GotProductTemplates
         FailedProductTemplates
 
-let update (msg: ShopProductTemplatesMsg) (model: ProductTemplate.ProductTemplateBrowser.Model) : ProductTemplate.ProductTemplateBrowser.Model * Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =
+let update (msg: ShopProductTemplatesMsg) (model: ProductTemplate.ProductTemplateBrowser.Model) : ProductTemplate.ProductTemplateBrowser.Model * Cmd<ShopProductTemplatesMsg> =
     match msg with
     | GetProductTemplates ->
         model,  
@@ -66,7 +65,7 @@ let update (msg: ShopProductTemplatesMsg) (model: ProductTemplate.ProductTemplat
 
 [<ReactComponent>]
 let ProductTemplateBrowser (props: ProductTemplate.ProductTemplateBrowser.Model) dispatch =
-    let (selected, setSelected) = React.useState<ProductTemplate.ProductTemplate option>(None)
+    let (selected, setSelected) = React.useState<Shared.SharedShopV2.ProductTemplate.ProductTemplate option>(None)
     React.useEffectOnce (
         fun _ ->
             dispatch GetProductTemplates

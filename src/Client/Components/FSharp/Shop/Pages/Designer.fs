@@ -2,7 +2,7 @@ namespace Client.Components.Shop
 
 open Feliz
 open Client.Components.Shop.Common
-open Client.Domain.SharedShopV2
+open Client.Domain.Store
 
 module Designer =
 

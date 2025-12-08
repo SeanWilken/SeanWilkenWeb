@@ -998,15 +998,23 @@ module SharedWelcome =
     type Msg =
         | SwitchSection of SharedWebAppViewSections.AppView
 
-// Refactor Shop Types
-module SharedShopV2 =
 
 
 
+
+
+
+
+
+module Store =
 
     open Shared.SharedShopV2.PrintfulCatalog
+    open Shared.SharedShopV2.ProductTemplate
+    open Shared.SharedShopV2Domain.ProductTemplateResponse
+    open Shared.SharedShopV2Domain.CatalogProductResponse
 
     module Collection =
+
         open Shared.SharedShopV2Domain.CatalogProductResponse
         open Shared.PrintfulCommon
 
@@ -1034,12 +1042,84 @@ module SharedShopV2 =
             | ApplyFilterPreset of string
             | SaveFilterPreset of string
 
-    module ProductTemplate =
+        let initModel () : Model = { 
+                Filters    = defaultFilters
+                Paging     = emptyPaging
+                SearchTerm = None
+                Products   = []
+                TotalCount = 0
+                IsLoading  = false
+                Error      = None 
+            }
 
+        open Elmish
+        
+        let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
+            match msg with
+            | InitFromQuery _ ->
+                // TODO: parse query → filters/paging/search
+                model, Cmd.ofMsg LoadProducts
+
+            | LoadProducts ->
+                // TODO: call client API: Client.Api.productsApi.getProducts
+                { model with IsLoading = true }, Cmd.none
+
+            | ProductsLoaded res ->
+                { model with
+                    Products   = res.products
+                    TotalCount = res.paging.total
+                    Paging     = res.paging
+                    IsLoading  = false
+                    Error      = None },
+                Cmd.none
+
+            | LoadFailed err ->
+                { model with IsLoading = false; Error = Some err }, Cmd.none
+
+            | ViewProduct _p ->
+                // The parent will handle navigation to product detail
+                model, Cmd.none
+
+            | FeaturedClick _ ->
+                // Could trigger overlay or same as ViewProduct
+                model, Cmd.none
+
+            | LoadMore ->
+                let nextPaging =
+                    { model.Paging with
+                        offset = model.Paging.offset + model.Paging.limit }
+                { model with Paging = nextPaging }, Cmd.ofMsg LoadProducts
+
+            | FiltersChanged filters ->
+                { model with Filters = filters; Paging = { model.Paging with offset = 0 } },
+                Cmd.ofMsg LoadProducts
+
+            | SearchChanged term ->
+                { model with SearchTerm = Some term; Paging = { model.Paging with offset = 0 } },
+                Cmd.ofMsg LoadProducts
+
+            | SortChanged (sortType, sortDir) ->
+                let updatedFilters =
+                    { model.Filters with
+                        SortType      = Some sortType
+                        SortDirection = Some sortDir }
+                { model with Filters = updatedFilters; Paging = { model.Paging with offset = 0 } },
+                Cmd.ofMsg LoadProducts
+
+            | ApplyFilterPreset _key ->
+                // TODO: load preset from localStorage (client-side)
+                model, Cmd.ofMsg LoadProducts
+
+            | SaveFilterPreset _key ->
+                // TODO: write preset to localStorage
+                model, Cmd.none
+
+    module ProductTemplate =
 
         module ProductTemplateBrowser =
             open Shared.PrintfulCommon
             open Shared.SharedShopV2.ProductTemplate
+            open Shared.SharedShopV2.PrintfulCatalog
 
             type Model = {
                 Filters: Filters
@@ -1061,6 +1141,7 @@ module SharedShopV2 =
 
     module BuildYourOwnProductWizard =
         open Shared.PrintfulCommon
+        open Shared.SharedShopV2.PrintfulCatalog
 
         type Step =
             | SelectProduct
@@ -1131,22 +1212,16 @@ module SharedShopV2 =
         | Social
         | Contact
         | NotFound
-
-module SharedShopV2Domain =
-    open Shared.SharedShopV2.PrintfulCatalog
-    open Shared.SharedShopV2Domain.CatalogProductResponse
-    open Shared.SharedShopV2.ProductTemplate
-    open Shared.SharedShopV2Domain.ProductTemplateResponse
-
+        
     type ShopLandingMsg =
-        | SwitchSection of SharedShopV2.ShopSection
+        | SwitchSection of ShopSection
 
     type ShopTypeSelectorMsg =
-        | SwitchSection of SharedShopV2.ShopSection
+        | SwitchSection of ShopSection
 
     // extend to have invalid state impossible
     type ShopBuildYourOwnProductWizardMsg =
-        | SwitchSection of SharedShopV2.ShopSection
+        | SwitchSection of ShopSection
         | Next
         | Back
         | ChooseProduct of CatalogProduct
@@ -1162,7 +1237,7 @@ module SharedShopV2Domain =
 
     // extend to have invalid state impossible
     type ShopProductTemplatesMsg =
-        | SwitchSection of SharedShopV2.ShopSection
+        | SwitchSection of ShopSection
         | Next
         | Back
         | ViewProductTemplate of ProductTemplate
@@ -1172,16 +1247,10 @@ module SharedShopV2Domain =
         | GotProductTemplates of ProductTemplatesResponse
         | FailedProductTemplates of exn
         | AddProductToBag of ProductTemplate
-
-
-module SharedShop =
-    open Shared.SharedShopV2.ProductTemplate
-
     type CartItem =
         | Template of ProductTemplate * qty:int
         // below is awful
-        | Custom of SharedShopV2.BuildYourOwnProductWizard.Model * qty:int
-
+        | Custom of BuildYourOwnProductWizard.Model * qty:int
 
     // message types we need
     type ShopMsg =
@@ -1218,63 +1287,18 @@ module SharedShop =
         // | GotProductVariants of SharedShopDomain.CatalogVariant list
         // | FailedProductVariants of exn
         // | RemoveProductFromBag of int
-        | NavigateTo of SharedShopV2.ShopSection
-        | ShopLanding of SharedShopV2Domain.ShopLandingMsg
-        | ShopCollectionMsg of SharedShopV2.Collection.Msg
+        | NavigateTo of ShopSection
+        | ShopLanding of ShopLandingMsg
+        | ShopCollectionMsg of Collection.Msg
 
 
 
-        | ShopTypeSelection of SharedShopV2Domain.ShopTypeSelectorMsg
-        | ShopBuildYourOwnWizard of SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg
-        | ShopStoreProductTemplates of SharedShopV2Domain.ShopProductTemplatesMsg
-
-    // I don't like this model, and I need to unify the overall types to be able to submit a printful order 
-    // at the end based on the items configured in either workflow.
-    // type Model = {
-    //     section: SharedShopV2.ShopSection
-    //     // customer : Customer option
-    //     // productVariationOptionsSelected : ( ProductColor option * ProductSize option )
-    //     validSyncVariantId : String option
-    //     // -- make this paypal order reference, only set by return of the GotDraftResults, if there is a value, can render the JS Paypal button
-    //     payPalOrderReference :  String option 
-    //     // shoppingBag : List<CatalogProduct * int>
-    //     // shoppingBag : List<SyncProductVariant * int>
-    //     // -- ( Variant Line Item, Qty )
-    //     checkoutTaxShipping : float option * float option 
-    //     // -- Tax, Shipping 
-    //     //    HOME PAGE
-    //     homeGif : String
-    //     //    SIGN UP
-    //     // customerSignUpForm : CustomerSignUpForm 
-    //     // customerAddressForm : CustomerAddressForm 
-    //     // validationResults : List<RequestResponse>
-    //     allProducts : SharedShopV2.PrintfulCatalog.CatalogProduct list option
-    //     // productVariants : List<CatalogVariant> option
-    //     productTemplates : SharedShopV2.ProductTemplate.ProductTemplate list
-    //     productTemplate : SharedShopV2.ProductTemplate.ProductTemplateBrowser.Model option
-    //     buildYourOwn: SharedShopV2.BuildYourOwnProductWizard.Model option
-    // }
-    // let getInitialModel shopSection = {
-    //     section = shopSection
-    //     // customer = None
-    //     // productVariationOptionsSelected = (None, None)
-    //     validSyncVariantId = None
-    //     payPalOrderReference = None
-    //     // shoppingBag = []
-    //     checkoutTaxShipping = (None, None)
-    //     homeGif = ""
-    //     // customerSignUpForm = defaultCustomerSignUpForm
-    //     // customerAddressForm = defaultCustomerAddressForm
-    //     // validationResults = []
-    //     allProducts = None
-    //     // productVariants = None
-    //     productTemplates = []
-    //     productTemplate = None
-    //     buildYourOwn = None
-    // }
+        | ShopTypeSelection of ShopTypeSelectorMsg
+        | ShopBuildYourOwnWizard of ShopBuildYourOwnProductWizardMsg
+        | ShopStoreProductTemplates of ShopProductTemplatesMsg
 
     type Model = {
-        Section: SharedShopV2.ShopSection
+        Section: ShopSection
         Cart: CartItem list
         PayPalOrderReference: string option
         CheckoutTax: float option
@@ -1309,7 +1333,7 @@ module SharedPage =
         | Portfolio of PortfolioSection
         | Services of SharedWebAppViewSections.ProfessionalServicesView
         | Resume
-        | Shop of SharedShopV2.ShopSection
+        | Shop of Store.ShopSection
         | Welcome
 
 module SharedWebAppModels =
@@ -1394,7 +1418,7 @@ module SharedWebAppModels =
         | Contact
         | Help
         | Settings
-        | Shop of SharedShop.Model
+        | Shop of Store.Model
         | Landing
         | Services of SharedServices.Model
         | Portfolio of SharedPortfolioGallery.Model
@@ -1410,7 +1434,7 @@ module SharedWebAppModels =
         | WelcomeMsg of SharedWelcome.Msg
         | AboutMsg of SharedAboutSection.Msg
         | PortfolioMsg of SharedPortfolioGallery.Msg
-        | ShopMsg of SharedShop.ShopMsg
+        | ShopMsg of Store.ShopMsg
         | SwitchToOtherApp of SharedWebAppViewSections.AppView
         | ServicesMsg of SharedServices.Msg
         | LoadPage of SharedPage.Page
