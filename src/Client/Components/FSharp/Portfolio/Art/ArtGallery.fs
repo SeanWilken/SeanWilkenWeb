@@ -5,7 +5,7 @@ open Feliz
 open Fable.Core.JsInterop
 open Browser.Dom
 open Browser
-open Shared
+open Client.Domain
 open Bindings.LucideIcon
 
 let galleryPieces = [
@@ -39,7 +39,7 @@ let init () = SharedDesignGallery.getInitialModel, Cmd.none
 
 let update (msg: SharedDesignGallery.Msg) (model: SharedDesignGallery.Model) =
     match msg with
-    | Shared.SharedDesignGallery.BackToPortfolio -> model, Cmd.none
+    | Client.Domain.SharedDesignGallery.BackToPortfolio -> model, Cmd.none
     | _ -> model, Cmd.none
 
 [<ReactComponent>]

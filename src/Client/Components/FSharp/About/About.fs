@@ -4,7 +4,7 @@ open System
 open Feliz
 open Shared
 open Bindings.LucideIcon
-open Shared.SharedWebAppViewSections
+open Client.Domain
 open Components.FSharp.Layout.MultiContent
 
 let tileContents : TileContent list = [
@@ -283,7 +283,7 @@ let view model dispatch =
                                 prop.text "Explore projects & demos"
                                 prop.onClick (fun _ ->
                                     dispatch (
-                                        Shared.SharedWebAppModels.WebAppMsg.SwitchToOtherApp
+                                        SharedWebAppModels.WebAppMsg.SwitchToOtherApp
                                             SharedWebAppViewSections.PortfolioAppLandingView
                                     ))
                             ]
@@ -292,7 +292,7 @@ let view model dispatch =
                                 prop.text "Explore services offered"
                                 prop.onClick (fun _ ->
                                     dispatch (
-                                        Shared.SharedWebAppModels.WebAppMsg.SwitchToOtherApp (SharedWebAppViewSections.ProfessionalServicesAppView ServicesLanding)
+                                        SharedWebAppModels.WebAppMsg.SwitchToOtherApp (SharedWebAppViewSections.ProfessionalServicesAppView SharedWebAppViewSections.ServicesLanding)
                                     ))
                             ]
                         ]

@@ -9,461 +9,11 @@ open Fable.Core
 open Fable.Core.JsInterop
 open Feliz
 open Shared.SharedShopDomain
-open Shared.SharedShop
+open Client.Domain.SharedShop
+open Client.Domain
 
-// ------------------- HELPERS -------------------
 
-// let checkIfJustValue (value: 'a option) : bool =
-//     match value with
-//     | Some a -> true
-//     | None -> false
-
-// let checkValidationResultHead (resultHead: RequestResponse option) =
-//     match resultHead with
-//     | Some result -> result
-//     | None -> FailedRequest "Result was not found."
-
-// let checkValidationResult = function
-//     | SuccessfulRequest _ -> true
-//     | FailedRequest _ -> false
-
-// let checkRequestAgainstConditionFunction conditionFunction request =
-//     match request with
-//     | SuccessfulRequest succ -> conditionFunction succ
-//     | FailedRequest fail -> FailedRequest fail
-
-// let checkIfFieldIsBlank fieldTitle fieldValue =
-//     if String.IsNullOrEmpty fieldValue |> not then
-//         if fieldTitle <> fieldValue then
-//             SuccessfulRequest fieldValue
-//         else
-//             FailedRequest $"{fieldTitle} cannot be default. \n"
-//     else
-//         FailedRequest $"{fieldTitle} cannot be empty. \n"
-
-// let checkPasswordMinimumLengthRequirement (password: string) =
-//     if password.Length >= 8 then
-//         SuccessfulRequest password
-//     else
-//         FailedRequest "Password does not meet the minimal length requirement of 8 characters."
-
-// let checkPasswordContainsUpperCharacter password =
-//     if password |> Seq.exists Char.IsUpper
-//     then SuccessfulRequest password
-//     else FailedRequest "Password does contain any upper-case characters."
-
-// let checkPasswordContainsLowerCharacter password =
-//     if password |> Seq.exists Char.IsLower
-//     then SuccessfulRequest password
-//     else FailedRequest "Password does contain any lower-case characters."
-
-// let checkPasswordContainsNumericCharacter password =
-//     if password |> Seq.exists Char.IsDigit
-//     then SuccessfulRequest password
-//     else FailedRequest "Password does contain any numeric characters."
-
-// let checkPasswordIsConfirmed password confirmPassword =
-//     if password = confirmPassword
-//     then SuccessfulRequest password
-//     else FailedRequest "Confirm password does not match original password."
-
-// let checkIfPasswordIsVerified password confirmedPassword =
-//     checkIfFieldIsBlank "Password" password
-//     |> checkRequestAgainstConditionFunction checkPasswordContainsLowerCharacter
-//     |> checkRequestAgainstConditionFunction checkPasswordContainsUpperCharacter
-//     |> checkRequestAgainstConditionFunction checkPasswordContainsNumericCharacter
-//     |> checkRequestAgainstConditionFunction checkPasswordMinimumLengthRequirement
-//     |> checkRequestAgainstConditionFunction (checkPasswordIsConfirmed confirmedPassword)
-
-// let checkUserFormFields (customerSignUpForm: CustomerSignUpForm) =
-//     [ checkIfFieldIsBlank "First Name" customerSignUpForm.firstName
-//       checkIfFieldIsBlank "Last Name" customerSignUpForm.lastName
-//       checkIfFieldIsBlank "User Name" customerSignUpForm.userName
-//       checkIfPasswordIsVerified customerSignUpForm.password customerSignUpForm.confirmPassword ]
-
-// let createCustomerFromSignUpForm (customerForm: CustomerSignUpForm) : Customer =
-//     { firstName = customerForm.firstName
-//       lastName = customerForm.lastName
-//       userName = customerForm.userName
-//       password = customerForm.password
-//       savedShippingAddress = None
-//       orders = [] }
-
-// let checkIfAnyValidationErrors validationResults =
-//     validationResults
-//     |> List.filter (checkValidationResult >> not)
-//     |> List.isEmpty
-
-// let checkIfCanCreateUser customerForm validationResults successFlag =
-//     if successFlag then
-//         SignUpSuccess (createCustomerFromSignUpForm customerForm)
-//     else
-//         SignUpFailed validationResults
-
-// let checkCustomerSignUpFormValidationResponses customerForm validationResults =
-//     validationResults
-//     |> List.filter (checkValidationResult >> not)
-//     |> List.isEmpty
-//     |> checkIfCanCreateUser customerForm validationResults
-
-
-// // ------------------- LOOKUPS -------------------
-
-// let stateCodeStringToStateCode (stateCodeValue: string) =
-//     match stateCodeValue.ToUpper() with
-//     | "NY" | "NEW YORK" -> NY
-//     | "CA" | "CALIFORNIA" -> CA
-//     | "FL" | "FLORIDA" -> FL
-//     | "TX" | "TEXAS" -> TX
-//     | _ -> NO_STATE
-
-// let countryCodeStringToCountryCode (countryCodeValue: string) =
-//     match countryCodeValue.ToUpper() with
-//     | "US" | "UNITED STATES" -> US
-//     | "MEX" | "MEXICO" -> MEX
-//     | "CAN" | "CANADA" -> CAN
-//     | _ -> NO_COUNTRY
-
-// let checkIfFieldIsValidFieldCode fieldTitle fieldValue =
-//     match fieldTitle with
-//     | "State Code" ->
-//         match stateCodeStringToStateCode fieldValue with
-//         | NY | CA | FL | TX -> SuccessfulRequest fieldValue
-//         | _ -> FailedRequest $"No State Code found with look up: {fieldValue}"
-//     | "Country Code" ->
-//         match countryCodeStringToCountryCode fieldValue with
-//         | US | MEX | CAN -> SuccessfulRequest fieldValue
-//         | NO_COUNTRY -> FailedRequest $"No Country Code found with look up: {fieldValue}"
-//     | _ -> FailedRequest $"Unknown field request: {fieldTitle}"
-
-// let zipStringCodeToZipIntCode (zipCode: string) =
-//     match Int32.TryParse zipCode with
-//     | true, zip -> zip
-//     | _ -> 0
-
-// let checkIfZipIsValid (zipCode: string) =
-//     if zipCode.Length = 5 then
-//         match Int32.TryParse zipCode with
-//         | true, _ -> SuccessfulRequest zipCode
-//         | false, _ -> FailedRequest "Could not convert Zip Code input to integer."
-//     else
-//         FailedRequest "Zip Code not correct length of 5 digits."
-
-// // module Shop.AddressAndProducts
-
-
-// // ------------------- ADDRESS VALIDATION -------------------
-
-// let checkAddressFields (customerAddressForm: CustomerAddressForm) : RequestResponse list =
-//     [ checkIfFieldIsBlank "First Name" customerAddressForm.firstName
-//       checkIfFieldIsBlank "Last Name" customerAddressForm.lastName
-//       checkIfFieldIsBlank "Street Address" customerAddressForm.streetAddress
-//       checkIfFieldIsBlank "City" customerAddressForm.city
-//       checkIfFieldIsValidFieldCode "State Code" customerAddressForm.stateCode
-//       checkIfFieldIsValidFieldCode "Country Code" customerAddressForm.countryCode
-//       checkIfZipIsValid customerAddressForm.zipCode ]
-
-// let createCustomerWithAddressSignUpForm (customer: Customer) (addressForm: CustomerAddressForm) : Customer =
-//     { customer with
-//         savedShippingAddress =
-//             Some {
-//                 firstName = addressForm.firstName
-//                 lastName = addressForm.lastName
-//                 streetAddress = addressForm.streetAddress
-//                 city = addressForm.city
-//                 stateCode = stateCodeStringToStateCode addressForm.stateCode
-//                 countryCode = countryCodeStringToCountryCode addressForm.countryCode
-//                 zipCode = zipStringCodeToZipIntCode addressForm.zipCode
-//             } }
-
-// let checkIfCanCreateCustomerAddress customer customerAddressForm validationResults successFlag =
-//     if successFlag then
-//         SignUpSuccess (createCustomerWithAddressSignUpForm customer customerAddressForm)
-//     else
-//         SignUpFailed validationResults
-
-// let checkCustomerAddressFormValidationResponses customer customerAddressForm validationResults =
-//     validationResults
-//     |> List.filter (checkValidationResult >> not)
-//     |> List.isEmpty
-//     |> checkIfCanCreateCustomerAddress customer customerAddressForm validationResults
-
-
-// ------------------- PRODUCT SYNC -------------------
-
-
-// ------------------- PRODUCT COLOR/SIZE HELPERS -------------------
-
-// let variantColorStringToProductColor color =
-//     match color with
-//     | "White" -> White
-//     | "Black" -> Black
-//     | "Ash" -> Ash
-//     | "Asphalt" -> Asphalt
-//     | "Aqua" -> Aqua
-//     | "Charcoal Gray" -> CharcoalGray
-//     | "Gold" -> Gold
-//     | "Maroon" -> Maroon
-//     | "Mustard" -> Mustard
-//     | "Navy" -> Navy
-//     | "Red" -> Red
-//     | "Silver" -> Silver
-//     | "Athletic Heather" -> AthleticHeather
-//     | "Black Heather" -> BlackHeather
-//     | "Dark Grey Heather" -> DarkGreyHeather
-//     | "Deep Heather" -> DeepHeather
-//     | "Heather Dark Gray" -> HeatherDarkGray
-//     | "Heather Olive" -> HeatherOlive
-//     | "Heather Blue" -> HeatherBlue
-//     | "Heather Navy" -> HeatherNavy
-//     | "Dark Heather" -> DarkHeather
-//     | "Heather Raspberry" -> HeatherRaspberry
-//     | "Heather Dust" -> HeatherDust
-//     | "Heather Deep Teal" -> HeatherDeepTeal
-//     | x -> NoColor($"No Color: {x}")
-
-// let productColorToString = function
-//     | White -> "White"
-//     | Black -> "Black"
-//     | Ash -> "Ash"
-//     | Asphalt -> "Asphalt"
-//     | Aqua -> "Aqua"
-//     | CharcoalGray -> "Charcoal Gray"
-//     | Gold -> "Gold"
-//     | Maroon -> "Maroon"
-//     | Mustard -> "Mustard"
-//     | Navy -> "Navy"
-//     | Red -> "Red"
-//     | Silver -> "Silver"
-//     | AthleticHeather -> "Athletic Heather"
-//     | BlackHeather -> "Black Heather"
-//     | DarkGreyHeather -> "Dark Grey Heather"
-//     | DeepHeather -> "Deep Heather"
-//     | HeatherDarkGray -> "Heather Dark Gray"
-//     | HeatherOlive -> "Heather Olive"
-//     | HeatherBlue -> "Heather Blue"
-//     | HeatherNavy -> "Heather Navy"
-//     | DarkHeather -> "Dark Heather"
-//     | HeatherRaspberry -> "Heather Raspberry"
-//     | HeatherDust -> "Heather Dust"
-//     | HeatherDeepTeal -> "Heather Deep Teal"
-//     | NoColor col -> $"No Color: {col}"
-
-// let variantSizeStringToProductSize size =
-//     match size with
-//     | "XS" | "X-Small" -> XS
-//     | "S" | "Small" -> S
-//     | "XS/S" -> XS_S
-//     | "M" | "Medium" -> M
-//     | "L" | "Large" -> L
-//     | "M/L" -> M_L
-//     | "XL" | "X-Large" -> XL
-//     | "XXL" | "2XL" | "XX-Large" -> XXL
-//     | "XXXL" | "3XL" | "XXX-Large" -> XXXL
-//     | "XXXXL" | "4XL" | "XXXX-Large" -> XXXXL
-//     | "OSFA" | "One Size Fits All" -> OSFA
-//     | x -> NoSize($"No Size: {x}")
-
-// let productSizeToString = function
-//     | XS -> "XS"
-//     | S -> "S"
-//     | XS_S -> "XS/S"
-//     | M -> "M"
-//     | L -> "L"
-//     | M_L -> "M/L"
-//     | XL -> "XL"
-//     | XXL -> "2XL"
-//     | XXXL -> "3XL"
-//     | XXXXL -> "4XL"
-//     | OSFA -> "One Size Fits All"
-//     | NoSize siz -> $"No Size: {siz}"
-
-
-// // ------------------- SKU HELPERS -------------------
-
-// let skuOptionStringListToProductColor listLength (options: string list) =
-//     options
-//     |> List.take listLength
-//     |> List.map (fun s -> " " + s)
-//     |> String.concat ""
-//     |> fun s -> s.Trim()
-//     |> variantColorStringToProductColor
-
-// let skuOptionStringListToProductSize options =
-//     match options |> List.rev |> List.tryHead with
-//     | Some size -> variantSizeStringToProductSize size
-//     | None -> NoSize "Size element was empty."
-
-// let variantSkuToVariantOptions (variantSku: string) : ProductColor * ProductSize =
-//     match variantSku.Split '_' |> Array.toList |> List.rev |> List.tryHead with
-//     | Some opts ->
-//         let optionValues = opts.Split '-' |> Array.toList
-//         let optionListLength = optionValues.Length
-//         ( skuOptionStringListToProductColor (optionListLength - 1) optionValues,
-//           skuOptionStringListToProductSize optionValues )
-//     | None -> (NoColor "No color data", NoSize "No size data")
-
-
-// // ------------------- IMAGE HELPERS -------------------
-
-// let syncVariantProductImagePathCreator productName (color: string option) =
-//     match color with
-//     | Some c -> $"./public/images/products/{productName} - {c}.jpg"
-//     | None -> $"./public/images/products/{productName}.jpg"
-
-
-// // ------------------- VARIANT VALIDATION -------------------
-
-// let checkForVariationColor color variant =
-//     if variant.variantColor = color then
-//         SuccessfulRequest "Color was found."
-//     else
-//         FailedRequest "Color doesn't exist."
-
-// let checkForVariationSize size variant =
-//     if variant.variantSize = size then
-//         SuccessfulRequest "Size was found."
-//     else
-//         FailedRequest "Size doesn't exist"
-
-// let checkVariantsInGroup color size variant =
-//     (checkForVariationColor color variant |> checkValidationResult)
-//     && (checkForVariationSize size variant |> checkValidationResult)
-
-// let checkGroupByVariationFunction variationFunc variationValue productVariations =
-//     productVariations
-//     |> List.map (variationFunc variationValue)
-//     |> List.filter checkValidationResult
-//     |> List.isEmpty
-
-// let createSyncProductVariant (colorOption: ProductColor option) (sizeOption: ProductSize option) (syncProduct: SyncProduct) =
-//     match colorOption, sizeOption with
-//     | None, Some _ -> Failed "Please select a color option"
-//     | Some _, None -> Failed "Please select a size option"
-//     | Some color, Some size ->
-//         match syncProduct.productVariations |> List.tryFind (checkVariantsInGroup color size) with
-//         | Some syncVariant -> Successful syncVariant
-//         | None ->
-//             match ( checkGroupByVariationFunction checkForVariationSize size syncProduct.productVariations,
-//                     checkGroupByVariationFunction checkForVariationColor color syncProduct.productVariations ) with
-//             | true, true -> Failed "Neither color, nor size options exist."
-//             | true, false -> Failed "Selected size does not exist."
-//             | false, true -> Failed "Selected color does not exist."
-//             | false, false -> Failed "Something went wrong with variant lookup process."
-//     | None, None -> Failed "Please select a configuration size and color."
-
-
-// // ------------------- VARIANT CONSTRUCTOR -------------------
-
-// let syncProductVariantGenerator variantId variantName variantSize variantColor variantPrice heroImagePath altImagePaths =
-//     { externalSyncVariantId = variantId
-//       variantName = variantName
-//       variantSize = variantSize
-//       variantColor = variantColor
-//       variantPrice = variantPrice
-//       variantHeroImagePath = heroImagePath
-//       variantAltImagePaths = altImagePaths }
-
-// let outForBloodShirtProductName = "Out for Blood - Unisex Shirt"
-// let outForBloodHoodieProductName = "Out for Blood - Unisex Hoodie"
-// let inescapableStareProductName = "Inescapable Stare - Unisex Hoodie"
-
-// // Variant definitions
-// let smallGray = syncProductVariantGenerator "ufb-shirt-small-gray" "Out for Blood Shirt" S CharcoalGray 25.0 "/images/products/Out for Blood/Out for Blood - Unisex Shirt.jpg" []
-// let mediumGray = syncProductVariantGenerator "ufb-shirt-medium-gray" "Out for Blood Shirt" M CharcoalGray 25.0 "/images/products/Out for Blood/Out for Blood - Unisex Shirt.jpg" []
-// let largeGray = syncProductVariantGenerator "ufb-shirt-large-gray" "Out for Blood Shirt" L CharcoalGray 25.0 "/images/products/Out for Blood/Out for Blood - Unisex Shirt.jpg" []
-// let xLargeGray = syncProductVariantGenerator "ufb-shirt-xl-gray" "Out for Blood Shirt" XL CharcoalGray 25.0 "/images/products/Out for Blood/Out for Blood - Unisex Shirt.jpg" []
-// let smallWhite = syncProductVariantGenerator "ufb-hoodie-small-white" "Out for Blood Hoodie" S White 45.0 "/images/products/Out for Blood/Out for Blood - Unisex Hoodie.jpg" []
-// let mediumWhite = syncProductVariantGenerator "ufb-hoodie-medium-white" "Out for Blood Hoodie" M White 45.0 "/images/products/Out for Blood/Out for Blood - Unisex Hoodie.jpg" []
-// let largeWhite = syncProductVariantGenerator "ufb-hoodie-large-white" "Out for Blood Hoodie" L White 45.0 "/images/products/Out for Blood/Out for Blood - Unisex Hoodie.jpg" []
-// let xLargeWhite = syncProductVariantGenerator "ufb-hoodie-xl-white" "Out for Blood Hoodie" XL White 45.0 "/images/products/Out for Blood/Out for Blood - Unisex Hoodie.jpg" []
-// let smallNavy = syncProductVariantGenerator "inescapable-hoodie-small-navy" "Inescapable Stare Hoodie" S Navy 50.0 "/images/products/Inescapable Stare/Inescapable Stare - Unisex Hoodie.jpg" []
-// let mediumNavy = syncProductVariantGenerator "inescapable-hoodie-medium-navy" "Inescapable Stare Hoodie" M Navy 50.0 "/images/products/Inescapable Stare/Inescapable Stare - Unisex Hoodie.jpg" []
-// let largeNavy = syncProductVariantGenerator "inescapable-hoodie-large-navy" "Inescapable Stare Hoodie" L Navy 50.0 "/images/products/Inescapable Stare/Inescapable Stare - Unisex Hoodie.jpg" []
-// let xLargeNavy = syncProductVariantGenerator "inescapable-hoodie-xl-navy" "Inescapable Stare Hoodie" XL Navy 50.0 "/images/products/Inescapable Stare/Inescapable Stare - Unisex Hoodie.jpg" []
-
-// let outforBloodShirt : SyncProduct =
-//     { name = outForBloodShirtProductName
-//       collectionTag = Unlimited
-//       syncProductHeroImagePath = "/images/products/Out for Blood/Out for Blood - Unisex Shirt.jpg"
-//       syncProductAltImagePaths = []
-//       syncProductId = 1
-//       productVariations = [ smallGray; mediumGray; largeGray; xLargeGray ] }
-
-
-// // Hoodie products
-// let outforBloodHoodie : SyncProduct =
-//     { name = outForBloodHoodieProductName
-//       collectionTag = Unlimited
-//       syncProductHeroImagePath = "/images/products/Out for Blood/Out for Blood - Unisex Hoodie.jpg"
-//       syncProductAltImagePaths = []
-//       syncProductId = 2
-//       productVariations = [ smallWhite; mediumWhite; largeWhite; xLargeWhite ] }
-
-// let inescapableStareHoodie : SyncProduct =
-//     { name = inescapableStareProductName
-//       collectionTag = Unlimited
-//       syncProductHeroImagePath = "/images/products/Inescapable Stare/Inescapable Stare - Unisex Hoodie.jpg"
-//       syncProductAltImagePaths = []
-//       syncProductId = 3
-//       productVariations = [ smallNavy; mediumNavy; largeNavy; xLargeNavy ] }
-
-// // Collection
-// let shirtCollection : ProductCollection =
-//     { collectionName = "Shirt Collection"
-//       collectionTag = Unlimited
-//       products = [ outforBloodShirt; ] }
-
-// let hoodieCollection : ProductCollection =
-//     { collectionName = "Hoodie Collection"
-//       collectionTag = Unlimited
-//       products = [ outforBloodHoodie; inescapableStareHoodie; ] }
-
-// let productColorOptionsToString (colors: ProductColor list) : string list =
-//     List.map productColorToString colors
-
-// let productColorStringToProductColor (colors: string list) : ProductColor list =
-//     List.map variantColorStringToProductColor colors
-
-// let productSizeOptionsToString (sizes: ProductSize list) : string list =
-//     List.map productSizeToString sizes
-
-// let productSizeStringToProductSize (sizes: string list) : ProductSize list =
-//     List.map variantSizeStringToProductSize sizes
-
-// let productVariationOptions (variations: SyncProductVariant list) : ProductColor list * ProductSize list =
-//     let colors =
-//         variations
-//         |> List.map (fun v -> v.variantColor)
-//         |> productColorOptionsToString
-//         |> Set.ofList
-//         |> Set.toList
-//         |> productColorStringToProductColor
-
-//     let sizes =
-//         variations
-//         |> List.map (fun v -> v.variantSize)
-//         |> productSizeOptionsToString
-//         |> Set.ofList
-//         |> Set.toList
-//         |> productSizeStringToProductSize
-
-//     colors, sizes
-
-// --------------------------------
-// Commands (Stubs)
-// Replace these with your real HTTP commands (Thoth.Fetch/Elmish.Cmd.OfAsync/etc.)
-// --------------------------------
-
-// let getHomeGif : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
-
-// let testApiGetTaxRate (_addr: CustomerAddressForm) : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
-
-// let testApiGetShippingRate (_addr: CustomerAddressForm) (_bag: (SyncProductVariant * int) list) : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
-
-// let testApiCreateDraftOrder (_draft: CustomerDraftOrder) : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
-
-let sendMessage (_paypalOrderRef: string) : Cmd<Shared.SharedShop.ShopMsg> = Cmd.none
+let sendMessage (_paypalOrderRef: string) : Cmd<ShopMsg> = Cmd.none
 
 // let getAllProductTemplates (request: Shared.Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Shared.SharedShop.ShopMsg> =
 //     Cmd.OfAsync.either
@@ -531,7 +81,7 @@ let sendMessage (_paypalOrderRef: string) : Cmd<Shared.SharedShop.ShopMsg> = Cmd
 
 
 let init shopSection =
-    Shared.SharedShop.getInitialModel shopSection
+    Client.Domain.SharedShop.getInitialModel shopSection
     , Cmd.none // getAllProducts defaultProductsRequest
 
 // --------------------------------
@@ -590,7 +140,7 @@ let init shopSection =
 // Update
 // --------------------------------
 
-let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.SharedShop.ShopMsg> =
+let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
     match msg with
     | NavigateTo section ->
         // need to do url here
@@ -600,38 +150,38 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
 
     | ShopMsg.ShopLanding msg ->
         match msg with
-        | Shared.SharedShopV2Domain.ShopLandingMsg.SwitchSection section ->
+        | SharedShopV2Domain.ShopLandingMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
 
     | ShopMsg.ShopTypeSelection msg ->
         match msg with
-        | Shared.SharedShopV2Domain.ShopTypeSelectorMsg.SwitchSection section ->
+        | SharedShopV2Domain.ShopTypeSelectorMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
 
     | ShopMsg.ShopBuildYourOwnWizard msg ->
         match model.Section, msg with
-        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard _, Shared.SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
+        | SharedShopV2.ShopSection.BuildYourOwnWizard _, SharedShopV2Domain.ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
-        | Shared.SharedShopV2.ShopSection.BuildYourOwnWizard byow, _ ->
+        | SharedShopV2.ShopSection.BuildYourOwnWizard byow, _ ->
             let newModel, childCmd = CreateYourOwnProduct.update msg byow
-            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard newModel },
+            { model with Section = SharedShopV2.ShopSection.BuildYourOwnWizard newModel },
             Cmd.map ShopMsg.ShopBuildYourOwnWizard childCmd
 
         | _ ->
-            { model with Section = Shared.SharedShopV2.ShopSection.BuildYourOwnWizard (Shared.SharedShopV2.BuildYourOwnProductWizard.initialState ()) },
+            { model with Section = SharedShopV2.ShopSection.BuildYourOwnWizard (SharedShopV2.BuildYourOwnProductWizard.initialState ()) },
             Cmd.none
 
     | ShopMsg.ShopStoreProductTemplates msg ->
 
         match model.Section, msg with
-        | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser _, Shared.SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection section ->
+        | SharedShopV2.ShopSection.ProductTemplateBrowser _, SharedShopV2Domain.ShopProductTemplatesMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
-        | Shared.SharedShopV2.ShopSection.ProductTemplateBrowser ptb, _ ->
+        | SharedShopV2.ShopSection.ProductTemplateBrowser ptb, _ ->
             let newModel, childCmd = Components.FSharp.Pages.ProductTemplateBrowser.update msg ptb
-            { model with Section = Shared.SharedShopV2.ShopSection.ProductTemplateBrowser newModel },
+            { model with Section = SharedShopV2.ShopSection.ProductTemplateBrowser newModel },
             Cmd.map ShopMsg.ShopStoreProductTemplates childCmd
         | _ ->
-            { model with Section = Shared.SharedShopV2.ShopSection.ProductTemplateBrowser (Shared.SharedShopV2.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
+            { model with Section = SharedShopV2.ShopSection.ProductTemplateBrowser (SharedShopV2.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
             Cmd.none
 
     // | UpdateCustomerForm fld ->
@@ -759,7 +309,7 @@ let update (msg: Shared.SharedShop.ShopMsg) (model: Model) : Model * Cmd<Shared.
     // | ShopMsg.BuildYourOwnProductMsg msg ->
     //     let byoUpdated =
     //         match model.buildYourOwn with
-    //         | None -> Shared.SharedShopV2.BuildYourOwnProductWizard.initialState (model.allProducts |> Option.defaultValue []) 
+    //         | None -> SharedShopV2.BuildYourOwnProductWizard.initialState (model.allProducts |> Option.defaultValue []) 
     //         | Some byo -> CreateYourOwnProduct.update msg byo
     //     let updatedModel = { model with buildYourOwn = Some byoUpdated; }
     //     // match msg with
@@ -1034,7 +584,7 @@ let shopHero dispatch =
                                     "btn btn-primary rounded-full px-8 gap-2 shadow-lg shadow-primary/40"
                                 prop.text "Enter collections"
                                 prop.onClick (fun _ ->
-                                    dispatch (NavigateTo Shared.SharedShopV2.ShopSection.ShopTypeSelector))
+                                    dispatch (NavigateTo SharedShopV2.ShopSection.ShopTypeSelector))
                             ]
                         ]
                     ]
@@ -1465,13 +1015,13 @@ let roundedGrandTotal (bag: float) (tax: float) (ship: float) : string =
 //         ]
 //     ]
 
-// let createDraftOrderButton (draft: CustomerDraftOrder) (dispatch: Shared.SharedShop.ShopMsg -> unit) =
+// let createDraftOrderButton (draft: CustomerDraftOrder) (dispatch: SharedShop.ShopMsg -> unit) =
 //     Html.button [
 //         prop.onClick (fun _ -> dispatch (TestApiCustomerDraft draft))
 //         prop.text "test"
 //     ]
 
-// let checkoutView (model: Model) (dispatch: Shared.SharedShop.ShopMsg -> unit) =
+// let checkoutView (model: Model) (dispatch: SharedShop.ShopMsg -> unit) =
 //     // let bagTotal = calculateOrderBagTotal model.shoppingBag
 //     let bagTotal = 100.0
 //     let taxOpt, shippingOpt = model.checkoutTaxShipping
@@ -1510,7 +1060,7 @@ let roundedGrandTotal (bag: float) (tax: float) (ship: float) : string =
 
 
 // // Payment page
-// let paymentView (model: Model) (dispatch: Shared.SharedShop.ShopMsg -> unit) =
+// let paymentView (model: Model) (dispatch: SharedShop.ShopMsg -> unit) =
 //     Html.div [
 //         contentHeader "Payment" None
 //         if model.payPalOrderReference.IsNone then
@@ -1529,7 +1079,7 @@ let roundedGrandTotal (bag: float) (tax: float) (ship: float) : string =
 //     ]
 
 // Social page
-let socialView (dispatch: Shared.SharedShop.ShopMsg -> unit) =
+let socialView (dispatch: Client.Domain.SharedShop.ShopMsg -> unit) =
     Html.div [
         contentHeader "SOCIAL SHIT SHOW" None
         Html.div [
@@ -1758,8 +1308,10 @@ let contactView =
 // module SharedShopV2.Views
 
 // open Feliz
-open Shared.SharedShopV2
-open Shared.SharedShopV2Domain
+open SharedShopV2
+open SharedShopV2Domain
+open Client.Domain.SharedShopV2Domain
+open Client.Domain.SharedShopV2
 
 let shopTypeSelectorView (dispatch: ShopTypeSelectorMsg -> unit) =
     Html.div [
@@ -1807,8 +1359,143 @@ let shopTypeSelectorView (dispatch: ShopTypeSelectorMsg -> unit) =
     ]
 
 
+open Feliz
+open Client.Components.Shop
+open Client.Components.Shop.Common
+open Client.Components.Shop.Common.Types
+open SharedShopV2
+open Client.Components.Shop.Collection
+open Client.Components.Shop.ShopHero
+
+module LuxuryMockup =
+    open Client.Shop.Domain
+    open Client.Domain.SharedShopV2
+
+    type Tab =
+        | Hero
+        | Collection
+        | Designer
+        | Product
+        | Cart
+        | Checkout
+
+    [<ReactComponent>]
+    let View (dispatch: Client.Domain.SharedShop.ShopMsg -> unit) =
+        let (tab, setTab) = React.useState Tab.Hero
+
+        let productDetails : Product.ProductDetails =
+            {
+                Name        = "Essential Crew Tee"
+                Price       = 45m
+                Description = "Premium cotton construction with a modern fit. Designed for everyday wear with exceptional comfort and durability. Sustainably produced."
+                ReviewCount = 128
+                Sizes       = [ "XS"; "S"; "M"; "L"; "XL"; "XXL" ]
+                Colors      = [ "bg-neutral"; "bg-base-100 border"; "bg-base-300"; "bg-primary" ]
+            }
+
+        // Minimal designer model for now
+        let wizardModel =
+            BuildYourOwnProductWizard.initialState ()
+
+        Html.div [
+            prop.className "min-h-screen bg-base-100 text-base-content"
+            prop.children [
+
+                // Top tab bar
+                Html.div [
+                    prop.className "sticky top-0 z-40 bg-base-100/90 backdrop-blur border-b border-base-300"
+                    prop.children [
+                        Ui.Section.container [
+                            Html.div [
+                                prop.className "flex gap-6 sm:gap-8 py-3"
+                                prop.children [
+                                    let tabBtn t (label: string) =
+                                        Html.button [
+                                            prop.key label
+                                            prop.className (
+                                                Ui.tw [
+                                                    "text-xs sm:text-sm font-medium uppercase tracking-[0.2em] pb-1 transition-all border-b-2 border-transparent"
+                                                    if tab = t then "text-base-content border-base-content"
+                                                    else "text-base-content/50 hover:text-base-content"
+                                                ]
+                                            )
+                                            prop.text label
+                                            prop.onClick (fun _ -> setTab t)
+                                        ]
+
+                                    tabBtn Tab.Hero       "hero"
+                                    tabBtn Tab.Collection "collection"
+                                    tabBtn Tab.Designer   "designer"
+                                    tabBtn Tab.Product    "product"
+                                    tabBtn Tab.Cart       "cart"
+                                    tabBtn Tab.Checkout   "checkout"
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+
+                // Active body
+                match tab with
+                | Tab.Hero ->
+                    Hero.view {
+                        OnShopCollection = (fun () -> setTab Tab.Collection)
+                        OnExploreMore    = (fun () -> setTab Tab.Collection)
+                    }
+
+                | Tab.Collection ->
+                    Collection.collectionView
+                        Collection.State.initModel
+                        (fun msg -> ())
+
+
+                | Tab.Product ->
+                    Product.view {
+                        Product     = productDetails
+                        OnAddToCart = ignore
+                        OnAddToWish = ignore
+                    }
+
+                | Tab.Designer ->
+                    Designer.view {
+                        Model    = wizardModel
+                        Dispatch = ignore
+                    }
+                | Tab.Cart ->
+                    Cart.Cart.view
+                        { Items   = []; }
+                        (fun _ -> ())
+
+                | Tab.Checkout ->
+                    Checkout.Checkout.view 
+                        {
+                            Step           = Checkout.Checkout.CheckoutStep.Shipping
+                            ShippingInfo   =
+                                {
+                                    Email     = ""
+                                    FirstName = ""
+                                    LastName  = ""
+                                    Address   = ""
+                                    Apartment = ""
+                                    City      = ""
+                                    State     = ""
+                                    ZipCode   = ""
+                                    Country   = ""
+                                    Phone     = ""
+                                }
+                            ShippingMethod  = Checkout.Checkout.ShippingMethod.Standard
+                            PaymentMethod  = Checkout.Checkout.PaymentMethod.Card
+                            Items          = []
+                        } 
+                        (fun _ -> ())
+            ]
+        ]
+
+
+
+
 // View dispatcher: select page content based on Model.CurrentPage
-let view (model: Shared.SharedShop.Model) (dispatch: Shared.SharedShop.ShopMsg -> unit) =
+let view (model: Client.Domain.SharedShop.Model) (dispatch: Client.Domain.SharedShop.ShopMsg -> unit) =
     // React.useEffectOnce ( 
     //     fun _ -> 
     //         dispatch GetAllProducts
@@ -1817,34 +1504,36 @@ let view (model: Shared.SharedShop.Model) (dispatch: Shared.SharedShop.ShopMsg -
     // )
     Html.div [
         match model.Section with
-        | Shared.SharedShopV2.ShopLanding ->
-            homeView 
-                [   
-                    "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3czeTFpdnYxczhiMWRqaGkxdHU4bHgybm51bWp2Znh2N2ZobnM5aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/HtfFneOxp0fx6nUvYn/giphy.gif"
-                    "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsaXJvN2JrNzA2dHAxeTVtOWZxampyZDNtejdlczJlc2V3N3c2ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d2W70ynZhKMyWTMQ/giphy.gif"
-                    // "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXhkdm5teWs4cHRrYW53bmZ5bnZxenV4eXFkM2s3dzdva2swcDFwbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2QXWNglhiBC4KI/giphy.gif"
-                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGducmk3MmpzaHF6aGNlcncwbnY3MTBmaTE4MmlkbzJ2MXJqcWU0NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/4EEy1K5SgmYcxFGCII/giphy.gif"
-                    // "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExa2J5bXN0cmpzeXZhaTI0MzgxaXRqYXkwazl1cXJua3djMXM1NGdmMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yb4GOQLoRkTJFnaJam/giphy.gif"
-                    // "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODQwZWs2eTRnM2VxMDRqMGh4MXA2cHhrb3hvanQyZjI3NmdnMjM0eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/vwT1f00PU44QnUgY2l/giphy.gif"
-                    // "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXA2ZnduMGV1dHJnZzBycG9nOXg1bm5tcG95NmFwMjA5ZDg4MGVraCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l46C82yRUnonqFM9q/giphy.gif"
-                    // "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXN0bzUzaTZ2bTRtN2d4NWdkaGp6NmZic3Q3NWY1cGludGpsM3B6aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kv5ek9HvmdqpOYiYxh/giphy.gif"
-                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsZXNzNGg4NXRqOXgybTlhcGp4a3AzbTFmaTUwM3hzcTNtOGMzOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/C8OSeOz7PY6FzId1lQ/giphy.gif"
-                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExODJ3a2FydHoydDQ2bDg4cHl1ZW45c3dudnJocTlremh1cm5jZHdiOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7ZezIWW1cKlqFpCM/giphy.gif"
-                    // "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjVwNXpucjhnNTF5M3Azb3ptNGxqZnZkdGpzMXl4aWhuOXgyd2U0dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oEjHDPbHx75Oo5ec8/giphy.gif"
-                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExamk1dDR1ZXZsazdpdHB5eHY4cjA1MmxkZGRkamJrMnkzYm90amE5bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/jorJeXKNM6rxIEV7jr/giphy.gif"
-                    // I LIKE BELOW A LOT
-                    // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExd20xdDB3eWNpbnYxemo3cWF0Z3cwbmRmOHRjZGJ2cjYwcWRnbnhkeCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/V3rEdkdScV7mo/giphy.gif"
-                ] 
-                dispatch
-        | Shared.SharedShopV2.ShopTypeSelector ->
-            // collectionView dispatch
-            shopTypeSelectorView (ShopMsg.ShopTypeSelection >> dispatch)
-        | Shared.SharedShopV2.BuildYourOwnWizard byow ->
-            // collectionView dispatch
-            CreateYourOwnProduct.render byow (ShopMsg.ShopBuildYourOwnWizard >> dispatch)
-        | Shared.SharedShopV2.ProductTemplateBrowser ptb ->
-            // collectionView dispatch
-            Components.FSharp.Pages.ProductTemplateBrowser.ProductTemplateBrowser ptb (ShopMsg.ShopStoreProductTemplates >> dispatch)
+        | _ ->
+            LuxuryMockup.View (dispatch)
+        // | SharedShopV2.ShopLanding ->
+        //     homeView 
+        //         [   
+        //             "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExN3czeTFpdnYxczhiMWRqaGkxdHU4bHgybm51bWp2Znh2N2ZobnM5aiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/HtfFneOxp0fx6nUvYn/giphy.gif"
+        //             "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsaXJvN2JrNzA2dHAxeTVtOWZxampyZDNtejdlczJlc2V3N3c2ayZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/d2W70ynZhKMyWTMQ/giphy.gif"
+        //             // "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExZXhkdm5teWs4cHRrYW53bmZ5bnZxenV4eXFkM2s3dzdva2swcDFwbSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l3q2QXWNglhiBC4KI/giphy.gif"
+        //             // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExOGducmk3MmpzaHF6aGNlcncwbnY3MTBmaTE4MmlkbzJ2MXJqcWU0NiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/4EEy1K5SgmYcxFGCII/giphy.gif"
+        //             // "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExa2J5bXN0cmpzeXZhaTI0MzgxaXRqYXkwazl1cXJua3djMXM1NGdmMSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/yb4GOQLoRkTJFnaJam/giphy.gif"
+        //             // "https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExODQwZWs2eTRnM2VxMDRqMGh4MXA2cHhrb3hvanQyZjI3NmdnMjM0eSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/vwT1f00PU44QnUgY2l/giphy.gif"
+        //             // "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExaXA2ZnduMGV1dHJnZzBycG9nOXg1bm5tcG95NmFwMjA5ZDg4MGVraCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l46C82yRUnonqFM9q/giphy.gif"
+        //             // "https://media1.giphy.com/media/v1.Y2lkPTc5MGI3NjExNXN0bzUzaTZ2bTRtN2d4NWdkaGp6NmZic3Q3NWY1cGludGpsM3B6aCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/kv5ek9HvmdqpOYiYxh/giphy.gif"
+        //             // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExMXFsZXNzNGg4NXRqOXgybTlhcGp4a3AzbTFmaTUwM3hzcTNtOGMzOCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/C8OSeOz7PY6FzId1lQ/giphy.gif"
+        //             // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExODJ3a2FydHoydDQ2bDg4cHl1ZW45c3dudnJocTlremh1cm5jZHdiOSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o7ZezIWW1cKlqFpCM/giphy.gif"
+        //             // "https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExZjVwNXpucjhnNTF5M3Azb3ptNGxqZnZkdGpzMXl4aWhuOXgyd2U0dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3oEjHDPbHx75Oo5ec8/giphy.gif"
+        //             // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExamk1dDR1ZXZsazdpdHB5eHY4cjA1MmxkZGRkamJrMnkzYm90amE5bSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/jorJeXKNM6rxIEV7jr/giphy.gif"
+        //             // I LIKE BELOW A LOT
+        //             // "https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExd20xdDB3eWNpbnYxemo3cWF0Z3cwbmRmOHRjZGJ2cjYwcWRnbnhkeCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/V3rEdkdScV7mo/giphy.gif"
+        //         ] 
+        //         dispatch
+        // | SharedShopV2.ShopTypeSelector ->
+        //     // collectionView dispatch
+        //     shopTypeSelectorView (ShopMsg.ShopTypeSelection >> dispatch)
+        // | SharedShopV2.BuildYourOwnWizard byow ->
+        //     // collectionView dispatch
+        //     CreateYourOwnProduct.render byow (ShopMsg.ShopBuildYourOwnWizard >> dispatch)
+        // | SharedShopV2.ProductTemplateBrowser ptb ->
+        //     // collectionView dispatch
+        //     Components.FSharp.Pages.ProductTemplateBrowser.ProductTemplateBrowser ptb (ShopMsg.ShopStoreProductTemplates >> dispatch)
         // | Catalog catalogName ->
         //     // catalogView2 catalogName model dispatch
         //     match model.productTemplates with

@@ -420,6 +420,41 @@ module Api =
             |> Remoting.fromValue productApi
             |> Remoting.buildHttpHandler
 
+    module Checkout =
+        
+        let private checkoutApi : CheckoutApi = {
+            getShippingRates = fun req -> async {
+                // TODO: map req -> Printful /v2/shipping-rates body,
+                // call HTTP, parse response, map into SharedShopV2.Checkout.ShippingRate list
+                // (use req.Recipient + req.Items + req.Currency)
+                return { Options = [] }  // stub for now
+            }
+
+            getTaxEstimate = fun req -> async {
+                // For now you can reuse your existing simple tax logic,
+                // or call Printful order-estimation if you want more accuracy later.
+                return { required = true; rate = 8.0; shipping_taxable = true }
+            }
+
+            createDraftOrder = fun draftReq -> async {
+                // TODO: map draftReq -> Printful /v2/orders (draft)
+                // * recipient  -> "recipient"
+                // * items      -> [ { quantity; catalog_variant_id; source="catalog"; placements=[...later] } ]
+                // * shipping   -> shipping settings from SelectedRate
+                // return { code = orderIdFromPrintful }
+                return { code = "DRAFT-PLACEHOLDER" }
+            }
+        }
+        
+
+        let handler =
+            Remoting.createApi()
+            |> Remoting.withRouteBuilder Shared.Route.builder
+            |> Remoting.fromValue checkoutApi
+            |> Remoting.buildHttpHandler
+
+
+
     module Payment =
         let private paymentApi : PaymentApi = {
             getTaxRate = fun addr -> async {
@@ -461,6 +496,7 @@ let app = application {
         choose [
             Api.Payment.handler
             Api.Product.handler
+            Api.Checkout.handler
         ])
     memory_cache
     use_static "public"

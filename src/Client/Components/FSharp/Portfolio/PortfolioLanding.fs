@@ -2,7 +2,7 @@ module Components.FSharp.PortfolioLanding
 
 open Elmish
 open Feliz
-open Shared
+open Client.Domain
 open Bindings.LucideIcon
 open Components.FSharp.Portfolio
 open Feliz

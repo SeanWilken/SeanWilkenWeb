@@ -10,6 +10,8 @@ type Props = {
     onPageChange: int -> unit // offset -> unit
 }
 
+// TODO: Make work with query parameters
+
 [<ReactComponent>]
 let Pagination (props: Props) =
     let currentPage = props.offset / props.limit + 1

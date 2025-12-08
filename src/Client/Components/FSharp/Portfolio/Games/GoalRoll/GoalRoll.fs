@@ -3,9 +3,9 @@ module Components.FSharp.Portfolio.Games.GoalRoll
 open Elmish
 open Fable.React
 open Feliz
-open Shared
-open Shared.GridGame
-open Shared.SharedGoalRoll
+open Client.Domain
+open GridGame
+open SharedGoalRoll
 
 // Content descriptions
 let goalRollDescriptions = [

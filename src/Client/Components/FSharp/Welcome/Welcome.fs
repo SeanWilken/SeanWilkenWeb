@@ -1,7 +1,7 @@
 module Components.FSharp.Welcome
 
 open Feliz
-open Shared
+open Client.Domain
 open SharedWelcome
 open Bindings.LucideIcon
 
@@ -128,8 +128,8 @@ let view2 (dispatch: Msg -> unit) =
         ]
     ]
 
-open Shared.SharedWebAppModels
-open Shared.SharedWebAppViewSections
+open Client.Domain.SharedWebAppModels
+open Client.Domain.SharedWebAppViewSections
 
 let view (dispatch: Msg -> unit) =
     Html.div [

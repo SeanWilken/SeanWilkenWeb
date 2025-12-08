@@ -1,7 +1,7 @@
 module Components.FSharp.Portfolio.Games.TileTap
 
 open System
-open Shared
+open Client.Domain
 open GridGame
 open Elmish
 open Fable.React

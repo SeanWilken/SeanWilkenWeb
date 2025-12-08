@@ -6,9 +6,8 @@ open Shared
 // URL BROWSER UPDATES
 open Elmish.UrlParser
 open Elmish.Navigation
-// open Shared.SharedShop
-open Shared.SharedShopV2Domain
-open SharedPage
+open Client.Domain
+open Client.Domain.SharedPage
 
 
 let toPath =

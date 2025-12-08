@@ -1,7 +1,7 @@
 module Components.FSharp.Portfolio.Games.PivotPoints
 
-open Shared
-open Shared.GridGame
+open Client.Domain
+open GridGame
 open Elmish
 open Browser
 open Feliz

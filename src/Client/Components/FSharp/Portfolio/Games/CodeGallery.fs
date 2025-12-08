@@ -2,7 +2,7 @@ module Components.FSharp.Portfolio.CodeGallery
 
 open Elmish
 open Feliz
-open Shared
+open Client.Domain
 open SharedCodeGallery
 open Fable.Core.JsInterop
 open Components.FSharp.Portfolio.Games

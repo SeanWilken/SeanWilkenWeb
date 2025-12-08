@@ -3,8 +3,9 @@ module Components.Layout.PageLayout
 open Feliz
 open Bindings.LucideIcon
 open NavigationMenu
-open Shared.SharedWebAppModels
-open Shared.SharedWebAppViewSections
+open Client.Domain
+open SharedWebAppModels
+open SharedWebAppViewSections
 
 type PageLayoutProps = {|
     children: ReactElement

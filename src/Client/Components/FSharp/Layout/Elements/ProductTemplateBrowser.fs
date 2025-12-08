@@ -2,11 +2,12 @@ module Components.FSharp.Pages.ProductTemplateBrowser
 
 open Feliz
 open Feliz.DaisyUI
-open Shared
+open Client.Domain
 open Elmish
-open Shared.SharedShopV2
-open Shared.SharedShopV2.ProductTemplate.ProductTemplateBrowser
-open Shared.SharedShopV2Domain
+open Shared
+open SharedShopV2
+open SharedShopV2.ProductTemplate.ProductTemplateBrowser
+open SharedShopV2Domain
 open Components.FSharp.Layout.Elements.Pagination
 
 let getAllProductTemplates (request: Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<SharedShopV2Domain.ShopProductTemplatesMsg> =

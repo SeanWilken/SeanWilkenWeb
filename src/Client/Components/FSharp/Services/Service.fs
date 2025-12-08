@@ -1,7 +1,7 @@
 module Components.FSharp.Service
 
 open Feliz
-open Shared.SharedServices
+open Client.Domain.SharedServices
 
 
 let private heroMetricCard (stat: ServiceStat) =

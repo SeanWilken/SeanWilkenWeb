@@ -3,12 +3,12 @@ module Components.FSharp.Services.Landing
 open Feliz
 open Shared
 open Bindings.LucideIcon
-open Shared.SharedWebAppModels
-open Shared.SharedWebAppViewSections
+open Client.Domain.SharedWebAppModels
+open Client.Domain.SharedWebAppViewSections
 open Components.FSharp.Layout.MultiContent
 
 [<ReactComponent>]
-let view (model: Shared.SharedServices.Model) (dispatch: WebAppMsg -> unit) =
+let view (model: Client.Domain.SharedServices.Model) (dispatch: WebAppMsg -> unit) =
     React.useEffectOnce (fun () ->
         let el = Browser.Dom.document.getElementById("inner-main-content")
         if not (isNull el) 

@@ -1,9 +1,9 @@
 module Components.FSharp.Portfolio.Games.TileSort
 
 open Elmish
-open Shared.SharedTileSort
-open Shared.GridGame
-open Shared
+open Client.Domain
+open SharedTileSort
+open GridGame
 
 // CURRENTLY BROKEN WHEN USING SHARED, AS I TRIED TO UPDATE TO USE GRIDGAME AND BROKE STUFF
 // TODO:
@@ -61,19 +61,19 @@ let modelTileSortRoundDetails ( model : SharedTileSort.Model ) = [
 
 //---------------------
 
-let init (): Shared.SharedTileSort.Model * Cmd<Msg> =
-    let initialDifficulty = Shared.SharedTileSort.Simple
-    let initialRound = Shared.SharedTileSort.createNewRoundGameBoardBasedOnDifficulty initialDifficulty
+let init (): SharedTileSort.Model * Cmd<Msg> =
+    let initialDifficulty = Simple
+    let initialRound = createNewRoundGameBoardBasedOnDifficulty initialDifficulty
     let model = {
         Difficulty = initialDifficulty
         CurrentTiles = initialRound
         InitialTiles = initialRound
         Turns = []
-        GameState = Shared.GridGame.Playing
+        GameState = Playing
     }
     model, Cmd.none
 //---------------------
-let update ( msg: Msg ) ( model: Shared.SharedTileSort.Model ): Shared.SharedTileSort.Model * Cmd<Msg> =
+let update ( msg: Msg ) ( model: Model ): Model * Cmd<Msg> =
     match msg with
     | SetGameState gameState ->
         { model with GameState = gameState }, Cmd.none
@@ -98,9 +98,9 @@ let update ( msg: Msg ) ( model: Shared.SharedTileSort.Model ): Shared.SharedTil
     | CheckSolution ->
         match winValidator model.CurrentTiles with
         | true -> 
-            { model with GameState = Shared.GridGame.Won }, Cmd.none
+            { model with GameState = Won }, Cmd.none
         | false -> model, Cmd.none
-    | Solved -> { model with GameState = Shared.GridGame.Won }, Cmd.none // Was used as a test state for button
+    | Solved -> { model with GameState = Won }, Cmd.none // Was used as a test state for button
     | QuitGame -> model, Cmd.none
 
 open Fable.React
@@ -207,7 +207,7 @@ let tileSortModalContent model dispatch =
     SharedViewModule.gameModalContent (
         Html.div [
             match model.GameState with
-            | Shared.GridGame.Won ->
+            | Won ->
                 SharedViewModule.roundCompleteContent (modelTileSortRoundDetails model) (fun () -> SharedTileSort.Msg.ResetRound |> dispatch)
             | _ ->
                 Html.div [

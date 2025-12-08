@@ -5,7 +5,7 @@ open Browser
 open Bindings.LucideIcon
 
 module GamePieceIcons =
-    open Shared.GridGame
+    open Client.Domain.GridGame
 
     let blocker = "🧱"
     let ball = "⚽"
@@ -269,3 +269,23 @@ let sharedSplitView header childLeft childRight =
             ]
         ]
     ]
+
+
+module Query =
+    open System
+
+    let private splitOn (c: char) (s: string) =
+        s.Split(c, StringSplitOptions.RemoveEmptyEntries ||| StringSplitOptions.TrimEntries)
+        |> Array.toList
+
+    let parse (query: string) =
+        // strip leading '?'
+        let q = if query.StartsWith("?") then query.Substring(1) else query
+        q
+        |> splitOn '&'
+        |> List.choose (fun pair ->
+            match splitOn '=' pair with
+            | [ key; value ] -> Some (key.ToLowerInvariant(), System.Uri.UnescapeDataString value)
+            | _ -> None
+        )
+        |> Map.ofList
