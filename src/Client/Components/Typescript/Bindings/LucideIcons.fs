@@ -70,3 +70,7 @@ type LucideIcon =
     static member inline Target     (classes: string) = icon "Target" classes
     static member inline Play     (classes: string) = icon "Play" classes
     static member inline Store     (classes: string) = icon "Store" classes
+    static member inline ZoomIn     (classes: string) = icon "ZoomIn" classes
+    static member inline RotateCw     (classes: string) = icon "RotateCw" classes
+    static member inline Move     (classes: string) = icon "Move" classes
+    static member inline Layers     (classes: string) = icon "Layers" classes

@@ -998,31 +998,21 @@ module SharedWelcome =
     type Msg =
         | SwitchSection of SharedWebAppViewSections.AppView
 
-
-
-
-
-
-
-
-
 module Store =
 
     open Shared.SharedShopV2.PrintfulCatalog
     open Shared.SharedShopV2.ProductTemplate
     open Shared.SharedShopV2Domain.ProductTemplateResponse
     open Shared.SharedShopV2Domain.CatalogProductResponse
+    open Shared.PrintfulCommon
 
     module Collection =
-
-        open Shared.SharedShopV2Domain.CatalogProductResponse
-        open Shared.PrintfulCommon
 
         type Model = {
             Filters    : Filters
             Paging     : PagingInfoDTO
             SearchTerm : string option
-            Products   : CatalogProduct list
+            Products   : ProductTemplate list
             TotalCount : int
             IsLoading  : bool
             Error      : string option
@@ -1030,17 +1020,18 @@ module Store =
 
         type Msg =
             | InitFromQuery of string   // raw query string
-            | LoadProducts
-            | ProductsLoaded of CatalogProductsResponse
-            | LoadFailed of string
-            | ViewProduct of CatalogProduct
-            | FeaturedClick of CatalogProduct option
             | LoadMore
             | FiltersChanged of Filters
             | SearchChanged of string
             | SortChanged of sortType: string * sortDir: string
             | ApplyFilterPreset of string
             | SaveFilterPreset of string
+            // Printful STORE Products
+            | GetProducts
+            | GotProducts of ProductTemplatesResponse
+            | FailedProducts of exn
+            | ViewProduct of ProductTemplate
+            | FeaturedClick of ProductTemplate option
 
         let initModel () : Model = { 
                 Filters    = defaultFilters
@@ -1051,75 +1042,288 @@ module Store =
                 IsLoading  = false
                 Error      = None 
             }
-
-        open Elmish
         
-        let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
-            match msg with
-            | InitFromQuery _ ->
-                // TODO: parse query → filters/paging/search
-                model, Cmd.ofMsg LoadProducts
+    module ProductDesigner =
 
-            | LoadProducts ->
-                // TODO: call client API: Client.Api.productsApi.getProducts
-                { model with IsLoading = true }, Cmd.none
+        type StepDesigner =
+            | SelectBaseProduct
+            | SelectVariants
+            | SelectCustomDesign
+            | ConfigureDesignPlacement
+            | ReviewDesign
 
-            | ProductsLoaded res ->
-                { model with
-                    Products   = res.products
-                    TotalCount = res.paging.total
-                    Paging     = res.paging
-                    IsLoading  = false
-                    Error      = None },
-                Cmd.none
+        module Designs =
 
-            | LoadFailed err ->
-                { model with IsLoading = false; Error = Some err }, Cmd.none
+            type DesignId = string
 
-            | ViewProduct _p ->
-                // The parent will handle navigation to product detail
-                model, Cmd.none
+            type Design = {
+                Id        : DesignId
+                Name      : string
+                Slug      : string
+                ImageUrl  : string   // your static asset path, not Printful's
+                Tagline   : string option
+                IsActive  : bool
+            }
 
-            | FeaturedClick _ ->
-                // Could trigger overlay or same as ViewProduct
-                model, Cmd.none
+            let all : Design list = [
+                {
+                    Id       = "bowing-bubbles"
+                    Name     = "Bowing Bubbles"
+                    Slug     = "bowing-bubbles"
+                    ImageUrl = "/img/artwork/bowing-bubbles.png"
+                    Tagline  = Some "Soft gradients, sharp attitude."
+                    IsActive = true
+                }
+                {
+                    Id       = "caution-very-hot"
+                    Name     = "Caution: Very Hot"
+                    Slug     = "caution-very-hot"
+                    ImageUrl = "/img/artwork/caution-very-hot.png"
+                    Tagline  = Some "Handle with zero effort."
+                    IsActive = true
+                }
+                {
+                    Id       = "misfortune"
+                    Name     = "Misfortune"
+                    Slug     = "misfortune"
+                    ImageUrl = "/img/artwork/misfortune.png"
+                    Tagline  = None
+                    IsActive = true
+                }
+            ]
 
-            | LoadMore ->
-                let nextPaging =
-                    { model.Paging with
-                        offset = model.Paging.offset + model.Paging.limit }
-                { model with Paging = nextPaging }, Cmd.ofMsg LoadProducts
+            let active = all |> List.filter (fun d -> d.IsActive)
 
-            | FiltersChanged filters ->
-                { model with Filters = filters; Paging = { model.Paging with offset = 0 } },
-                Cmd.ofMsg LoadProducts
+            let tryFindById id =
+                active |> List.tryFind (fun d -> d.Id = id)
 
-            | SearchChanged term ->
-                { model with SearchTerm = Some term; Paging = { model.Paging with offset = 0 } },
-                Cmd.ofMsg LoadProducts
+            
 
-            | SortChanged (sortType, sortDir) ->
-                let updatedFilters =
-                    { model.Filters with
-                        SortType      = Some sortType
-                        SortDirection = Some sortDir }
-                { model with Filters = updatedFilters; Paging = { model.Paging with offset = 0 } },
-                Cmd.ofMsg LoadProducts
+            type PlacementId = string
 
-            | ApplyFilterPreset _key ->
-                // TODO: load preset from localStorage (client-side)
-                model, Cmd.ofMsg LoadProducts
+            type PlacementCategory =
+                | Apparel
+                | Headwear
+                | Embroidery
+                | WallArt
+                | Drinkware
+                | Other
 
-            | SaveFilterPreset _key ->
-                // TODO: write preset to localStorage
-                model, Cmd.none
+            type Placement = {
+                Id          : PlacementId   // internal key, e.g. "front", "back", "sleeve_left"
+                Label       : string        // UI label, e.g. "Front", "Back", "Left Sleeve"
+                Description : string option // optional helper text
+                Category    : PlacementCategory
+                IsDefault   : bool          // good candidate when first selecting
+            }
+
+            let defaultPlacement = {
+                Id = ""
+                Label = ""
+                Description = None
+                Category = Other
+                IsDefault = false
+            }
+
+            module DefaultPlacements =
+
+                let apparelPlacements : Placement list = [
+                    {
+                        Id          = "front"
+                        Label       = "Front"
+                        Description = Some "Main front print area"
+                        Category    = PlacementCategory.Apparel
+                        IsDefault   = true
+                    }
+                    {
+                        Id          = "back"
+                        Label       = "Back"
+                        Description = Some "Full back print"
+                        Category    = PlacementCategory.Apparel
+                        IsDefault   = false
+                    }
+                    {
+                        Id          = "left_chest"
+                        Label       = "Left Chest"
+                        Description = Some "Small logo on left chest"
+                        Category    = PlacementCategory.Apparel
+                        IsDefault   = false
+                    }
+                    {
+                        Id          = "right_chest"
+                        Label       = "Right Chest"
+                        Description = Some "Small logo on right chest"
+                        Category    = PlacementCategory.Apparel
+                        IsDefault   = false
+                    }
+                    {
+                        Id          = "sleeve_left"
+                        Label       = "Left Sleeve"
+                        Description = Some "Print on left sleeve"
+                        Category    = PlacementCategory.Apparel
+                        IsDefault   = false
+                    }
+                    {
+                        Id          = "sleeve_right"
+                        Label       = "Right Sleeve"
+                        Description = Some "Print on right sleeve"
+                        Category    = PlacementCategory.Apparel
+                        IsDefault   = false
+                    }
+                    {
+                        Id          = "inside_label"
+                        Label       = "Inside Label"
+                        Description = Some "Neck label / branding"
+                        Category    = PlacementCategory.Apparel
+                        IsDefault   = false
+                    }
+                ]
+
+                let headwearPlacements : Placement list = [
+                    {
+                        Id          = "front"
+                        Label       = "Front"
+                        Description = Some "Front embroidery or print"
+                        Category    = PlacementCategory.Headwear
+                        IsDefault   = true
+                    }
+                    {
+                        Id          = "back"
+                        Label       = "Back"
+                        Description = Some "Back logo or text"
+                        Category    = PlacementCategory.Headwear
+                        IsDefault   = false
+                    }
+                    {
+                        Id          = "side_left"
+                        Label       = "Left Side"
+                        Description = Some "Left side logo"
+                        Category    = PlacementCategory.Headwear
+                        IsDefault   = false
+                    }
+                    {
+                        Id          = "side_right"
+                        Label       = "Right Side"
+                        Description = Some "Right side logo"
+                        Category    = PlacementCategory.Headwear
+                        IsDefault   = false
+                    }
+                ]
+
+                let wallArtPlacements : Placement list = [
+                    {
+                        Id          = "front"
+                        Label       = "Print Area"
+                        Description = Some "Main artwork area"
+                        Category    = PlacementCategory.WallArt
+                        IsDefault   = true
+                    }
+                ]
+
+                let drinkwarePlacements : Placement list = [
+                    {
+                        Id          = "wrap"
+                        Label       = "Full Wrap"
+                        Description = Some "Artwork wraps around the mug/tumbler"
+                        Category    = PlacementCategory.Drinkware
+                        IsDefault   = true
+                    }
+                    {
+                        Id          = "side_left"
+                        Label       = "Left Side"
+                        Description = Some "Print on left side (for right-handed grip)"
+                        Category    = PlacementCategory.Drinkware
+                        IsDefault   = false
+                    }
+                    {
+                        Id          = "side_right"
+                        Label       = "Right Side"
+                        Description = Some "Print on right side (for left-handed grip)"
+                        Category    = PlacementCategory.Drinkware
+                        IsDefault   = false
+                    }
+                ]
+
+                let all : Placement list =
+                    apparelPlacements
+                    @ headwearPlacements
+                    @ wallArtPlacements
+                    @ drinkwarePlacements
+
+            type AppliedDesign = {
+                Design    : Design
+                Placement : Placement
+                Size      : string
+            }
+
+
+        module PrintfulDesignMap =
+
+            open Designs
+
+            type PrintfulFileRef = {
+                DesignId   : DesignId
+                FileId     : int option    // Printful file ID when you have it
+                FileUrl    : string option // Printful-hosted URL if needed
+            }
+
+            // For now, stub them as None / placeholder
+            let map : PrintfulFileRef list = [
+                { DesignId = "bowing-bubbles"; FileId = None; FileUrl = None }
+                { DesignId = "caution-very-hot"; FileId = None; FileUrl = None }
+                { DesignId = "misfortune"; FileId = None; FileUrl = None }
+            ]
+
+            let tryGetPrintfulRef designId =
+                map |> List.tryFind (fun m -> m.DesignId = designId)
+
+        type Msg =
+            | GoToStep of StepDesigner
+            | SelectBase of CatalogProduct
+            | SelectColor of string
+            | SelectSize of string
+            | RemoveDesign of Designs.DesignId
+            | AddDesign of Designs.Design
+            | SetActiveDesign of int
+            | UpdateDesignPlacement of index:int * placement:string
+            | UpdateDesignSize of index:int * size:string
+            | LoadProducts
+            | ProductsLoaded of CatalogProductsResponse
+            | LoadFailed of string
+            | ViewProduct of CatalogProduct
+
+        type Model = {
+            products: CatalogProduct list
+            paging: PagingInfoDTO
+            query: Filters
+            currentStep: StepDesigner
+            selectedProduct: CatalogProduct option
+            selectedVariantSize: string option
+            selectedVariantColor: string option
+            designs: Designs.Design list
+            selectedDesigns: Designs.AppliedDesign list
+            activeDesignIndex  : int option
+            placements          : Designs.Placement list
+        }
+        
+        // ADD DEFERRED!!!!
+        let initialModel () = {
+            products = []
+            paging = emptyPaging
+            query = defaultFilters
+            currentStep = SelectBaseProduct
+            selectedProduct = None
+            selectedVariantSize = None
+            selectedVariantColor = None
+            designs = []
+            selectedDesigns = []
+            activeDesignIndex = None
+            placements = Designs.DefaultPlacements.all
+        }
 
     module ProductTemplate =
 
         module ProductTemplateBrowser =
-            open Shared.PrintfulCommon
-            open Shared.SharedShopV2.ProductTemplate
-            open Shared.SharedShopV2.PrintfulCatalog
 
             type Model = {
                 Filters: Filters
@@ -1139,84 +1343,20 @@ module Store =
                 Error = None
             }
 
-    module BuildYourOwnProductWizard =
-        open Shared.PrintfulCommon
-        open Shared.SharedShopV2.PrintfulCatalog
-
-        type Step =
-            | SelectProduct
-            | SelectVariant
-            | SelectDesign
-            | ConfigurePlacement
-            | Review
-
-        type CatalogProductsFilters = {
-            SelectedCategories: int list
-            SelectedColors: string list
-            SelectedPlacements: string list
-            SelectedTechniques: string list
-            OnlyNew: bool
-            SellingRegion: string option
-            DestinationCountry: string option
-            SortDirection: string option
-            SortType: string option
-        }
-
-        let defaultCatalogProductsFilters = {
-            SelectedCategories = []
-            SelectedColors = []
-            SelectedPlacements = []
-            SelectedTechniques = []
-            OnlyNew = false
-            SellingRegion = None
-            DestinationCountry = None
-            SortDirection = None
-            SortType = None
-        }
-
-        type Model = {
-            products: CatalogProduct list
-            paging: PagingInfoDTO
-            query: Filters
-            currentStep: Step
-            selectedProduct: CatalogProduct option
-            selectedVariantSize: string option
-            selectedVariantColor: string option
-            selectedDesign: string option
-            placements: (string * string) list // placement, url
-        }
-
-
-        // ADD DEFERRED!!!!
-        let initialState () = {
-            products = []
-            paging = emptyPaging
-            query = defaultFilters
-            currentStep = SelectProduct
-            selectedProduct = None
-            selectedVariantSize = None
-            selectedVariantColor = None
-            selectedDesign = None
-            placements = []
-        }
-
     type ShopSection =
         | ShopLanding // this is is a welcome page
-        | ShopTypeSelector // this is landing page, for selecting either of the two workflows
-        | ProductTemplateBrowser of ProductTemplate.ProductTemplateBrowser.Model // product template browser, not yet created
-        | BuildYourOwnWizard of BuildYourOwnProductWizard.Model // build your own, should be able to control whether or not we allow the user to upload their own images.
+        // | ProductTemplateBrowser of ProductTemplate.ProductTemplateBrowser.Model // product template browser, not yet created
+        // | BuildYourOwnWizard of BuildYourOwnProductWizard.Model // build your own, should be able to control whether or not we allow the user to upload their own images.
+        | ProductDesigner of ProductDesigner.Model // build your own, should be able to control whether or not we allow the user to upload their own images.
         | CollectionBrowser of Collection.Model
         | ShoppingBag
         | Checkout
         | Payment
-        | Social
-        | Contact
+        // | Social
+        // | Contact
         | NotFound
         
     type ShopLandingMsg =
-        | SwitchSection of ShopSection
-
-    type ShopTypeSelectorMsg =
         | SwitchSection of ShopSection
 
     // extend to have invalid state impossible
@@ -1250,57 +1390,28 @@ module Store =
     type CartItem =
         | Template of ProductTemplate * qty:int
         // below is awful
-        | Custom of BuildYourOwnProductWizard.Model * qty:int
+        | Custom of ProductDesigner.Model * qty:int
 
-    // message types we need
+    type Tab =
+        | Hero
+        | Collection
+        | Designer
+        | Product
+        | Cart
+        | Checkout
+
     type ShopMsg =
-        // | ShoppingBagMsg of ShoppingBag.Msg
-        // | CheckoutMsg of Checkout.Msg
-        // | PaymentMsg of Payment.Msg
-        // | ApiFailed of exn
-        // | UpdateCustomerForm of UserSignUpFormField
-        // | UpdateAddressForm of CustomerAddressFormField
-        // | CheckUserSignUpForm
-        // | CheckAddressForm
-        // | UpdateProductColor of SyncProduct * ProductColor
-        // | UpdateProductSize of SyncProduct * ProductSize
-        // | AddVariantToShoppingBag of SyncProductVariant
-        // | DeleteVariantFromShoppingBag of SyncProductVariant
-        // | AdjustLineItemQuantity of QuantityAdjustment * SyncProductVariant
-        // Testing
-        // | TestApiTaxRate
-        // | TestApiShippingRate
-        // | Send // apparently testing paypal
-        // | GotResult of Result<string, HttpError>
-        // | TestApiCustomerDraft of CustomerDraftOrder
-        // | GotCustomerOrderDraftResult of Result<DraftResult, HttpError>
-        // Tax
-        // | GetTaxRateResult of CustomerAddress
-        // | GotTaxRateResult of CheckoutTax
-        // | FailedTaxRateResult of exn
-        // Shipping Rates
-        // | GetShippingRateResult of Result<CheckoutShippingRate list, HttpError>
-        // | GotShippingRateResult of CheckoutShippingRate list
-        // | FailedShippingRateResult of exn
-        // Product Variants
-        // | GetProductVariants of int
-        // | GotProductVariants of SharedShopDomain.CatalogVariant list
-        // | FailedProductVariants of exn
-        // | RemoveProductFromBag of int
         | NavigateTo of ShopSection
         | ShopLanding of ShopLandingMsg
         | ShopCollectionMsg of Collection.Msg
-
-
-
-        | ShopTypeSelection of ShopTypeSelectorMsg
-        | ShopBuildYourOwnWizard of ShopBuildYourOwnProductWizardMsg
-        | ShopStoreProductTemplates of ShopProductTemplatesMsg
+        | ShopDesignerMsg of ProductDesigner.Msg
+        // | ShopBuildYourOwnWizard of ShopBuildYourOwnProductWizardMsg
+        // | ShopStoreProductTemplates of ShopProductTemplatesMsg
 
     type Model = {
         Section: ShopSection
         Cart: CartItem list
-        PayPalOrderReference: string option
+        // PayPalOrderReference: string option
         CheckoutTax: float option
         CheckoutShipping: float option
     }
@@ -1308,7 +1419,7 @@ module Store =
     let getInitialModel shopSection = {
         Section = shopSection
         Cart = []
-        PayPalOrderReference = None
+        // PayPalOrderReference = None
         CheckoutTax = None
         CheckoutShipping = None
     }

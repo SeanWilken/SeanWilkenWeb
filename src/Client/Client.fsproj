@@ -36,15 +36,15 @@
         <Compile Include="Components\FSharp\Layout\Elements\ProductGrid.fs" />
         <!-- 
         <Compile Include="Components\FSharp\Layout\Elements\ProductBrowser.fs" />
-        -->
         <Compile Include="Components\FSharp\Layout\Elements\ProductTemplateBrowser.fs" />
+        <Compile Include="Components\FSharp\Shop\CreateYourOwnProduct.fs" />
+        -->
         <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\GoalRoll\GoalRoll.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\PivotPoints\PivotPoints.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\TileSort\TileSort.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\TileTap\TileTap.fs" />
         <Compile Include="Components\FSharp\Layout\Elements\MultiContent.fs" />
-        <Compile Include="Components\FSharp\Shop\CreateYourOwnProduct.fs" />
 
         <!-- Shop Pages -->
         <Compile Include="Components\FSharp\Shop\Domain.fs" />
@@ -59,6 +59,7 @@
         <Compile Include="Components\FSharp\Shop\Pages\Catalog.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Shipping.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Showroom.fs" />
+        <Compile Include="Components\FSharp\Shop\Shop.fs" />
         -->
 
         <!-- F# Component Pages -->
@@ -67,7 +68,6 @@
         <Compile Include="Components\FSharp\Portfolio\Art\ArtGallery.fs" />
         <Compile Include="Components\FSharp\Contact\Contact.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\CodeGallery.fs" />
-        <Compile Include="Components\FSharp\Shop\Shop.fs" />
         <Compile Include="Components\FSharp\Shop\ShopV2.fs" />
         <Compile Include="Components\FSharp\Portfolio\PortfolioLanding.fs" />
         <Compile Include="Components\FSharp\Services\ServicesLanding.fs" />

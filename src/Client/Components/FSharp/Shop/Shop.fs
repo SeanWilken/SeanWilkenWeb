@@ -1456,10 +1456,11 @@ module LuxuryMockup =
                     }
 
                 | Tab.Designer ->
-                    Designer.view {
-                        Model    = wizardModel
-                        Dispatch = ignore
-                    }
+                    // Designer.view {
+                    //     Model    = wizardModel
+                    //     Dispatch = ignore
+                    // }
+                    Html.none
                 | Tab.Cart ->
                     Cart.Cart.view
                         { Items   = []; }

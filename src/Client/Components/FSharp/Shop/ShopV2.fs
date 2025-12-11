@@ -1,28 +1,38 @@
 module Components.FSharp.ShopV2
 
-open System
-open System
 open Elmish
-open Elmish.UrlParser
-open Elmish.Navigation
-open Fable.Core
-open Fable.Core.JsInterop
 open Feliz
-open Shared.SharedShopDomain
 open Client.Domain.Store
 open Client.Domain
-
+open Client.Components.Shop
+open Client.Components.Shop.Common
+open Client.Components.Shop.Collection
+open Client.Components.Shop.ShopHero
 
 let sendMessage (_paypalOrderRef: string) : Cmd<ShopMsg> = Cmd.none
 
-
 let init shopSection =
     Client.Domain.Store.getInitialModel shopSection
-    , Cmd.none // getAllProducts defaultProductsRequest
-
+    , Cmd.none
 
 let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
     match msg with
+    | ShopDesignerMsg subMsg ->
+        match model.Section with
+        | ProductDesigner pd ->
+            let productDesignerMdl, cmd' =
+                Client.Components.Shop.Designer.update subMsg pd
+
+            { model with Section = Store.ProductDesigner productDesignerMdl },
+            cmd' |> Cmd.map ShopDesignerMsg
+        | _ ->
+            
+            let initMdl = ProductDesigner.initialModel()
+            let designerModel, msg = Client.Components.Shop.Designer.update subMsg initMdl
+            
+            { model with Section = Store.ShopSection.ProductDesigner designerModel },
+            Cmd.ofMsg (ShopDesignerMsg ProductDesigner.Msg.LoadProducts)
+
     | ShopCollectionMsg subMsg ->
         match model.Section with
         | Client.Domain.Store.CollectionBrowser cb ->
@@ -38,9 +48,12 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
             cmd' |> Cmd.map ShopCollectionMsg
         | _ ->
             printfn $"HANDLE ME: SHOP V2: UPDATE"
+            
             let landingModel, msg = Client.Components.Shop.Collection.State.init None
+            
             { model with Section = Store.ShopSection.CollectionBrowser landingModel },
             Cmd.map ShopCollectionMsg msg
+
     | NavigateTo section ->
         // need to do url here
 
@@ -52,36 +65,36 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
         | Store.ShopLandingMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
 
-    | ShopMsg.ShopTypeSelection msg ->
-        match msg with
-        | Store.ShopTypeSelectorMsg.SwitchSection section ->
-            model, Cmd.ofMsg (NavigateTo section)
+    // | ShopMsg.ShopTypeSelection msg ->
+    //     match msg with
+    //     | Store.ShopTypeSelectorMsg.SwitchSection section ->
+    //         model, Cmd.ofMsg (NavigateTo section)
 
-    | ShopMsg.ShopBuildYourOwnWizard msg ->
-        match model.Section, msg with
-        | Store.ShopSection.BuildYourOwnWizard _, Store.ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
-            model, Cmd.ofMsg (NavigateTo section)
-        | Store.ShopSection.BuildYourOwnWizard byow, _ ->
-            let newModel, childCmd = CreateYourOwnProduct.update msg byow
-            { model with Section = Store.ShopSection.BuildYourOwnWizard newModel },
-            Cmd.map ShopMsg.ShopBuildYourOwnWizard childCmd
+    // | ShopMsg.ShopBuildYourOwnWizard msg ->
+    //     match model.Section, msg with
+    //     | Store.ShopSection.BuildYourOwnWizard _, Store.ShopBuildYourOwnProductWizardMsg.SwitchSection section ->
+    //         model, Cmd.ofMsg (NavigateTo section)
+    //     | Store.ShopSection.BuildYourOwnWizard byow, _ ->
+    //         let newModel, childCmd = CreateYourOwnProduct.update msg byow
+    //         { model with Section = Store.ShopSection.BuildYourOwnWizard newModel },
+    //         Cmd.map ShopMsg.ShopBuildYourOwnWizard childCmd
 
-        | _ ->
-            { model with Section = Store.ShopSection.BuildYourOwnWizard (Store.BuildYourOwnProductWizard.initialState ()) },
-            Cmd.none
+    //     | _ ->
+    //         { model with Section = Store.ShopSection.BuildYourOwnWizard (Store.BuildYourOwnProductWizard.initialState ()) },
+    //         Cmd.none
 
-    | ShopMsg.ShopStoreProductTemplates msg ->
+    // | ShopMsg.ShopStoreProductTemplates msg ->
 
-        match model.Section, msg with
-        | Store.ShopSection.ProductTemplateBrowser _, Store.ShopProductTemplatesMsg.SwitchSection section ->
-            model, Cmd.ofMsg (NavigateTo section)
-        | Store.ShopSection.ProductTemplateBrowser ptb, _ ->
-            let newModel, childCmd = Components.FSharp.Pages.ProductTemplateBrowser.update msg ptb
-            { model with Section = Store.ShopSection.ProductTemplateBrowser newModel },
-            Cmd.map ShopMsg.ShopStoreProductTemplates childCmd
-        | _ ->
-            { model with Section = Store.ShopSection.ProductTemplateBrowser (Store.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
-            Cmd.none
+    //     match model.Section, msg with
+    //     | Store.ShopSection.ProductTemplateBrowser _, Store.ShopProductTemplatesMsg.SwitchSection section ->
+    //         model, Cmd.ofMsg (NavigateTo section)
+    //     | Store.ShopSection.ProductTemplateBrowser ptb, _ ->
+    //         let newModel, childCmd = Components.FSharp.Pages.ProductTemplateBrowser.update msg ptb
+    //         { model with Section = Store.ShopSection.ProductTemplateBrowser newModel },
+    //         Cmd.map ShopMsg.ShopStoreProductTemplates childCmd
+    //     | _ ->
+    //         { model with Section = Store.ShopSection.ProductTemplateBrowser (Store.ProductTemplate.ProductTemplateBrowser.initialModel ()) },
+    //         Cmd.none
 
 let pathToTitleString (path: string) =
     path.Replace ("/", " ")
@@ -205,7 +218,7 @@ let hero dispatch =
 
             Html.button [
                 prop.className "mt-10 btn btn-sm px-6 bg-white text-black hover:bg-white/80"
-                prop.onClick (fun _ -> dispatch (NavigateTo Store.ShopSection.ShopTypeSelector))
+                prop.onClick (fun _ -> dispatch (NavigateTo (CollectionBrowser (Collection.initModel()))))
                 prop.text "Enter collections →"
             ]
         ]
@@ -283,8 +296,7 @@ let shopHero dispatch =
                                 prop.className
                                     "btn btn-primary rounded-full px-8 gap-2 shadow-lg shadow-primary/40"
                                 prop.text "Enter collections"
-                                prop.onClick (fun _ ->
-                                    dispatch (NavigateTo Store.ShopSection.ShopTypeSelector))
+                                prop.onClick (fun _ -> dispatch (NavigateTo (CollectionBrowser (Collection.initModel()))))
                             ]
                         ]
                     ]
@@ -433,73 +445,10 @@ let contactView =
         ]
     ]
 
-
-let shopTypeSelectorView (dispatch: ShopTypeSelectorMsg -> unit) =
-    Html.div [
-        prop.className "flex flex-col items-center justify-center gap-8 p-8"
-        prop.children [
-            Html.h2 [
-                prop.className "text-2xl font-bold"
-                prop.text "Choose how you want to shop"
-            ]
-
-            Html.div [
-                prop.className "grid grid-cols-1 gap-6 w-full max-w-3xl"
-                prop.children [
-
-                    Html.div [
-                        prop.className "p-6 border rounded-2xl shadow hover:shadow-lg cursor-pointer transition"
-                        prop.onClick (fun _ -> dispatch (ShopTypeSelectorMsg.SwitchSection (ShopSection.BuildYourOwnWizard (BuildYourOwnProductWizard.initialState ()))))
-                        prop.children [
-                            Html.h3 [ prop.className "text-xl font-semibold"; prop.text "📅 We'll be right back!" ]
-                            // Html.hr [ prop.className "my-4" ]
-                            Html.p [ prop.className "text-md opacity-70 text-center p-2"; prop.text "Currently disabled, while we upgrade to API v2!" ]
-                        ]
-                    ]
-
-                    // Html.div [
-                    //     prop.className "p-6 border rounded-2xl shadow hover:shadow-lg cursor-pointer transition"
-                    //     // prop.onClick (fun _ -> dispatch (ShopTypeSelectorMsg.SwitchSection (ShopSection.BuildYourOwnWizard (BuildYourOwnProductWizard.initialState ()))))
-                    //     prop.children [
-                    //         Html.h3 [ prop.className "text-xl font-semibold text-left"; prop.text "🛠️ Build Your Own" ]
-                    //         Html.p [ prop.className "text-md opacity-70 text-center p-2"; prop.text "Customize products step by step with your own designs." ]
-                    //     ]
-                    // ]
-
-                    // Html.div [
-                    //     prop.className "p-6 border rounded-2xl shadow hover:shadow-lg cursor-pointer transition"
-                    //     // prop.onClick (fun _ -> dispatch (ShopTypeSelectorMsg.SwitchSection (ShopSection.ProductTemplateBrowser (ProductTemplate.ProductTemplateBrowser.initialModel()))))
-                    //     prop.children [
-                    //         Html.h3 [ prop.className "text-xl font-semibold text-left"; prop.text "🛍️ Browse Store Templates" ]
-                    //         Html.p [ prop.className "text-md opacity-70 text-center p-2"; prop.text "Pick from pre-made product templates and order quickly." ]
-                    //     ]
-                    // ]
-                ]
-            ]
-        ]
-    ]
-
-open Feliz
-open Client.Components.Shop
-open Client.Components.Shop.Common
-open Client.Components.Shop.Common.Types
-open SharedShopV2
-open Client.Components.Shop.Collection
-open Client.Components.Shop.ShopHero
-
-module LuxuryMockup =
-    open Client.Domain.Store
-
-    type Tab =
-        | Hero
-        | Collection
-        | Designer
-        | Product
-        | Cart
-        | Checkout
+module Shop =
 
     [<ReactComponent>]
-    let view model (dispatch: Client.Domain.Store.ShopMsg -> unit) =
+    let view model (dispatch: Store.ShopMsg -> unit) =
         let (tab, setTab) = React.useState Tab.Hero
 
         let productDetails : Product.ProductDetails =
@@ -512,9 +461,6 @@ module LuxuryMockup =
                 Colors      = [ "bg-neutral"; "bg-base-100 border"; "bg-base-300"; "bg-primary" ]
             }
 
-        // Minimal designer model for now
-        let wizardModel =
-            BuildYourOwnProductWizard.initialState ()
 
         Html.div [
             prop.className "min-h-screen bg-base-100 text-base-content"
@@ -563,18 +509,19 @@ module LuxuryMockup =
                     }
 
                 | Tab.Collection ->
-                    match model.Section with
-                    | CollectionBrowser cmodel  ->
-                        Collection.collectionView
-                            cmodel
-                            (fun msg -> msg |> dispatch )
-                    | _ ->
+                    let model = 
+                        match model.Section with
+                        | CollectionBrowser cmodel -> cmodel
+                        | _ -> State.initModel
+                    Collection.collectionView model (ShopCollectionMsg >> dispatch)
 
-                        Collection.collectionView
-                            State.initModel
-                            (fun msg -> msg |> dispatch )
-
-
+                | Tab.Designer ->
+                    let model = 
+                        match model.Section with
+                        | ProductDesigner dmodel -> dmodel
+                        | _ -> ProductDesigner.initialModel ()
+                    Designer.view model (ShopDesignerMsg >> dispatch)
+                
                 | Tab.Product ->
                     Product.view {
                         Product     = productDetails
@@ -582,11 +529,6 @@ module LuxuryMockup =
                         OnAddToWish = ignore
                     }
 
-                | Tab.Designer ->
-                    Designer.view {
-                        Model    = wizardModel
-                        Dispatch = ignore
-                    }
                 | Tab.Cart ->
                     Cart.Cart.view
                         { Items   = []; }
@@ -617,7 +559,6 @@ module LuxuryMockup =
             ]
         ]
 
-// View dispatcher: select page content based on Model.CurrentPage
-let view (model: Client.Domain.Store.Model) (dispatch: Client.Domain.Store.ShopMsg -> unit) =
-    LuxuryMockup.view model (dispatch)
+let view (model: Store.Model) (dispatch: Store.ShopMsg -> unit) =
+    Shop.view model dispatch
        
