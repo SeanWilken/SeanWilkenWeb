@@ -1,13 +1,9 @@
 namespace Client.Components.Shop
 
 open Feliz
-open Client.Components.Shop.Common
-
-
-// meta tags to dynamically construct the way we organinze products without explicit categories (essentitally same thing)
+open Client.Components.Shop.Common.Ui
 
 module Product =
-    open Client.Components.Shop.Common.Ui
 
     type ProductDetails = {
         Name        : string

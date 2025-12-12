@@ -1,7 +1,6 @@
 namespace Client.Components.Shop.ShopHero
 
 open Feliz
-open Client.Components.Shop.Common
 
 module Hero =
 

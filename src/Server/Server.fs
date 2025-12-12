@@ -180,11 +180,13 @@ module Api =
                     raw.options
                     |> Array.choose (fun v -> if v.ValueKind = JsonValueKind.String then Some (v.GetString()) else None)
                 { 
-                    placement = raw.placement
-                    display_name = raw.display_name
-                    technique_key = raw.technique_key
-                    technique_display_name = raw.technique_display_name
-                    options = opts 
+                    // placement = raw.placement
+                    // display_name = raw.display_name
+                    // technique_key = raw.technique_key
+                    // technique_display_name = raw.technique_display_name
+                    // options = opts
+                    Label = raw.display_name
+                    HitArea = PrintfulCommon.designHitAreaFromPrintfulString raw.placement
                 }
 
             let private normalizePlacementOptionData (raw: RawPlacementOptionData) : SharedShopV2.ProductTemplate.PlacementOptionData =
@@ -294,16 +296,19 @@ module Api =
                         q.newOnly |> Option.map (fun v -> "new", if v then "true" else "false")
                         q.offset |> Option.map (fun v -> "offset", string v)
                         q.placements |> Option.map (fun xs -> "placements", String.concat "," xs)
-                        q.selling_region_name |> Option.map (fun v -> "selling_region_name", v)
-                        q.sort_direction |> Option.map (fun v -> "sort_direction", v)
-                        q.sort_type |> Option.map (fun v -> "sort_type", v)
+                        // q.selling_region_name |> Option.map (fun v -> "selling_region_name", v)
+                        // q.sort_direction |> Option.map (fun v -> "sort_direction", v)
+                        // q.sort_type |> Option.map (fun v -> "sort_type", v)
                         q.techniques |> Option.map (fun xs -> "techniques", String.concat "," xs)
                         q.destination_country |> Option.map (fun v -> "destination_country", v)
                     ]
                     |> List.choose id
                     |> List.map (fun (k,v) -> $"{k}={System.Uri.EscapeDataString v}")
                     |> String.concat "&"
-                    |> fun s -> if s = "" then "" else "?" + s
+                    |> fun s -> 
+                        printfn $"Query String: {s}"
+                        if s = "" then "" else "?" + s
+
 
                 // Fetch products (paginated)
                 // V1 only
@@ -372,8 +377,8 @@ module Api =
                     configureClient printfulV2HttpClient storeHeaders
 
                     System.Console.WriteLine $"URL: {url}"
-// + url
-                    let! response = printfulV2HttpClient.GetAsync("catalog-products/" ) |> Async.AwaitTask
+                    // + url
+                    let! response = printfulV2HttpClient.GetAsync("catalog-products/" + url) |> Async.AwaitTask
                     // 291981984 - Handsy
                     System.Console.WriteLine $"RESPONSE: {response}"
 

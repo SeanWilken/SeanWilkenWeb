@@ -1048,278 +1048,270 @@ module Store =
         type StepDesigner =
             | SelectBaseProduct
             | SelectVariants
-            | SelectCustomDesign
-            | ConfigureDesignPlacement
+            | ProductDesigner
             | ReviewDesign
 
         module Designs =
 
-            type DesignId = string
+            type DesignSize =
+                | Small
+                | Medium
+                | Large
 
-            type Design = {
-                Id        : DesignId
-                Name      : string
-                Slug      : string
-                ImageUrl  : string   // your static asset path, not Printful's
-                Tagline   : string option
-                IsActive  : bool
-            }
-
-            let all : Design list = [
-                {
-                    Id       = "bowing-bubbles"
-                    Name     = "Bowing Bubbles"
-                    Slug     = "bowing-bubbles"
-                    ImageUrl = "/img/artwork/bowing-bubbles.png"
-                    Tagline  = Some "Soft gradients, sharp attitude."
-                    IsActive = true
-                }
-                {
-                    Id       = "caution-very-hot"
-                    Name     = "Caution: Very Hot"
-                    Slug     = "caution-very-hot"
-                    ImageUrl = "/img/artwork/caution-very-hot.png"
-                    Tagline  = Some "Handle with zero effort."
-                    IsActive = true
-                }
-                {
-                    Id       = "misfortune"
-                    Name     = "Misfortune"
-                    Slug     = "misfortune"
-                    ImageUrl = "/img/artwork/misfortune.png"
-                    Tagline  = None
-                    IsActive = true
-                }
-            ]
-
-            let active = all |> List.filter (fun d -> d.IsActive)
-
-            let tryFindById id =
-                active |> List.tryFind (fun d -> d.Id = id)
-
-            
-
-            type PlacementId = string
-
-            type PlacementCategory =
-                | Apparel
-                | Headwear
+            type DesignTechnique =
+                | DTG
                 | Embroidery
-                | WallArt
-                | Drinkware
-                | Other
+                | Digital
+                | Knitting
+                | Sublimation
+                | Other of string
 
-            type Placement = {
-                Id          : PlacementId   // internal key, e.g. "front", "back", "sleeve_left"
-                Label       : string        // UI label, e.g. "Front", "Back", "Left Sleeve"
-                Description : string option // optional helper text
-                Category    : PlacementCategory
-                IsDefault   : bool          // good candidate when first selecting
+                member this.ToPrintfulTechnique() =
+                    match this with
+                    | DTG         -> "dtg"
+                    | Embroidery  -> "embroidery"
+                    | Digital     -> "digital"
+                    | Knitting    -> "knitting"
+                    | Sublimation -> "sublimation"
+                    | Other t     -> t
+
+            // ------------------------
+            // Top-level asset/image
+            // ------------------------
+
+            type AssetId = Guid
+
+            /// A reusable artwork asset (library or upload)
+            type ImageAsset = {
+                Id            : AssetId
+                Name          : string
+                ImageUrl      : string
+                Tagline       : string option
+                TechniqueHint : DesignTechnique option
             }
 
-            let defaultPlacement = {
-                Id = ""
-                Label = ""
-                Description = None
-                Category = Other
-                IsDefault = false
+            // ------------------------
+            // Placed instance
+            // ------------------------
+
+            /// One *use* of an ImageAsset on a specific product (front, back, etc.)
+            type PlacedDesign = {
+                /// Distinguishes multiple uses of the *same* asset (front + back, etc.)
+                InstanceId   : Guid
+                Asset        : ImageAsset
+                HitArea      : DesignHitArea
+                Size         : DesignSize
+                Technique    : DesignTechnique
+                Position     : PrintfulPosition option
+                LayerOptions : PrintfulLayerOption list
             }
 
-            module DefaultPlacements =
+            module Defaults =
 
-                let apparelPlacements : Placement list = [
+                /// “Promote” a raw ImageAsset into a first PlacedDesign with defaults
+                let toPlaced (hitArea: DesignHitArea) (size: DesignSize) (asset: ImageAsset) : PlacedDesign =
                     {
-                        Id          = "front"
-                        Label       = "Front"
-                        Description = Some "Main front print area"
-                        Category    = PlacementCategory.Apparel
-                        IsDefault   = true
+                        InstanceId   = Guid.NewGuid()
+                        Asset        = asset
+                        HitArea      = hitArea
+                        Size         = size
+                        Technique    = asset.TechniqueHint |> Option.defaultValue DesignTechnique.DTG
+                        Position     = None
+                        LayerOptions = []
+                    }
+
+                let all : ImageAsset list = [
+                    {
+                        Id           = Guid.NewGuid()
+                        Name         = "Bowing Bubbles"
+                        ImageUrl     = "./../img/artwork/bowing-bubbles.jpg"
+                        Tagline      = Some "Sweet as chewed gum."
+                        TechniqueHint = None
                     }
                     {
-                        Id          = "back"
-                        Label       = "Back"
-                        Description = Some "Full back print"
-                        Category    = PlacementCategory.Apparel
-                        IsDefault   = false
+                        Id           = Guid.NewGuid()
+                        Name         = "Caution: Very Hot"
+                        ImageUrl     = "./../img/artwork/caution-very-hot.jpg"
+                        Tagline      = Some "Handle with xero effort."
+                        TechniqueHint = None
                     }
                     {
-                        Id          = "left_chest"
-                        Label       = "Left Chest"
-                        Description = Some "Small logo on left chest"
-                        Category    = PlacementCategory.Apparel
-                        IsDefault   = false
+                        Id           = Guid.NewGuid()
+                        Name         = "Misfortune"
+                        ImageUrl     = "./../img/artwork/misfortune.png"
+                        Tagline      = Some "It was always somewhere in the cards."
+                        TechniqueHint = None
                     }
                     {
-                        Id          = "right_chest"
-                        Label       = "Right Chest"
-                        Description = Some "Small logo on right chest"
-                        Category    = PlacementCategory.Apparel
-                        IsDefault   = false
-                    }
-                    {
-                        Id          = "sleeve_left"
-                        Label       = "Left Sleeve"
-                        Description = Some "Print on left sleeve"
-                        Category    = PlacementCategory.Apparel
-                        IsDefault   = false
-                    }
-                    {
-                        Id          = "sleeve_right"
-                        Label       = "Right Sleeve"
-                        Description = Some "Print on right sleeve"
-                        Category    = PlacementCategory.Apparel
-                        IsDefault   = false
-                    }
-                    {
-                        Id          = "inside_label"
-                        Label       = "Inside Label"
-                        Description = Some "Neck label / branding"
-                        Category    = PlacementCategory.Apparel
-                        IsDefault   = false
+                        Id           = Guid.NewGuid()
+                        Name         = "Out for Blood"
+                        ImageUrl     = "./../img/artwork/out-for-blood.png"
+                        Tagline      = Some "Always thirsty."
+                        TechniqueHint = None
                     }
                 ]
 
-                let headwearPlacements : Placement list = [
+            /// Helper to go from a PlacedDesign to a PrintfulPlacement + Layer
+            module ToPrintful =
+
+                let private sizeToRelativeBox = function
+                    // these are “relative” sizes (0.0–1.0 of print area); you can refine later
+                    | DesignSize.Small  -> 0.4
+                    | DesignSize.Medium -> 0.7
+                    | DesignSize.Large  -> 1.0
+
+                /// Given a product’s print-area dimensions (inches), derive a rough position box
+                let autoCenterPosition (areaWidth: float) (areaHeight: float) (size: DesignSize) : PrintfulPosition =
+                    let scale  = sizeToRelativeBox size
+                    let width  = areaWidth * scale
+                    let height = areaHeight * scale
                     {
-                        Id          = "front"
-                        Label       = "Front"
-                        Description = Some "Front embroidery or print"
-                        Category    = PlacementCategory.Headwear
-                        IsDefault   = true
+                        Width  = width
+                        Height = height
+                        Left   = (areaWidth  - width)  / 2.0
+                        Top    = (areaHeight - height) / 2.0
                     }
+
+                /// Convert a single PlacedDesign into a PrintfulPlacement
+                let toPlacementAndLayer
+                    (printAreaWidth : float)
+                    (printAreaHeight: float)
+                    (pd: PlacedDesign)
+                    : PrintfulPlacement =
+
+                    let position =
+                        pd.Position
+                        |> Option.defaultWith (fun () -> autoCenterPosition printAreaWidth printAreaHeight pd.Size)
+
                     {
-                        Id          = "back"
-                        Label       = "Back"
-                        Description = Some "Back logo or text"
-                        Category    = PlacementCategory.Headwear
-                        IsDefault   = false
+                        Placement = pd.HitArea.ToPrintfulPlacement()
+                        Technique = pd.Technique.ToPrintfulTechnique()
+                        Layers    = [
+                            {
+                                Type         = "file"
+                                Url          = pd.Asset.ImageUrl
+                                LayerOptions = pd.LayerOptions
+                                Position     = Some position
+                            }
+                        ]
                     }
-                    {
-                        Id          = "side_left"
-                        Label       = "Left Side"
-                        Description = Some "Left side logo"
-                        Category    = PlacementCategory.Headwear
-                        IsDefault   = false
-                    }
-                    {
-                        Id          = "side_right"
-                        Label       = "Right Side"
-                        Description = Some "Right side logo"
-                        Category    = PlacementCategory.Headwear
-                        IsDefault   = false
-                    }
-                ]
 
-                let wallArtPlacements : Placement list = [
-                    {
-                        Id          = "front"
-                        Label       = "Print Area"
-                        Description = Some "Main artwork area"
-                        Category    = PlacementCategory.WallArt
-                        IsDefault   = true
-                    }
-                ]
-
-                let drinkwarePlacements : Placement list = [
-                    {
-                        Id          = "wrap"
-                        Label       = "Full Wrap"
-                        Description = Some "Artwork wraps around the mug/tumbler"
-                        Category    = PlacementCategory.Drinkware
-                        IsDefault   = true
-                    }
-                    {
-                        Id          = "side_left"
-                        Label       = "Left Side"
-                        Description = Some "Print on left side (for right-handed grip)"
-                        Category    = PlacementCategory.Drinkware
-                        IsDefault   = false
-                    }
-                    {
-                        Id          = "side_right"
-                        Label       = "Right Side"
-                        Description = Some "Print on right side (for left-handed grip)"
-                        Category    = PlacementCategory.Drinkware
-                        IsDefault   = false
-                    }
-                ]
-
-                let all : Placement list =
-                    apparelPlacements
-                    @ headwearPlacements
-                    @ wallArtPlacements
-                    @ drinkwarePlacements
-
-            type AppliedDesign = {
-                Design    : Design
-                Placement : Placement
-                Size      : string
-            }
-
-
-        module PrintfulDesignMap =
-
-            open Designs
-
-            type PrintfulFileRef = {
-                DesignId   : DesignId
-                FileId     : int option    // Printful file ID when you have it
-                FileUrl    : string option // Printful-hosted URL if needed
-            }
-
-            // For now, stub them as None / placeholder
-            let map : PrintfulFileRef list = [
-                { DesignId = "bowing-bubbles"; FileId = None; FileUrl = None }
-                { DesignId = "caution-very-hot"; FileId = None; FileUrl = None }
-                { DesignId = "misfortune"; FileId = None; FileUrl = None }
-            ]
-
-            let tryGetPrintfulRef designId =
-                map |> List.tryFind (fun m -> m.DesignId = designId)
+        open Designs
 
         type Msg =
-            | GoToStep of StepDesigner
-            | SelectBase of CatalogProduct
-            | SelectColor of string
-            | SelectSize of string
-            | RemoveDesign of Designs.DesignId
-            | AddDesign of Designs.Design
-            | SetActiveDesign of int
-            | UpdateDesignPlacement of index:int * placement:string
-            | UpdateDesignSize of index:int * size:string
+            
+            | BackToDropLanding
             | LoadProducts
             | ProductsLoaded of CatalogProductsResponse
             | LoadFailed of string
             | ViewProduct of CatalogProduct
+            
+            | GoToStep of StepDesigner
+            | SelectBase of CatalogProduct
+            | SelectColor of string
+            | SelectSize of string
+
+            // image-level selection
+            | AddAsset    of ImageAsset
+            | RemoveAsset of AssetId
+
+            | DesignerSearchChanged of string
+            | DesignerSortChanged of string * string
+            | DesignerFiltersChanged of Filters
+            | DesignerPageChanged of PagingInfoDTO
+
+            // placement-level edits
+            | SetActivePlaced of int
+            | UpdatePlacedPlacement of index:int * DesignHitArea
+            | UpdatePlacedSize      of index:int * DesignSize
+            | UpdatePlacedTechnique  of index:int * DesignTechnique
+            | UpdatePlacedPositionTag of index:int * string
+            
+            | AddToCart of quantity:int
+            
 
         type Model = {
-            products: CatalogProduct list
-            paging: PagingInfoDTO
-            query: Filters
-            currentStep: StepDesigner
-            selectedProduct: CatalogProduct option
-            selectedVariantSize: string option
-            selectedVariantColor: string option
-            designs: Designs.Design list
-            selectedDesigns: Designs.AppliedDesign list
-            activeDesignIndex  : int option
-            placements          : Designs.Placement list
+            products             : CatalogProduct list
+            paging               : PagingInfoDTO
+            query                : Filters
+            searchTerm           : string
+
+            currentStep          : StepDesigner
+            selectedProduct      : CatalogProduct option
+            selectedVariantSize  : string option
+            selectedVariantColor : string option
+
+            // NEW
+            selectedVariantId   : int option
+            availableAssets      : ImageAsset list  // library/mock list
+            selectedAssets       : ImageAsset list  // “added designs” in the Add Designs step
+            placedDesigns        : PlacedDesign list
+            activePlacedIndex    : int option
+            placements           : PlacementOption list
         }
-        
+ 
         // ADD DEFERRED!!!!
         let initialModel () = {
             products = []
             paging = emptyPaging
             query = defaultFilters
+            searchTerm = ""
             currentStep = SelectBaseProduct
+            selectedVariantId = None
             selectedProduct = None
             selectedVariantSize = None
             selectedVariantColor = None
-            designs = []
-            selectedDesigns = []
-            activeDesignIndex = None
-            placements = Designs.DefaultPlacements.all
+            availableAssets = Defaults.all
+            selectedAssets = []
+            placedDesigns = []
+            activePlacedIndex = None
+            placements = [
+                {
+                    Label   = "Front"
+                    HitArea = Front
+                }
+                {
+                    Label   = "Back"
+                    HitArea = Back
+                }
+                {
+                    Label   = "Pocket"
+                    HitArea = Pocket
+                }
+                {
+                    Label   = "Left Sleeve"
+                    HitArea = LeftSleeve
+                }
+                {
+                    Label   = "Right Sleeve"
+                    HitArea = RightSleeve
+                }
+                {
+                    Label   = "Left Leg"
+                    HitArea = LeftLeg
+                }
+                {
+                    Label   = "Right Leg"
+                    HitArea = RightLeg
+                }
+                {
+                    Label   = "Left Half"
+                    HitArea = LeftHalf
+                }
+                {
+                    Label   = "Right Half"
+                    HitArea = RightHalf
+                }
+                {
+                    Label   = "Center"
+                    HitArea = Center
+                }
+            ]
         }
+    open ProductDesigner.Designs
+    open ProductDesigner.Designs.ToPrintful
+    open Shared.SharedShopV2Domain
+    open Shared.SharedShopV2.Cart
 
     module ProductTemplate =
 
@@ -1343,6 +1335,168 @@ module Store =
                 Error = None
             }
 
+    module PrintfulMapping =
+        open Shared.SharedShopV2Domain
+
+        let mapDesignToPlacement (d: ProductDesigner.Designs.PlacedDesign) : PrintfulPlacement =
+            {
+                Placement = d.HitArea.ToPrintfulPlacement()
+                Technique = d.Technique.ToPrintfulTechnique()
+                Layers = [
+                    {
+                        Type = "file"
+                        Url = d.Asset.ImageUrl
+                        Position = d.Position
+                        LayerOptions = []
+                    }
+                ]
+            }
+
+        /// For now, we hard-code a reasonable print area size.
+        /// Later you can derive this from the product/template metadata.
+        let private defaultPrintAreaWidthInches  = 12.0
+        let private defaultPrintAreaHeightInches = 16.0
+
+        /// Convert all placed designs in the designer model into Printful placements.
+        let private toPrintfulPlacements
+            (placed : PlacedDesign list)
+            : PrintfulPlacement list =
+            placed
+            |> List.map (ToPrintful.toPlacementAndLayer 12.0 16.0) // TODO: real print-area dimensions
+
+        /// Build a *domain* CartItem (DU) from the designer model + qty
+        // let toCustomCartDU
+        //     (qty     : int)
+        //     (model   : ProductDesigner.Model)
+        //     : CartLineItem option =
+
+        //     match model.selectedVariantId, model.placedDesigns with
+        //     | None, _ -> None
+        //     | _, []   -> None
+        //     | Some variantId, placed ->
+
+        //         let placements = toPrintfulPlacements placed
+
+        //         let preview =
+        //             model.selectedProduct
+        //             |> Option.map (fun p -> p.thumbnailURL)
+
+        //         let baseItem : CartItem =
+        //             {
+        //                 VariantId    = variantId
+        //                 Quantity     = qty
+        //                 Placements   = placements
+        //                 PreviewImage = preview
+        //                 UnitPrice = 
+        //                     model.selectedProduct
+        //                     |> function
+        //                         | None -> 0.0m
+        //                         | Some cp -> 100.0m
+        //                 CatalogProductId =
+        //                     model.selectedProduct
+        //                     |> function
+        //                         | None -> ""
+        //                         | Some cp -> cp.id
+        //                 Name =
+        //                 CatalogVariantId =
+        //                 // type CartItem = {
+        //                 //             VariantId : int                      // catalog_variant_id
+        //                 //             Placements : PrintfulPlacement list  // normalized placements/layers
+        //                 //             PreviewImage : string option         // for UI purposes
+        //                 //             /// Printful catalog product id (v2 /catalog-products)
+        //                 //             CatalogProductId   : int
+        //                 //             /// Printful catalog variant id (from /catalog-products/{id}/catalog-variants)
+        //                 //             CatalogVariantId   : int
+        //                 //             Name               : string
+        //                 //             ThumbnailUrl       : string
+        //                 //             /// e.g. "M", "L", "XL"
+        //                 //             Size               : string
+        //                 //             /// e.g. "Black"
+        //                 //             ColorName          : string
+        //                 //             /// e.g. "#000000"
+        //                 //             ColorCodeOpt       : string option
+        //                 //             Quantity           : int
+        //                 //             /// Store price you charge the customer (retail)
+        //                 //             UnitPrice          : decimal
+        //                 //             /// Optional flag for your custom-design flow
+        //                 //             IsCustomDesign     : bool
+        //                 //         }
+        //             }
+
+        //         Some (Custom baseItem)
+        let toCustomCartDU
+            (qty   : int)
+            (model : ProductDesigner.Model)
+            : CartLineItem option =
+
+            match model.selectedVariantId,
+                model.selectedProduct,
+                model.placedDesigns with
+
+            // must have a variant, a base product, and at least one placed design
+            | None, _, _ -> None
+            | _, None, _ -> None
+            | _, _, []   -> None
+
+            | Some variantId, Some product, placedDesigns ->
+
+                // 1. Build Printful placements from the placed designs
+                let placements : PrintfulPlacement list =
+                    placedDesigns |> toPrintfulPlacements
+
+                // 2. Preview image from the selected product
+                let previewImage =
+                    product.thumbnailURL
+                    |> function
+                        | null | "" -> None
+                        | url       -> Some url
+
+                // 3. Size + color from the designer selections
+                let size =
+                    model.selectedVariantSize
+                    |> Option.defaultValue ""
+
+                // For now we’ll treat the selected color string as the "name",
+                // and assume we *might* also use it as a hex code.
+                let colorName, colorCodeOpt =
+                    match model.selectedVariantColor with
+                    | None
+                    | Some "" ->
+                        "Default", None
+                    | Some c ->
+                        // naive heuristic: if it looks like a hex code, use it as both
+                        if c.StartsWith("#") then c, Some c
+                        else c, None
+
+                // 4. Price — placeholder for now until you wire real pricing
+                let unitPrice : decimal =
+                    // TODO: plug in a real price, from product/variant pricing
+                    45.0m
+
+                // 5. Build the rich CartItem record (your commented-out type)
+                let baseItem : CartItem =
+                    {
+                        VariantId         = variantId
+                        Placements        = placements
+                        PreviewImage      = previewImage
+
+                        CatalogProductId  = product.id
+                        CatalogVariantId  = variantId
+                        Name              = product.name
+                        ThumbnailUrl      = product.thumbnailURL
+
+                        Size              = size
+                        ColorName         = colorName
+                        ColorCodeOpt      = colorCodeOpt
+
+                        Quantity          = qty
+                        UnitPrice         = unitPrice
+                        IsCustomDesign    = true
+                    }
+
+                // 6. Wrap it in the DU
+                Some (CartLineItem.Custom baseItem)
+
     type ShopSection =
         | ShopLanding // this is is a welcome page
         // | ProductTemplateBrowser of ProductTemplate.ProductTemplateBrowser.Model // product template browser, not yet created
@@ -1360,22 +1514,6 @@ module Store =
         | SwitchSection of ShopSection
 
     // extend to have invalid state impossible
-    type ShopBuildYourOwnProductWizardMsg =
-        | SwitchSection of ShopSection
-        | Next
-        | Back
-        | ChooseProduct of CatalogProduct
-        // | ChooseProduct of string
-        | ChooseVariantSize of string
-        | ChooseVariantColor of string
-        | ChooseDesign of string
-        | TogglePlacement of string * string
-        | GetAllProducts
-        | GotAllProducts of CatalogProductsResponse
-        | FailedAllProducts of exn
-        | AddProductToBag of CatalogProduct
-
-    // extend to have invalid state impossible
     type ShopProductTemplatesMsg =
         | SwitchSection of ShopSection
         | Next
@@ -1387,10 +1525,7 @@ module Store =
         | GotProductTemplates of ProductTemplatesResponse
         | FailedProductTemplates of exn
         | AddProductToBag of ProductTemplate
-    type CartItem =
-        | Template of ProductTemplate * qty:int
-        // below is awful
-        | Custom of ProductDesigner.Model * qty:int
+
 
     type Tab =
         | Hero
@@ -1405,12 +1540,13 @@ module Store =
         | ShopLanding of ShopLandingMsg
         | ShopCollectionMsg of Collection.Msg
         | ShopDesignerMsg of ProductDesigner.Msg
-        // | ShopBuildYourOwnWizard of ShopBuildYourOwnProductWizardMsg
-        // | ShopStoreProductTemplates of ShopProductTemplatesMsg
+        | AddCartItem      of CartLineItem
+        | RemoveCartItem   of CartLineItem
+        | UpdateCartQty    of CartLineItem * int
 
     type Model = {
         Section: ShopSection
-        Cart: CartItem list
+        Cart: CartState
         // PayPalOrderReference: string option
         CheckoutTax: float option
         CheckoutShipping: float option
@@ -1418,7 +1554,7 @@ module Store =
 
     let getInitialModel shopSection = {
         Section = shopSection
-        Cart = []
+        Cart = emptyCart
         // PayPalOrderReference = None
         CheckoutTax = None
         CheckoutShipping = None
@@ -1431,6 +1567,7 @@ module SharedPage =
         | GoalRoll
         | TileTap
         | TileSort
+        | PivotPoint
 
     type PortfolioSection =
         | PortfolioLanding
@@ -1518,12 +1655,6 @@ module SharedWebAppModels =
             | Nord -> "nord"
             | Sunset -> "sunset"
 
-
-    // Represents which of the web app's subsections is to be displayed
-    // Welcome -> not much to see here, a landing page with element to drive along user interaction
-    // AboutSection -> Overview of the purpose of the web app, in this case some details about it's creator
-    // Portfolio -> Split view landing page to separate categories from one another at a high level
-    // Contact -> How to get in touch with the entity the web app represents
     type Model =
         | About of SharedAboutSection.Model
         | Contact

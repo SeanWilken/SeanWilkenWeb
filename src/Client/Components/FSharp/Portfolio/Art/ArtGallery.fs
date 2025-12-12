@@ -14,7 +14,7 @@ let galleryPieces = [
     // "Harlot", "Unholy mother of sin..."
     // "Kcuf Em", "Kcuf me? F!#% you."
     // "BackStabber", "Never saw them comin'."
-    "Caution Very Hot Colorless", "jpg", "Ya' might get burnt..."
+    "Caution: Very Hot", "jpg", "Ya' might get burnt..."
     // "Models", "I work with them for a living..."
     // "Storm", "And with a thundering roar, she sang"
     // "Forever Burning", "Till death do us part."
@@ -44,6 +44,7 @@ let update (msg: SharedDesignGallery.Msg) (model: SharedDesignGallery.Model) =
 
 [<ReactComponent>]
 let artCard (title: string, extension: string, description: string, isLiked: bool, onToggle: unit -> unit) =
+    let fileName = title.Replace(":", "").Replace(" ", "-").ToLowerInvariant()
     Html.div [
         prop.className
             "relative card bg-base-100 shadow-md hover:shadow-xl hover:ring hover:ring-primary/30 \
@@ -51,7 +52,7 @@ let artCard (title: string, extension: string, description: string, isLiked: boo
         prop.children [
             Html.figure [
                 Html.img [
-                    prop.src ($"./img/artwork/{title}.{extension}")
+                    prop.src ($"./img/artwork/{fileName}.{extension}")
                     prop.alt title
                     prop.className "w-full h-64 object-cover rounded-t"
                 ]

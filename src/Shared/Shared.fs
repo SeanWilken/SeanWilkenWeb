@@ -70,30 +70,130 @@ module SharedShopDomain =
     }
 
 module PrintfulCommon =
+
+    open System
+
     /// Paging information
     type PagingInfoDTO = {
-        total: int
-        offset: int
-        limit: int
+        total  : int
+        offset : int
+        limit  : int
     }
 
     let emptyPaging = {
-        total = 0
+        total  = 0
         offset = 0
-        limit = 20
+        limit  = 20
     }
 
     /// Navigation links (HATEOAS from Printful)
     type LinksDTO = {
-        self: string
-        next: string option
-        first: string option
-        last: string option
+        self  : string
+        next  : string option
+        first : string option
+        last  : string option
     }
 
     type HateoasLink = {
         href : string
     }
+
+    /// Position of the image inside the print area (inches, per Printful docs)
+    [<CLIMutable>]
+    type PrintfulPosition = {
+        Width  : float
+        Height : float
+        Left   : float
+        Top    : float
+    }
+
+    /// Known layer option names we care about; fall back to Raw for future-proofing
+    type PrintfulLayerOptionName =
+        | ThreadColors          // "thread_colors"
+        | YarnColors            // "yarn_colors"
+        | CustomBorderColor     // "custom_border_color"
+        | Raw of string         // any other option name
+
+        member this.ToApiName() =
+            match this with
+            | ThreadColors      -> "thread_colors"
+            | YarnColors        -> "yarn_colors"
+            | CustomBorderColor -> "custom_border_color"
+            | Raw n             -> n
+
+    [<CLIMutable>]
+    type PrintfulLayerOption = {
+        Name   : PrintfulLayerOptionName
+        Values : string list
+    }
+
+    /// Thin DTO used when actually building the JSON payload
+    [<CLIMutable>]
+    type PrintfulLayer = {
+        Type         : string            // always "file" for now
+        Url          : string
+        LayerOptions : PrintfulLayerOption list
+        Position     : PrintfulPosition option
+    }
+
+    /// One placement block in Printful's order item design data
+    [<CLIMutable>]
+    type PrintfulPlacement = {
+        Placement : string              // e.g. "front", "back", "sleeve_left"
+        Technique : string              // e.g. "dtg", "embroidery"
+        Layers    : PrintfulLayer list
+    }
+
+    /// This is what you actually send as an item in the order
+    type PrintfulOrderItem = {
+        PreviewImage : string option
+        catalog_variant_id : int
+        source             : string
+        quantity           : int
+        placements         : PrintfulPlacement list
+    }
+
+    /// Logical “where” on the product that we support
+    type DesignHitArea =
+        | Front
+        | Back
+        | Pocket
+        | LeftSleeve
+        | RightSleeve
+        | LeftLeg
+        | RightLeg
+        | LeftHalf
+        | RightHalf
+        | Center
+        | Custom of string
+
+        member this.ToPrintfulPlacement() =
+            match this with
+            | Front        -> "front"
+            | Back         -> "back"
+            | Pocket       -> "embroidery_chest_left"
+            | LeftSleeve   -> "sleeve_left"
+            | RightSleeve  -> "sleeve_right"
+            | LeftLeg      -> "leg_left"
+            | RightLeg     -> "leg_right"
+            | LeftHalf     -> "default"
+            | RightHalf    -> "default"
+            | Center       -> "default"
+            | Custom name  -> name
+
+    let designHitAreaFromPrintfulString str =
+        match str with
+        | "front"                  -> Front 
+        | "back"                   -> Back 
+        | "embroidery_chest_left"  -> Pocket 
+        | "sleeve_left"            -> LeftSleeve
+        | "sleeve_right"           -> RightSleeve 
+        | "leg_left"               -> LeftLeg
+        | "leg_right"              -> RightLeg
+        | "default"                -> Center 
+        | name                     -> Custom name
+
+open PrintfulCommon
 
 // Refactor Shop Types
 module SharedShopV2 =
@@ -155,11 +255,8 @@ module SharedShopV2 =
         }
 
         type PlacementOption = {
-            placement               : string
-            display_name            : string
-            technique_key           : string
-            technique_display_name  : string
-            options                 : string array
+            Label   : string          // UI label
+            HitArea : DesignHitArea
         }
 
         type PlacementOptionData = {
@@ -201,6 +298,9 @@ module SharedShopV2 =
 
         /// A single variant in the cart (one size/color of a catalog product)
         type CartItem = {
+            VariantId : int                      // catalog_variant_id
+            Placements : PrintfulPlacement list  // normalized placements/layers
+            PreviewImage : string option         // for UI purposes
             /// Printful catalog product id (v2 /catalog-products)
             CatalogProductId   : int
             /// Printful catalog variant id (from /catalog-products/{id}/catalog-variants)
@@ -220,6 +320,45 @@ module SharedShopV2 =
             IsCustomDesign     : bool
         }
 
+        type TemplateCartItem = {
+            VariantId : int
+            Quantity  : int
+            TemplateId : int
+            CatalogProductId : int
+            Name             : string
+            Size             : string
+            ColorName        : string
+            ColorCodeOpt     : string option
+            UnitPrice        : decimal
+            PreviewImage     : string option
+        }
+
+        type CartLineItem =
+            | Template of TemplateCartItem
+            | Custom of CartItem
+
+        let customCartItemToPrintfulOrderItem
+                (source : string)   // e.g. "xero-effort:designer"
+                (item   : CartItem)
+                : PrintfulOrderItem =
+                {
+                    catalog_variant_id = item.VariantId
+                    PreviewImage = item.PreviewImage
+                    source             = source
+                    quantity           = item.Quantity
+                    placements         = item.Placements
+                }
+
+        let buildPrintfulItems (cartItems: CartLineItem list) =
+            cartItems
+            |> List.choose (function
+                | Custom c ->
+                    Some (customCartItemToPrintfulOrderItem "xero-effort:designer" c)
+                | Template _ ->
+                    // TODO: map template cart item into Printful order item
+                    None
+            )
+
         type CartTotals = {
             Subtotal : decimal
             Tax      : decimal
@@ -229,9 +368,82 @@ module SharedShopV2 =
         }
 
         type CartState = {
-            Items  : CartItem list
+            Items  : CartLineItem list
             Totals : CartTotals
         }
+
+        let emptyTotals = {
+            Subtotal = 0m
+            Tax      = 0m
+            Shipping = 0m
+            Total    = 0m
+            Currency = "USD"
+        }
+
+        let emptyCart : CartState = {
+            Items  = []
+            Totals = emptyTotals
+        }
+
+        let private lineTotal (item: CartLineItem) : decimal =
+            match item with
+            | CartLineItem.Custom   c -> c.UnitPrice * decimal c.Quantity
+            | CartLineItem.Template t -> t.UnitPrice * decimal t.Quantity
+
+        let private recomputeTotals (items: CartLineItem list) : CartTotals =
+            let subtotal =
+                items
+                |> List.sumBy lineTotal
+
+            let taxRate  = 0.08m
+            let tax      = System.Math.Round(subtotal * taxRate, 2)
+            let shipping =
+                if subtotal = 0m then 0m
+                elif subtotal >= 100m then 0m
+                else 12m
+
+            let total = subtotal + tax + shipping
+
+            {
+                Subtotal = subtotal
+                Tax      = tax
+                Shipping = shipping
+                Total    = total
+                Currency = "USD"
+            }
+
+        let withItems (items: CartLineItem list) : CartState =
+            {
+                Items  = items
+                Totals = recomputeTotals items
+            }
+
+        let withRemovedItem item cartState =
+            let updatedItems = cartState.Items |> List.filter ( fun x -> x <> item )
+            { cartState with
+                Items = updatedItems
+                Totals = recomputeTotals updatedItems
+            }
+
+        let withUpdatedItemQuantity item qty cartState =
+            let updatedItems = 
+                cartState.Items 
+                |> List.tryFind (fun it -> it = item)
+                |> Option.map (fun x -> 
+                    match x with
+                    | CartLineItem.Custom cci -> { cci with Quantity = qty } |> CartLineItem.Custom
+                    | CartLineItem.Template template -> { template with Quantity = qty } |> CartLineItem.Template
+                )
+                |> function
+                    | Some citem ->
+                        cartState.Items 
+                        |> List.filter ( fun x -> x <> item )
+                        |> fun citems -> citems @ [ citem ] 
+                    | None -> cartState.Items
+            { cartState with
+                Items = updatedItems
+                Totals = recomputeTotals updatedItems
+            }
 
         /// Minimal representation for shipping/tax calls
         type ShippingLineItem = {
@@ -285,6 +497,8 @@ module SharedShopV2 =
             ClientTotals  : Cart.CartTotals
         }
 
+
+// module SharedStore =
 module SharedShopV2Domain =
 
     module ProductTemplateResponse =
@@ -395,6 +609,9 @@ module SharedShopV2Domain =
                     } 
             }
 
+
+
+open SharedShopV2Domain
 
 module Api =
 

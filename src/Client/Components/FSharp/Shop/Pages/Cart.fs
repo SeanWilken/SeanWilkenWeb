@@ -7,21 +7,6 @@ open Client.Components.Shop.Common.Types
 
 module Cart =
 
-    type CartItem = {
-        Id           : int
-        Name         : string
-        Price        : decimal
-        Quantity     : int
-        Color        : string
-        Size         : string
-        ImageLabel   : string
-        CustomDesign : bool
-    }
-
-    type Model = {
-        Items : CartItem list
-    }
-
     type Msg =
         | IncrementQty of itemId:int
         | DecrementQty of itemId:int
@@ -29,50 +14,64 @@ module Cart =
         | GoToCollection
         | GoToCheckout
 
-    let private totals (items: CartItem list) =
-        let subtotal =
-            items
-            |> List.sumBy (fun i -> i.Price * decimal i.Quantity)
+    open System
+    open Feliz
+    open SharedShopV2
+    open SharedShopV2.Cart
+    open Bindings.LucideIcon
 
-        let shippingCost =
-            if subtotal > 100m then 0m else 12m
+    type Props = {
+        Cart : CartState
 
-        let tax = subtotal * 0.08m
-        let total = subtotal + tax + shippingCost
-        subtotal, shippingCost, tax, total
+        OnRemove          : CartLineItem -> unit
+        OnUpdateQuantity  : CartLineItem * int -> unit
+        OnContinueShopping: unit -> unit
+        OnCheckout        : unit -> unit
+    }
 
-    let view (model: Model) (dispatch: Msg -> unit) =
-        let subtotal, shippingCost, tax, total = totals model.Items
+    let private money (v: decimal) =
+        v.ToString("0.00")
 
-        Html.section [
-            prop.className "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20"
+    [<ReactComponent>]
+    let view (props: Props) =
+        let items  = props.Cart.Items
+        let totals = props.Cart.Totals
+
+        let cartItemsCount = items.Length
+
+        // For the free-shipping banner, mirror your TSX behaviour
+        let freeShippingThreshold = 100m
+        let standardShippingFlat  = 12m
+
+        Html.div [
+            prop.className "max-w-7xl mx-auto px-6 py-20"
+
             prop.children [
-                if model.Items.IsEmpty then
+                if cartItemsCount = 0 then
                     Html.div [
-                        prop.className "text-center py-24 md:py-32"
+                        prop.className "text-center py-32"
                         prop.children [
-                            Html.div [
-                                prop.className "w-16 h-16 mx-auto mb-6 rounded-full bg-base-200 flex items-center justify-center text-3xl"
-                                prop.text "🛍️"
-                            ]
+                            LucideIcon.ShoppingBag "w-16 h-16 mx-auto text-base-300 mb-6"
                             Html.h2 [
-                                prop.className "text-2xl md:text-3xl font-light mb-3"
+                                prop.className "text-3xl font-light mb-4"
                                 prop.text "Your cart is empty"
                             ]
                             Html.p [
-                                prop.className "text-sm md:text-base text-base-content/60 mb-6"
-                                prop.text "Add some items to get started."
+                                prop.className "text-base-content/60 mb-8"
+                                prop.text "Add some items to get started"
                             ]
                             Html.button [
-                                prop.className "btn btn-primary rounded-none px-8"
-                                prop.text "Continue Shopping"
-                                prop.onClick (fun _ -> dispatch GoToCollection)
+                                prop.className
+                                    "btn btn-sm sm:btn-md rounded-none bg-base-content text-base-100 px-10 py-4 \
+                                    text-sm font-medium uppercase tracking-[0.2em] hover:bg-base-content/90 transition-colors"
+                                prop.onClick (fun _ -> props.OnContinueShopping())
+                                prop.text "Continue shopping"
                             ]
                         ]
                     ]
                 else
                     Html.div [
-                        prop.className "grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12"
+                        prop.className "grid grid-cols-1 lg:grid-cols-3 gap-12"
                         prop.children [
 
                             // LEFT: items
@@ -80,18 +79,18 @@ module Cart =
                                 prop.className "lg:col-span-2 space-y-8"
                                 prop.children [
                                     Html.div [
-                                        prop.className "flex items-center justify-between border-b border-base-300 pb-4 md:pb-6"
+                                        prop.className "flex items-center justify-between border-b border-base-300 pb-6"
                                         prop.children [
                                             Html.h1 [
-                                                prop.className "text-3xl md:text-4xl font-light"
+                                                prop.className "text-4xl font-light"
                                                 prop.text "Shopping Cart"
                                             ]
                                             Html.span [
-                                                prop.className "text-sm text-base-content/60"
+                                                prop.className "text-base-content/60 text-sm"
                                                 prop.text (
-                                                    let count = model.Items.Length
-                                                    if count = 1 then "1 item"
-                                                    else $"{count} items"
+                                                    sprintf "%d item%s"
+                                                        cartItemsCount
+                                                        (if cartItemsCount = 1 then "" else "s")
                                                 )
                                             ]
                                         ]
@@ -100,80 +99,159 @@ module Cart =
                                     Html.div [
                                         prop.className "space-y-6"
                                         prop.children [
-                                            for item in model.Items do
+                                            for item in items do
+                                                let itemId =
+                                                    match item with
+                                                    | CartLineItem.Custom c -> 
+                                                        c.CatalogProductId, c.CatalogVariantId
+                                                    | CartLineItem.Template t -> 
+                                                        t.CatalogProductId, t.VariantId
+                                                    |> fun (cpid, cvid) -> sprintf "%d-%d" cpid cvid
+                                                let itemDetails =
+                                                    match item with
+                                                    | CartLineItem.Custom c -> 
+                                                        {|
+                                                            thumbnail = c.PreviewImage
+                                                            name = c.Name
+                                                            isCustom = c.IsCustomDesign // always true?
+                                                            color = c.ColorName
+                                                            size = c.Size
+                                                            unitPrice = c.UnitPrice
+                                                            quantity = c.Quantity
+                                                        |}
+                                                    | CartLineItem.Template t -> 
+                                                        {|
+                                                            thumbnail = t.PreviewImage
+                                                            name = t.Name
+                                                            isCustom = false // ??
+                                                            color = t.ColorName
+                                                            size = t.Size
+                                                            unitPrice = t.UnitPrice
+                                                            quantity = t.Quantity
+                                                        |}
+
+                                                    
+
                                                 Html.div [
-                                                    prop.key item.Id
-                                                    prop.className "flex gap-4 md:gap-6 pb-5 border-b border-base-300 group"
+                                                    prop.key itemId
+                                                    prop.className "flex gap-6 pb-6 border-b border-base-200 group"
                                                     prop.children [
 
                                                         // Thumbnail
                                                         Html.div [
-                                                            prop.className "w-24 h-24 md:w-32 md:h-32 flex-shrink-0 bg-base-200 flex items-center justify-center text-3xl md:text-4xl font-light text-base-content/30 relative overflow-hidden rounded-md"
+                                                            prop.className
+                                                                "w-32 h-32 flex-shrink-0 bg-base-200 flex items-center justify-center text-4xl font-light text-base-content/20 relative overflow-hidden rounded-lg"
                                                             prop.children [
-                                                                Html.span item.ImageLabel
-                                                                if item.CustomDesign then
+                                                                match itemDetails.thumbnail with
+                                                                | Some tnail ->
+                                                                    Html.img [
+                                                                        prop.src tnail
+                                                                        prop.alt itemDetails.name
+                                                                        prop.className " object-cover"
+                                                                    ]
+                                                                | None ->
+                                                                    Html.span [
+                                                                        prop.className "text-3xl"
+                                                                        prop.text (itemDetails.name.[0].ToString().ToUpper())
+                                                                    ]
+
+                                                                if itemDetails.isCustom then
                                                                     Html.div [
-                                                                        prop.className "absolute top-1.5 right-1.5 bg-neutral text-neutral-content text-[0.6rem] px-2 py-0.5 rounded-full uppercase tracking-[0.15em]"
+                                                                        prop.className
+                                                                            "absolute top-2 right-2 bg-base-content text-base-100 \
+                                                                            text-[10px] px-2 py-1 rounded"
                                                                         prop.text "Custom"
                                                                     ]
                                                             ]
                                                         ]
 
-                                                        // Details + quantity
+                                                        // Text + controls
                                                         Html.div [
                                                             prop.className "flex-1 space-y-3"
                                                             prop.children [
+
+                                                                // Title + remove
                                                                 Html.div [
-                                                                    prop.className "flex items-start justify-between gap-3"
+                                                                    prop.className "flex items-start justify-between"
                                                                     prop.children [
                                                                         Html.div [
                                                                             Html.h3 [
-                                                                                prop.className "text-base md:text-lg font-medium mb-1"
-                                                                                prop.text item.Name
+                                                                                prop.className "text-lg font-medium mb-1"
+                                                                                prop.text itemDetails.name
                                                                             ]
                                                                             Html.div [
-                                                                                prop.className "text-xs md:text-sm text-base-content/60 space-y-0.5"
+                                                                                prop.className "text-sm text-base-content/60 space-y-1"
                                                                                 prop.children [
-                                                                                    Html.p [ prop.text $"Color: {item.Color}" ]
-                                                                                    Html.p [ prop.text $"Size: {item.Size}" ]
+                                                                                    Html.p [
+                                                                                        prop.text (
+                                                                                            sprintf "Color: %s"
+                                                                                                (itemDetails.color)
+                                                                                        )
+                                                                                    ]
+                                                                                    Html.p [
+                                                                                        prop.text (
+                                                                                            sprintf "Size: %s"
+                                                                                                (itemDetails.size)
+                                                                                        )
+                                                                                    ]
                                                                                 ]
                                                                             ]
                                                                         ]
                                                                         Html.button [
-                                                                            prop.className "text-base-content/40 hover:text-base-content/80 transition-opacity opacity-0 group-hover:opacity-100"
-                                                                            prop.onClick (fun _ -> dispatch (RemoveItem item.Id))
+                                                                            prop.onClick (fun _ -> props.OnRemove item)
+                                                                            prop.className
+                                                                                "text-base-content/40 hover:text-base-content \
+                                                                                transition-colors opacity-0 group-hover:opacity-100"
                                                                             prop.children [
-                                                                                Html.span "✕"
+                                                                                LucideIcon.X "w-5 h-5"
                                                                             ]
                                                                         ]
                                                                     ]
                                                                 ]
 
+                                                                // Qty + line total
                                                                 Html.div [
-                                                                    prop.className "flex items-center justify-between pt-1"
+                                                                    prop.className "flex items-center justify-between pt-2"
                                                                     prop.children [
                                                                         Html.div [
-                                                                            prop.className "flex items-center gap-2 md:gap-3"
+                                                                            prop.className "flex items-center gap-3"
                                                                             prop.children [
                                                                                 Html.button [
-                                                                                    prop.className "btn btn-xs btn-outline rounded-none"
-                                                                                    prop.text "−"
-                                                                                    prop.onClick (fun _ -> dispatch (DecrementQty item.Id))
+                                                                                    prop.className
+                                                                                        "w-8 h-8 border border-base-300 flex items-center \
+                                                                                        justify-center hover:border-base-content \
+                                                                                        transition-colors"
+                                                                                    prop.onClick (fun _ ->
+                                                                                        let newQty = max 1 (itemDetails.quantity - 1)
+                                                                                        props.OnUpdateQuantity (item, newQty)
+                                                                                    )
+                                                                                    prop.children [
+                                                                                        LucideIcon.Minus "w-4 h-4"
+                                                                                    ]
                                                                                 ]
                                                                                 Html.span [
-                                                                                    prop.className "w-10 text-center font-medium"
-                                                                                    prop.text (string item.Quantity)
+                                                                                    prop.className "w-12 text-center font-medium"
+                                                                                    prop.text (string itemDetails.quantity)
                                                                                 ]
                                                                                 Html.button [
-                                                                                    prop.className "btn btn-xs btn-outline rounded-none"
-                                                                                    prop.text "+"
-                                                                                    prop.onClick (fun _ -> dispatch (IncrementQty item.Id))
+                                                                                    prop.className
+                                                                                        "w-8 h-8 border border-base-300 flex items-center \
+                                                                                        justify-center hover:border-base-content \
+                                                                                        transition-colors"
+                                                                                    prop.onClick (fun _ ->
+                                                                                        let newQty = itemDetails.quantity + 1
+                                                                                        props.OnUpdateQuantity (item, newQty)
+                                                                                    )
+                                                                                    prop.children [
+                                                                                        LucideIcon.Plus "w-4 h-4"
+                                                                                    ]
                                                                                 ]
                                                                             ]
                                                                         ]
                                                                         Html.p [
                                                                             prop.className "text-lg font-light"
-                                                                            prop.text (sprintf "$%.2f" (item.Price * decimal item.Quantity))
+                                                                            let lineTotal = itemDetails.unitPrice * decimal itemDetails.quantity
+                                                                            prop.text ("$" + money lineTotal)
                                                                         ]
                                                                     ]
                                                                 ]
@@ -185,14 +263,13 @@ module Cart =
                                     ]
 
                                     Html.button [
-                                        prop.className "inline-flex items-center gap-2 text-xs md:text-sm font-medium uppercase tracking-[0.25em] hover:gap-3 transition-all"
-                                        prop.onClick (fun _ -> dispatch GoToCollection)
+                                        prop.className
+                                            "flex items-center gap-2 text-sm font-medium uppercase tracking-[0.2em] \
+                                            hover:gap-3 transition-all"
+                                        prop.onClick (fun _ -> props.OnContinueShopping())
                                         prop.children [
-                                            Html.span [
-                                                prop.className "inline-block rotate-180"
-                                                prop.text "➜"
-                                            ]
-                                            Html.span "Continue Shopping"
+                                            LucideIcon.ChevronRight "w-4 h-4 rotate-180"
+                                            Html.span [ prop.text "Continue shopping" ]
                                         ]
                                     ]
                                 ]
@@ -203,104 +280,132 @@ module Cart =
                                 prop.className "lg:col-span-1"
                                 prop.children [
                                     Html.div [
-                                        prop.className "sticky top-28 space-y-6 border border-base-300 rounded-lg p-6 md:p-8 bg-base-100"
+                                        prop.className "sticky top-32 space-y-8"
                                         prop.children [
-                                            Html.h2 [
-                                                prop.className "text-xl md:text-2xl font-light pb-4 border-b border-base-300"
-                                                prop.text "Order Summary"
-                                            ]
 
+                                            // Order summary card
                                             Html.div [
-                                                prop.className "space-y-3 text-sm"
+                                                prop.className "border border-base-300 p-8 space-y-6 bg-base-100"
                                                 prop.children [
+                                                    Html.h2 [
+                                                        prop.className "text-2xl font-light pb-4 border-b border-base-200"
+                                                        prop.text "Order Summary"
+                                                    ]
+
                                                     Html.div [
-                                                        prop.className "flex items-center justify-between text-base-content/70"
+                                                        prop.className "space-y-4 text-sm"
                                                         prop.children [
-                                                            Html.span "Subtotal"
-                                                            Html.span (sprintf "$%.2f" subtotal)
+                                                            Html.div [
+                                                                prop.className "flex items-center justify-between text-base-content/70"
+                                                                prop.children [
+                                                                    Html.span [ prop.text "Subtotal" ]
+                                                                    Html.span [ prop.text ("$" + money totals.Subtotal) ]
+                                                                ]
+                                                            ]
+                                                            Html.div [
+                                                                prop.className "flex items-center justify-between text-base-content/70"
+                                                                prop.children [
+                                                                    Html.span [ prop.text "Shipping" ]
+                                                                    Html.span [
+                                                                        if totals.Shipping = 0m && totals.Subtotal > 0m then
+                                                                            prop.text "FREE"
+                                                                        else
+                                                                            prop.text ("$" + money totals.Shipping)
+                                                                    ]
+                                                                ]
+                                                            ]
+
+                                                            if totals.Shipping = standardShippingFlat
+                                                            && totals.Subtotal < freeShippingThreshold
+                                                            && totals.Subtotal > 0m then
+                                                                let remaining = freeShippingThreshold - totals.Subtotal
+                                                                Html.div [
+                                                                    prop.className "text-[11px] text-base-content/60 bg-base-200/60 p-3 rounded"
+                                                                    prop.text (
+                                                                        sprintf "Add $%s more for free shipping"
+                                                                            (money remaining)
+                                                                    )
+                                                                ]
+
+                                                            Html.div [
+                                                                prop.className "flex items-center justify-between text-base-content/70"
+                                                                prop.children [
+                                                                    Html.span [ prop.text "Tax (est.)" ]
+                                                                    Html.span [ prop.text ("$" + money totals.Tax) ]
+                                                                ]
+                                                            ]
+
+                                                            Html.div [
+                                                                prop.className "pt-4 border-t border-base-200 flex items-center justify-between text-xl"
+                                                                prop.children [
+                                                                    Html.span [ prop.className "font-medium"; prop.text "Total" ]
+                                                                    Html.span [
+                                                                        prop.className "font-light"
+                                                                        prop.text ("$" + money totals.Total)
+                                                                    ]
+                                                                ]
+                                                            ]
                                                         ]
                                                     ]
-                                                    Html.div [
-                                                        prop.className "flex items-center justify-between text-base-content/70"
-                                                        prop.children [
-                                                            Html.span "Shipping"
-                                                            Html.span (
-                                                                if shippingCost = 0m then "FREE"
-                                                                else sprintf "$%.2f" shippingCost
-                                                            )
-                                                        ]
+
+                                                    Html.button [
+                                                        prop.className
+                                                            "w-full bg-base-content text-base-100 py-5 text-sm font-medium \
+                                                            uppercase tracking-[0.2em] hover:bg-base-content/90 transition-colors"
+                                                        prop.onClick (fun _ -> props.OnCheckout())
+                                                        prop.text "Proceed to checkout"
                                                     ]
-                                                    if shippingCost = 12m && subtotal < 100m then
-                                                        Html.div [
-                                                            prop.className "text-[0.7rem] text-base-content/60 bg-base-200/80 p-3 rounded"
-                                                            prop.text (sprintf "Add $%.2f more for free shipping." (100m - subtotal))
-                                                        ]
+
                                                     Html.div [
-                                                        prop.className "flex items-center justify-between text-base-content/70"
+                                                        prop.className "space-y-3 pt-4 border-t border-base-200 text-sm"
                                                         prop.children [
-                                                            Html.span "Tax (8%)"
-                                                            Html.span (sprintf "$%.2f" tax)
-                                                        ]
-                                                    ]
-                                                    Html.div [
-                                                        prop.className "pt-4 border-t border-base-300 flex items-center justify-between text-lg"
-                                                        prop.children [
-                                                            Html.span [ prop.className "font-medium"; prop.text "Total" ]
-                                                            Html.span [ prop.className "font-light"; prop.text (sprintf "$%.2f" total) ]
+                                                            Html.div [
+                                                                prop.className "flex items-center gap-3 text-base-content/70"
+                                                                prop.children [
+                                                                    LucideIcon.Check "w-5 h-5 flex-shrink-0"
+                                                                    Html.span [ prop.text "Free returns within 30 days" ]
+                                                                ]
+                                                            ]
+                                                            Html.div [
+                                                                prop.className "flex items-center gap-3 text-base-content/70"
+                                                                prop.children [
+                                                                    LucideIcon.Check "w-5 h-5 flex-shrink-0"
+                                                                    Html.span [ prop.text "Secure checkout with encryption" ]
+                                                                ]
+                                                            ]
+                                                            Html.div [
+                                                                prop.className "flex items-center gap-3 text-base-content/70"
+                                                                prop.children [
+                                                                    LucideIcon.Check "w-5 h-5 flex-shrink-0"
+                                                                    Html.span [ prop.text "Customer support 24/7" ]
+                                                                ]
+                                                            ]
                                                         ]
                                                     ]
                                                 ]
                                             ]
 
-                                            Html.button [
-                                                prop.className "btn btn-primary w-full rounded-none mt-2"
-                                                prop.text "Proceed to Checkout"
-                                                prop.onClick (fun _ -> dispatch GoToCheckout)
-                                            ]
-
+                                            // Promo code
                                             Html.div [
-                                                prop.className "space-y-2 pt-4 border-t border-base-300 text-xs md:text-sm text-base-content/70"
-                                                prop.children [
-                                                    Html.div [
-                                                        prop.className "flex items-center gap-2"
-                                                        prop.children [
-                                                            Html.span "✓"
-                                                            Html.span "Free returns within 30 days"
-                                                        ]
-                                                    ]
-                                                    Html.div [
-                                                        prop.className "flex items-center gap-2"
-                                                        prop.children [
-                                                            Html.span "✓"
-                                                            Html.span "Secure checkout with encryption"
-                                                        ]
-                                                    ]
-                                                    Html.div [
-                                                        prop.className "flex items-center gap-2"
-                                                        prop.children [
-                                                            Html.span "✓"
-                                                            Html.span "Customer support 24/7"
-                                                        ]
-                                                    ]
-                                                ]
-                                            ]
-
-                                            Html.div [
-                                                prop.className "border border-base-200 rounded-lg p-4 mt-2 space-y-3"
+                                                prop.className "border border-base-300 p-6 bg-base-100"
                                                 prop.children [
                                                     Html.h3 [
-                                                        prop.className "text-[0.7rem] font-semibold uppercase tracking-[0.25em]"
+                                                        prop.className "text-sm font-medium uppercase tracking-[0.2em] mb-4"
                                                         prop.text "Have a promo code?"
                                                     ]
                                                     Html.div [
                                                         prop.className "flex gap-2"
                                                         prop.children [
                                                             Html.input [
-                                                                prop.className "input input-bordered input-sm rounded-none flex-1"
+                                                                prop.className
+                                                                    "flex-1 px-4 py-3 border border-base-300 text-sm \
+                                                                    focus:outline-none focus:border-base-content transition-colors"
                                                                 prop.placeholder "Enter code"
                                                             ]
                                                             Html.button [
-                                                                prop.className "btn btn-sm rounded-none"
+                                                                prop.className
+                                                                    "px-6 py-3 bg-base-200 text-sm font-medium uppercase \
+                                                                    tracking-[0.2em] hover:bg-base-300 transition-colors"
                                                                 prop.text "Apply"
                                                             ]
                                                         ]
@@ -308,13 +413,19 @@ module Cart =
                                                 ]
                                             ]
 
+                                            // Tiny footer
                                             Html.div [
-                                                prop.className "bg-base-200/60 rounded-lg p-4 text-center text-xs md:text-sm text-base-content/70"
+                                                prop.className "bg-base-200/60 p-6 text-center text-sm"
                                                 prop.children [
-                                                    Html.span "Need help? "
-                                                    Html.button [
-                                                        prop.className "underline hover:text-base-content"
-                                                        prop.text "Contact us"
+                                                    Html.p [
+                                                        prop.className "text-base-content/70"
+                                                        prop.children [
+                                                            Html.text "Need help? "
+                                                            Html.button [
+                                                                prop.className "underline hover:text-base-content transition-colors"
+                                                                prop.text "Contact us"
+                                                            ]
+                                                        ]
                                                     ]
                                                 ]
                                             ]
@@ -326,3 +437,4 @@ module Cart =
                     ]
             ]
         ]
+

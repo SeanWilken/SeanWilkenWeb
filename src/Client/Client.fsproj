@@ -34,11 +34,6 @@
         <Compile Include="Components\FSharp\Layout\Elements\Pagination.fs" />
         <Compile Include="Components\FSharp\Layout\Elements\ProductCard.fs" />
         <Compile Include="Components\FSharp\Layout\Elements\ProductGrid.fs" />
-        <!-- 
-        <Compile Include="Components\FSharp\Layout\Elements\ProductBrowser.fs" />
-        <Compile Include="Components\FSharp\Layout\Elements\ProductTemplateBrowser.fs" />
-        <Compile Include="Components\FSharp\Shop\CreateYourOwnProduct.fs" />
-        -->
         <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\GoalRoll\GoalRoll.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\PivotPoints\PivotPoints.fs" />
@@ -47,7 +42,6 @@
         <Compile Include="Components\FSharp\Layout\Elements\MultiContent.fs" />
 
         <!-- Shop Pages -->
-        <Compile Include="Components\FSharp\Shop\Domain.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Common.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Cart.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Checkout.fs" />
@@ -68,7 +62,7 @@
         <Compile Include="Components\FSharp\Portfolio\Art\ArtGallery.fs" />
         <Compile Include="Components\FSharp\Contact\Contact.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\CodeGallery.fs" />
-        <Compile Include="Components\FSharp\Shop\ShopV2.fs" />
+        <Compile Include="Components\FSharp\Shop\Shop.fs" />
         <Compile Include="Components\FSharp\Portfolio\PortfolioLanding.fs" />
         <Compile Include="Components\FSharp\Services\ServicesLanding.fs" />
         <Compile Include="Components\FSharp\Welcome\Welcome.fs" />

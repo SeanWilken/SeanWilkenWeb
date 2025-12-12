@@ -28,10 +28,9 @@ let toPath =
     | Some ( Services section ) -> section.toUrlString
     | Some Resume -> "/resume"
     | Some Welcome -> "/welcome"
-    | Some (Shop Store.ShopSection.ShopLanding) -> "/shop/landing"
-    // | Some (Shop Store.ShopSection.ShopTypeSelector) -> "/shop/select"
-    // | Some (Shop (Store.ShopSection.ProductTemplateBrowser _)) -> "/shop/templates"
-    // | Some (Shop (Store.ShopSection.BuildYourOwnWizard _)) -> "/shop/build"
+    | Some (Shop Store.ShopSection.ShopLanding) -> "/shop/drop"
+    | Some (Shop (Store.ShopSection.CollectionBrowser _)) -> "/shop/collection"
+    | Some (Shop (Store.ShopSection.ProductDesigner _)) -> "/shop/designer"
     | Some (Shop Store.ShopSection.ShoppingBag) -> "/shop/shoppingBag"
     | Some (Shop Store.ShopSection.Checkout) -> "/shop/checkout"
     | Some (Shop Store.ShopSection.Payment) -> "/shop/payment"
@@ -40,12 +39,12 @@ let toPath =
     | Some (Shop Store.ShopSection.NotFound) -> "/notFound"
     | None -> "/"
 
-
 let shopParser : Parser<Store.ShopSection->Page,_> =
     oneOf [
-        map Store.ShopSection.ShopLanding (s "landing")
+        map Store.ShopSection.ShopLanding (s "drop")
         // map Store.ShopSection.ShopTypeSelector (s "select")
         map (Store.ShopSection.CollectionBrowser  (Collection.initModel ()) ) (s "collection")
+        map (Store.ShopSection.ProductDesigner  (ProductDesigner.initialModel ()) ) (s "designer")
         // map (Store.ShopSection.ProductTemplateBrowser (Store.ProductTemplate.ProductTemplateBrowser.initialModel())) (s "templates")
         // map (Store.ShopSection.BuildYourOwnWizard (Store.BuildYourOwnProductWizard.initialState ())) (s "build")
         map Store.ShopSection.ShoppingBag (s "shoppingBag")
@@ -53,27 +52,15 @@ let shopParser : Parser<Store.ShopSection->Page,_> =
         map Store.ShopSection.Payment (s "payment")
     ]
 
-
-// router use combinators for better structured paths
-// let pageParser : Parser< Page -> Page,_ > =
-//     oneOf
-//         [
-//             map Page.About ( s "about" )
-//             map Page.Contact ( s "contact" )
-//             map ( Page.Landing) ( s "landing" )
-//             map ( Page.Landing) ( s "index" )
-//             map ( Page.Services SharedWebAppViewSections.ProfessionalServicesView.SalesPlatform) ( s "services-sales" )
-//             map ( Page.Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding) ( s "services" )
-//             map ( Page.Portfolio PortfolioSection.PortfolioLanding) ( s "portfolio" )
-//             map ( Page.Portfolio ( Code ( CodeSection.CodeLanding ) ) ) ( s "portfolio-code" )
-//             map ( Page.Portfolio Design ) ( s "portfolio-design" )
-//             map ( Page.Portfolio ( Code ( CodeSection.GoalRoll ) ) ) ( s "portfolio-goalRoll" )
-//             map ( Page.Portfolio ( Code ( CodeSection.TileSort ) ) ) ( s "portfolio-tileSort" )
-//             map ( Page.Portfolio ( Code ( CodeSection.TileTap ) ) ) ( s "portfolio-tileSmash" )
-//             map Page.Resume ( s "resume" )
-//             map (Page.Shop ) (s "shop" </> shopParser)
-//             map Page.Welcome ( s "welcome" )
-//         ]
+// let codeGalleryParser : Parser<PortfolioSection->Page,_> =
+//     oneOf [
+//         map CodeSection.CodeLanding (s "drop")
+//         map CodeSection.GoalRoll (s "goalRoll")
+//         // map Store.ShopSection.ShopTypeSelector (s "select")
+//         map CodeSection.TileSort (s "tileSort")
+//         map CodeSection.TileTap (s "tileSmash")
+//         map CodeSection.PivotPoint (s "portfolio-pivotPoint")
+//     ]
 
 let pageParser : Parser<Page -> Page,_> =
     oneOf [
@@ -90,10 +77,12 @@ let pageParser : Parser<Page -> Page,_> =
         map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Website) (s "web-services")
         map (Page.Portfolio PortfolioSection.PortfolioLanding) (s "portfolio")
         map (Page.Portfolio (Code CodeSection.CodeLanding)) (s "portfolio-code")
+        // map Page.Portfolio (PortfolioSection.Code (s "portfolio-code" </> codeGalleryParser))
         map (Page.Portfolio Design) (s "portfolio-design")
-        map (Page.Portfolio (Code CodeSection.GoalRoll)) (s "portfolio-goalRoll")
-        map (Page.Portfolio (Code CodeSection.TileSort)) (s "portfolio-tileSort")
-        map (Page.Portfolio (Code CodeSection.TileTap)) (s "portfolio-tileSmash")
+        map (Page.Portfolio (Code CodeSection.GoalRoll)) (s "goalRoll")
+        map (Page.Portfolio (Code CodeSection.TileSort)) (s "tileSort")
+        map (Page.Portfolio (Code CodeSection.TileTap)) (s "tileSmash")
+        map (Page.Portfolio (Code CodeSection.PivotPoint)) (s "tileSmash")
         map Page.Resume (s "resume")
         map Page.Welcome (s "welcome")
         map Page.Shop (s "shop" </> shopParser)
