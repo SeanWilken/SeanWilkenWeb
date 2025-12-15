@@ -348,7 +348,7 @@ module SharedTileTap =
     type TileTapDifficulty =
         | Simple
         | Easy
-        | Intermediate
+        | Medium
         | Hard
 
     // KINDA USELESS IMPLEMENTATION CURRENTLY, 
@@ -677,13 +677,15 @@ module SharedTileSort =
         let selectedIndex = unwrapIndex ( getObjectPositionIndex tiles selected )
         let blankIndex = unwrapIndex ( getObjectPositionIndex tiles ( TileSortLaneObject { Value = None } ) )
         if selectedIndex = -1 || blankIndex = -1
-            then tiles
+            then tiles, false
             else
                 let colSwap = checkSwapInColumn selectedIndex blankIndex tiles selected gridDimension
                 let rowSwap = checkSwapInRow selectedIndex blankIndex tiles selected gridDimension
                 if (colSwap || rowSwap) 
-                    then swapBlankWithSelected tiles selected selectedIndex blankIndex
-                    else tiles
+                    then swapBlankWithSelected tiles selected selectedIndex blankIndex, true
+                    else tiles, false
+
+    
 
     // // BLANK TILE VALUE POSITION VALIDATION
     // // gets the current index of the Blank Tile and adds one to the index

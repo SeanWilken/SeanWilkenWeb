@@ -5,6 +5,8 @@ open GridGame
 open Elmish
 open Browser
 open Feliz
+open SharedViewModule.SharedMicroGames
+open Bindings.LucideIcon
     
 // - Extras:
 // speeds up like snake as more are picked up
@@ -168,81 +170,315 @@ let roundStateToggle (model: SharedPivotPoint.Model) dispatch =
         prop.text toggleStr
     ]
 
-let rulesAndSettingsGameControls (model: SharedPivotPoint.Model) dispatch =
-    let toggleStr = roundStateToggleString model
-    Html.div [
-        prop.className "space-y-4 text-center"
-        prop.children [
-            Html.button [
-                prop.className "modalControls text-lg text-white hover:text-blue-400"
-                prop.text $"{toggleStr} Round"
-                prop.onClick (fun _ -> startGameLoop model dispatch |> ignore)
+// let rulesAndSettingsGameControls (model: SharedPivotPoint.Model) dispatch =
+//     let toggleStr = roundStateToggleString model
+//     Html.div [
+//         prop.className "space-y-4 text-center"
+//         prop.children [
+//             Html.button [
+//                 prop.className "modalControls text-lg text-white hover:text-blue-400"
+//                 prop.text $"{toggleStr} Round"
+//                 prop.onClick (fun _ -> startGameLoop model dispatch |> ignore)
+//             ]
+//             Html.button [
+//                 prop.className "modalControls text-lg text-white hover:text-red-400"
+//                 prop.text "Restart Round"
+//                 prop.onClick (fun _ -> SharedPivotPoint.ResetRound |> dispatch)
+//             ]
+//         ]
+//     ]
+
+// let modalGameSettingsView model dispatch =
+//     Html.div [
+//         prop.className "modalAltContent text-center"
+//         prop.children [ rulesAndSettingsGameControls model dispatch ]
+//     ]
+
+// let gameRulesAndSettingsView model dispatch =
+//     Html.div [
+//         SharedViewModule.modalInstructionContent pivotPointsDescriptions
+//         modalGameSettingsView model dispatch
+//     ]
+
+// let gameContentViewControls model controlList dispatch =
+//     Html.div [
+//         prop.className "pt-4 flex flex-wrap gap-4 justify-center items-center"
+//         prop.children (
+//             [ roundStateToggle model dispatch ] @
+//             [
+//                 for (controlTitle: string, controlMsg) in controlList ->
+//                     Html.button [
+//                         prop.className "modalControls text-white text-lg font-semibold hover:text-green-400"
+//                         prop.text controlTitle
+//                         prop.onClick (fun _ -> dispatch controlMsg)
+//                     ]
+//             ]
+//         )
+//     ]
+
+// let pivotPointTileView rollDirection position style message dispatch =
+//     let iconPath =
+//         match position with
+//         | Ball -> SharedViewModule.GamePieceIcons.directionArrowImage rollDirection
+//         | Blocker -> SharedViewModule.GamePieceIcons.blocker
+//         | Goal -> SharedViewModule.GamePieceIcons.goalFlag
+//         | _ -> SharedViewModule.GamePieceIcons.empty
+
+//     Html.div [
+//         prop.className "w-10 h-10 flex items-center justify-center rounded shadow cursor-pointer bg-gray-800"
+//         prop.style style
+//         prop.onClick (fun _ -> message |> dispatch)
+//         prop.children [ Html.div [ prop.text iconPath; prop.className "w-6 h-6" ] ]
+//     ]
+
+// let parseLaneDetails (details: LaneDetails option) =
+//     match details with
+//     | Some d -> d.Style, d.Message
+//     | None -> [], SharedPivotPoint.Ignore
+
+type LaneHighlight =
+    | NoHighlight
+    | HighlightAscend
+    | HighlightDescend
+
+let private pivotTileBase (sizePx: int) : IStyleAttribute list =
+    [
+        style.width sizePx
+        style.height sizePx
+        style.custom("border-radius", "0")
+        style.custom("clip-path", "polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%)")
+        style.position.relative
+        style.display.flex
+        style.alignItems.center
+        style.justifyContent.center
+        style.userSelect.none
+    ]
+
+let private pivotTileStyle (highlight: LaneHighlight) : IStyleAttribute list =
+    // baseline “empty tile”
+    let bg = "rgba(10, 20, 40, 0.55)"
+    let border = "1px solid rgba(255,255,255,0.10)"
+    let shadow = "inset 0 0 10px rgba(0,0,0,0.55)"
+
+    // lane highlight overrides (match your red/blue intent but cyber)
+    let bg', border', shadow', anim =
+        match highlight with
+        | HighlightAscend ->
+            "linear-gradient(135deg, rgba(0,255,255,0.14), rgba(0,139,139,0.14))",
+            "1px solid rgba(0,255,255,0.35)",
+            "inset 0 0 16px rgba(0,255,255,0.10), 0 0 12px rgba(0,255,255,0.10)",
+            Some "neonPulse 2s ease-in-out infinite"
+        | HighlightDescend ->
+            "linear-gradient(135deg, rgba(255,0,100,0.16), rgba(139,0,0,0.14))",
+            "1px solid rgba(255,0,100,0.35)",
+            "inset 0 0 16px rgba(255,0,100,0.10), 0 0 12px rgba(255,0,100,0.10)",
+            None
+        | NoHighlight ->
+            bg, border, shadow, None
+
+    [
+        style.custom("background", bg')
+        style.custom("border", border')
+        style.custom("box-shadow", shadow')
+        match anim with
+        | Some a -> style.custom("animation", a)
+        | None -> style.custom("animation", "none")
+    ]
+
+// let private pivotIcon (rollDirection: Client.Domain.GridGame.MovementDirection) (position: LaneObject) =
+//     match position with
+//     | Ball -> SharedViewModule.GamePieceIcons.directionArrowImage rollDirection
+//     | Blocker -> SharedViewModule.GamePieceIcons.blocker
+//     | Goal -> SharedViewModule.GamePieceIcons.goalFlag
+//     | _ -> SharedViewModule.GamePieceIcons.empty
+
+let private pivotTileContent (rollDirection: Client.Domain.GridGame.MovementDirection) (position: LaneObject) =
+    match position with
+    | Blocker ->
+        [
+            // hatch overlay
+            Html.div [
+                prop.className "absolute inset-0"
+                prop.style [
+                    style.custom(
+                        "background",
+                        "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,0,100,0.18) 8px, rgba(255,0,100,0.18) 16px)"
+                    )
+                ]
             ]
-            Html.button [
-                prop.className "modalControls text-lg text-white hover:text-red-400"
-                prop.text "Restart Round"
-                prop.onClick (fun _ -> SharedPivotPoint.ResetRound |> dispatch)
+            // center glyph
+            Html.div [
+                prop.className "text-[24px] font-black"
+                prop.style [
+                    style.custom("color", "#ff2b7a")
+                    style.custom("text-shadow", "0 0 14px rgba(255,0,100,0.55)")
+                    style.custom("filter", "drop-shadow(0 0 10px rgba(255,0,100,0.35))")
+                ]
+                // Use your existing icon string, but styled
+                prop.text SharedViewModule.GamePieceIcons.blocker
             ]
         ]
-    ]
 
-let modalGameSettingsView model dispatch =
-    Html.div [
-        prop.className "modalAltContent text-center"
-        prop.children [ rulesAndSettingsGameControls model dispatch ]
-    ]
-
-let gameRulesAndSettingsView model dispatch =
-    Html.div [
-        SharedViewModule.modalInstructionContent pivotPointsDescriptions
-        modalGameSettingsView model dispatch
-    ]
-
-let gameContentViewControls model controlList dispatch =
-    Html.div [
-        prop.className "pt-4 flex flex-wrap gap-4 justify-center items-center"
-        prop.children (
-            [ roundStateToggle model dispatch ] @
-            [
-                for (controlTitle: string, controlMsg) in controlList ->
-                    Html.button [
-                        prop.className "modalControls text-white text-lg font-semibold hover:text-green-400"
-                        prop.text controlTitle
-                        prop.onClick (fun _ -> dispatch controlMsg)
+    | Goal ->
+        [
+            Html.div [
+                prop.className "absolute inset-0 flex items-center justify-center"
+                prop.style [
+                    style.custom("animation", "float 2s ease-in-out infinite")
+                ]
+                prop.children [
+                    Html.div [
+                        prop.className "text-[26px] font-black"
+                        prop.style [
+                            style.custom("color", "#00ffff")
+                            style.custom("text-shadow", "0 0 16px rgba(0,255,255,0.7)")
+                            style.custom("filter", "drop-shadow(0 0 10px rgba(0,255,255,0.6))")
+                        ]
+                        prop.text SharedViewModule.GamePieceIcons.goalFlag
                     ]
+                ]
+            ]
+        ]
+
+    | Ball ->
+        let dirGlyph = SharedViewModule.GamePieceIcons.directionArrowImage rollDirection
+        [
+            // outer glow
+            Html.div [
+                prop.className "absolute"
+                prop.style [
+                    style.custom("inset", "-10px")
+                    style.custom("border-radius", "9999px")
+                    style.custom("background", "radial-gradient(circle, rgba(0,255,255,0.45) 0%, transparent 70%)")
+                    style.custom("filter", "blur(14px)")
+                ]
+            ]
+
+            // orb
+            Html.div [
+                prop.className "absolute"
+                prop.style [
+                    style.custom("inset", "8px")
+                    style.custom("border-radius", "9999px")
+                    style.custom(
+                        "background",
+                        "radial-gradient(circle at 35% 35%, #00ffff, #0099cc 50%, #006699 100%)"
+                    )
+                    style.custom("border", "2px solid rgba(0,255,255,0.55)")
+                    style.custom("box-shadow", "0 0 26px rgba(0,255,255,0.65), inset 0 0 18px rgba(255,255,255,0.25)")
+                    style.custom("overflow", "hidden")
+                ]
+                prop.children [
+                    // glossy highlight
+                    Html.div [
+                        prop.className "absolute"
+                        prop.style [
+                            style.custom("top", "18%")
+                            style.custom("left", "18%")
+                            style.custom("width", "35%")
+                            style.custom("height", "35%")
+                            style.custom("border-radius", "9999px")
+                            style.custom("background", "radial-gradient(circle, rgba(255,255,255,0.65) 0%, transparent 70%)")
+                            style.custom("filter", "blur(3px)")
+                        ]
+                    ]
+                    // subtle scan stripes
+                    Html.div [
+                        prop.className "absolute inset-0"
+                        prop.style [
+                            style.custom(
+                                "background-image",
+                                "repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0,255,255,0.10) 4px, rgba(0,255,255,0.10) 5px)"
+                            )
+                            style.custom("opacity", "0.35")
+                        ]
+                    ]
+                ]
+            ]
+
+            // optional direction hint on top of the ball
+            Html.div [
+                prop.className "relative z-10 text-[16px] font-black"
+                prop.style [
+                    style.custom("color", "#e8ffff")
+                    style.custom("text-shadow", "0 0 10px rgba(0,255,255,0.65)")
+                ]
+                prop.text dirGlyph
+            ]
+        ]
+
+    | _ ->
+        // empty tile => no content
+        []
+
+let pivotPointTileView
+    (rollDirection: Client.Domain.GridGame.MovementDirection)
+    (position: LaneObject)
+    (highlight: LaneHighlight)
+    (message: SharedPivotPoint.Msg)
+    (dispatch: SharedPivotPoint.Msg -> unit) =
+
+    let sizePx = 64
+
+    Html.button [
+        prop.type'.button
+        prop.className "tile select-none"
+        prop.style (
+            pivotTileBase sizePx
+            @ pivotTileStyle highlight
+            @ [
+                style.custom("cursor", "pointer")
+                style.custom("transition", "transform 0.15s ease, filter 0.15s ease")
             ]
         )
-    ]
-
-let pivotPointTileView rollDirection position style message dispatch =
-    let iconPath =
-        match position with
-        | Ball -> SharedViewModule.GamePieceIcons.directionArrowImage rollDirection
-        | Blocker -> SharedViewModule.GamePieceIcons.blocker
-        | Goal -> SharedViewModule.GamePieceIcons.goalFlag
-        | _ -> SharedViewModule.GamePieceIcons.empty
-
-    Html.div [
-        prop.className "w-10 h-10 flex items-center justify-center rounded shadow cursor-pointer bg-gray-800"
-        prop.style style
-        prop.onClick (fun _ -> message |> dispatch)
-        prop.children [ Html.div [ prop.text iconPath; prop.className "w-6 h-6" ] ]
-    ]
-
-let parseLaneDetails (details: LaneDetails option) =
-    match details with
-    | Some d -> d.Style, d.Message
-    | None -> [], SharedPivotPoint.Ignore
-
-let pivotPointsLaneCreator isRow rollDirection laneDetail rowPositions dispatch =
-    let style, message = parseLaneDetails laneDetail
-    Html.div [
-        prop.className (if isRow then "flex justify-center items-center space-x-1 my-1" else "")
+        prop.onClick (fun _ -> dispatch message)
         prop.children [
-            for obj in rowPositions ->
-                pivotPointTileView rollDirection obj style message dispatch
+            Html.div [
+                prop.className "text-[22px] font-black"
+                prop.style [
+                    style.custom("color", "#cfffff")
+                    style.custom("text-shadow", "0 0 10px rgba(0,255,255,0.25)")
+                    // bomb/goal/etc could be colored per-icon later if desired
+                ]
+                prop.children (pivotTileContent rollDirection position)
+            ]
         ]
     ]
+
+let parseLaneDetails (details: LaneDetails option) : LaneHighlight * SharedPivotPoint.Msg =
+    match details with
+    | Some d ->
+        match d.Message with
+        | SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Ascend ->
+            HighlightAscend, d.Message
+        | SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Descend ->
+            HighlightDescend, d.Message
+        | _ ->
+            NoHighlight, d.Message
+    | None ->
+        NoHighlight, SharedPivotPoint.Ignore
+
+
+let pivotPointsLaneCreator isRow rollDirection laneDetail rowPositions dispatch =
+    let highlight, message = parseLaneDetails laneDetail
+    Html.div [
+        prop.className (if isRow then "flex justify-center items-center gap-1 my-1" else "")
+        prop.children [
+            for obj in rowPositions ->
+                pivotPointTileView rollDirection obj highlight message dispatch
+        ]
+    ]
+
+
+// let pivotPointsLaneCreator isRow rollDirection laneDetail rowPositions dispatch =
+//     let style, message = parseLaneDetails laneDetail
+//     Html.div [
+//         prop.className (if isRow then "flex justify-center items-center space-x-1 my-1" else "")
+//         prop.children [
+//             for obj in rowPositions ->
+//                 pivotPointTileView rollDirection obj style message dispatch
+//         ]
+//     ]
 
 let laneStyleCenterPositions ceiling position =
     [ for i in 0 .. ceiling - 1 ->
@@ -288,84 +524,79 @@ let pivotPointsBoardView (model: SharedPivotPoint.Model) dispatch =
         let laneStyles = laneStyleCreator ballLaneIndex ceiling
         laneView false model board laneStyles ceiling dispatch
 
-let pivotPointsGameLoopCard (model: SharedPivotPoint.Model) (dispatch: SharedPivotPoint.Msg -> unit) =
+
+[<ReactComponent>]
+let view (model: SharedPivotPoint.Model) (dispatch: SharedPivotPoint.Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
+    let (showInfo, setShowInfo) = React.useState(false)
+
+    let checkIfDirectionHorizontal (model: SharedPivotPoint.Model) =
+        match model.BallDirection with
+        | Up | Down -> false
+        | Left | Right -> true
+
+    let dpadState =
+        { CanUp = checkIfDirectionHorizontal model
+          CanDown = checkIfDirectionHorizontal model
+          CanLeft = checkIfDirectionHorizontal model |> not
+          CanRight = checkIfDirectionHorizontal model |> not
+          Disabled = (model.GameState = Won) }
+
+    let overlay : ReactElement option =
+        match model.GameState with
+        | Won ->
+            Some (
+                WinOverlay model.CoinsCollected
+                    (fun () -> dispatch SharedPivotPoint.ResetRound)
+                    (Some (fun () -> dispatch SharedPivotPoint.ResetRound))
+            )
+        | _ -> None
+
     let toggleString = roundStateToggleString model
-    Html.div [
-        prop.className "card bg-base-200 shadow-md p-4 mt-4"
-        prop.children [
-            Html.div [
-                prop.className "flex flex-col space-y-6"
-                prop.children [
-                    Html.div [
-                        prop.className "modalAltContent p-4"
-                        prop.children [ 
+
+    CyberShellResponsive {
+        Left = 
+            Html.div 
+                [
+                    TitlePanel "PIVOT POINT"
+                    CyberPanel {
+                        ClassName = "p-5"
+                        ClipPath = Some "polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%)"
+                        Children = [
                             Html.div [
-                                prop.className "flex flex-col md:flex-row gap-4 justify-between items-stretch"
+                                prop.style [ style.display.flex; style.justifyContent.spaceAround; style.alignItems.center ]
                                 prop.children [
-                                    Html.div [
-                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
-                                        prop.children [
-                                            Html.a [
-                                                prop.className "btn btn-sm btn-primary w-full"
-                                                prop.onClick (fun _ -> startGameLoop model dispatch |> ignore)
-                                                prop.text (toggleString + " Round")
-                                            ]
-                                            Html.a [
-                                                prop.className "btn btn-sm btn-secondary w-full"
-                                                prop.onClick (fun _ -> SharedPivotPoint.Msg.ResetRound |> dispatch)
-                                                prop.text "Restart Round"
-                                            ]
-                                        ]
-                                    ]
+                                    StatBlock "" $"Game Clock: {SharedViewModule.gameTickClock model.GameClock}" "#ff00ff"
+                                    StatBlock " " $"Score: {model.CoinsCollected}" "#ff00ff"
                                 ]
                             ]
                         ]
+                    }
+                    if showInfo 
+                    then 
+                        InstructionsPanel 
+                            "HOW TO PLAY" 
+                            pivotPointsDescriptions
+                            "CLOSE"
+                            (fun () -> setShowInfo(false))
+                    else 
+                        DPadInfoPanel
+                            "CLOCK"
+                            (string model.GameClock)
+                            "SCORE"
+                            (string model.CoinsCollected)
+                            dpadState 
+                            (fun dir ->
+                                match dir with
+                                | Up | Left -> dispatch (SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Descend)
+                                | Down | Right -> dispatch (SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Ascend)
+                            )
+                    ControlsPanel [
+                        ControlButton "INFO" Cyan true (fun () -> setShowInfo(not showInfo)) (Some (LucideIcon.Info "w-4 h-4"))
+                        ControlButton toggleString Purple (true) (fun () -> startGameLoop model dispatch |> ignore ) (Some (LucideIcon.RotateCcw "w-4 h-4"))
+                        ControlButton "RESTART" Red true (fun () -> dispatch SharedPivotPoint.ResetRound) None
                     ]
                 ]
-            ]
-        ]
-    ]
-
-let pivotPointsModalContent (model: SharedPivotPoint.Model) dispatch =
-    SharedViewModule.gameModalContent (
-        Html.div [
-            match model.GameState with
-            | Won -> SharedViewModule.roundCompleteContent (modelPivotPointRoundDetails model) (fun () -> SharedPivotPoint.ResetRound |> dispatch)
-            | _ ->
-                Html.div [
-                    prop.className "flex flex-row justify-between items-center w-full mb-4 gap-4 relative p-2"
-                    prop.children [
-                        Html.div [
-                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-info-content"
-                            prop.children [
-                                Html.div [
-                                    prop.className "text-error font-bold text-lg text-center"
-                                    prop.text $"Game Clock: {SharedViewModule.gameTickClock model.GameClock}"
-                                ]
-                            ]
-                        ]
-                        Html.div [
-                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-warning-content"
-                            prop.children [
-                                Html.div [
-                                    prop.className "text-info font-bold text-lg text-center"
-                                    prop.text $"Coins: {model.CoinsCollected}"
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-                Html.div [
-                    prop.className "my-4"
-                    prop.children [ pivotPointsBoardView model dispatch ]
-                ]
-                pivotPointsGameLoopCard model dispatch
-        ]
-    )
-
-let view (model: SharedPivotPoint.Model) dispatch =
-    Html.div [
-        SharedViewModule.sharedModalHeader "Pivot Points" pivotPointsDescriptions SharedPivotPoint.QuitGame dispatch
-        pivotPointsModalContent model dispatch
-        // gameContentViewControls model controlList dispatch
-    ]
+        Board = BoardPanel ( pivotPointsBoardView model dispatch )
+        Overlay = overlay
+        OnQuit = (fun () -> dispatchParent quitMsg)
+    }

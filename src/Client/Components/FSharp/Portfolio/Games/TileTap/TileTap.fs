@@ -299,51 +299,167 @@ let update msg ( model : SharedTileTap.Model ) =
 open Shared
 open SharedTileTap
 open Feliz
+open SharedViewModule.SharedMicroGames
 
-let tileColorClass (tile: TapTile) =
+
+let private tapTileBase (sizePx: int) : IStyleAttribute list =
+    [
+        style.width sizePx
+        style.height sizePx
+        style.custom("border-radius", "0")
+        style.custom("clip-path", "polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%)")
+        style.position.relative
+        style.display.flex
+        style.alignItems.center
+        style.justifyContent.center
+        style.userSelect.none
+    ]
+
+let private timerBadge (txt: string) =
+    Html.div [
+        prop.className "absolute top-1 right-1 px-1.5 py-0.5 text-[10px] font-bold leading-none"
+        prop.style [
+            style.custom("background", "rgba(10,20,40,0.75)")
+            style.custom("border", "1px solid rgba(0,255,255,0.25)")
+            style.custom("box-shadow", "0 0 10px rgba(0,255,255,0.15)")
+            style.custom("color", "#cfffff")
+            style.custom("text-shadow", "0 0 10px rgba(0,255,255,0.35)")
+        ]
+        prop.text txt
+    ]
+
+type TapVisual =
+    { Bg: string
+      Border: string
+      Shadow: string
+      Icon: string
+      IconColor: string
+      IconShadow: string
+      OverlayHatch: bool }
+
+let private tapVisual (tile: TapTile) : TapVisual =
     match tile.Value with
-    | TapTileValue.Bomb -> "bg-red-600"      // Bomb is red
-    | TapTileValue.Heart -> "bg-pink-300"    // Heart stays pink
-    | Minor -> "bg-green-700"                // Minor: dark green
-    | Modest -> "bg-green-500"               // Modest: medium green
-    | Major -> "bg-green-300"                // Major: light green
-    
-let tileView colorClass tapTile (tileImage: string) dispatch = 
+    | TapTileValue.Bomb ->
+        { Bg = "linear-gradient(135deg, rgba(255,0,100,0.45), rgba(139,0,0,0.45))"
+          Border = "1px solid rgba(255,0,100,0.70)"
+          Shadow = "inset 0 0 20px rgba(255,0,100,0.25), 0 0 18px rgba(255,0,100,0.18)"
+          Icon = SharedViewModule.GamePieceIcons.bomb
+          IconColor = "#ff2b7a"
+          IconShadow = "0 0 12px rgba(255,0,100,0.55)"
+          OverlayHatch = true }
+
+    | TapTileValue.Heart ->
+        { Bg = "linear-gradient(135deg, rgba(255,105,180,0.32), rgba(180,60,120,0.28))"
+          Border = "1px solid rgba(255,105,180,0.55)"
+          Shadow = "inset 0 0 18px rgba(255,105,180,0.18), 0 0 18px rgba(255,105,180,0.12)"
+          Icon = SharedViewModule.GamePieceIcons.heart
+          IconColor = "#ffd1e8"
+          IconShadow = "0 0 12px rgba(255,105,180,0.45)"
+          OverlayHatch = false }
+
+    | Minor ->
+        { Bg = "linear-gradient(135deg, rgba(0,255,255,0.18), rgba(0,139,139,0.18))"
+          Border = "1px solid rgba(0,255,255,0.45)"
+          Shadow = "inset 0 0 18px rgba(0,255,255,0.10), 0 0 14px rgba(0,255,255,0.12)"
+          Icon = "★"
+          IconColor = "#bfffff"
+          IconShadow = "0 0 10px rgba(0,255,255,0.40)"
+          OverlayHatch = false }
+
+    | Modest ->
+        { Bg = "linear-gradient(135deg, rgba(0,255,255,0.24), rgba(0,139,139,0.22))"
+          Border = "1px solid rgba(0,255,255,0.55)"
+          Shadow = "inset 0 0 20px rgba(0,255,255,0.12), 0 0 16px rgba(0,255,255,0.16)"
+          Icon = "★"
+          IconColor = "#cfffff"
+          IconShadow = "0 0 12px rgba(0,255,255,0.55)"
+          OverlayHatch = false }
+
+    | Major ->
+        { Bg = "linear-gradient(135deg, rgba(0,255,255,0.32), rgba(0,139,139,0.28))"
+          Border = "1px solid rgba(0,255,255,0.70)"
+          Shadow = "inset 0 0 22px rgba(0,255,255,0.14), 0 0 20px rgba(0,255,255,0.22)"
+          Icon = "★"
+          IconColor = "#e8ffff"
+          IconShadow = "0 0 14px rgba(0,255,255,0.70)"
+          OverlayHatch = false }
+
+let tileView (tapTile: TapTile) (dispatch: Msg -> unit) =
+    let sizePx = 64
+    let v = tapVisual tapTile
+    let timeTxt = SharedViewModule.gameTickClock tapTile.LifeTime
+
     Html.button [
-        prop.className $"gameTile {colorClass} w-10 h-10 flex flex-col items-center justify-center rounded-lg shadow cursor-pointer relative border-2 border-white"
-        prop.onClick (fun _ -> DestroyTile(tapTile) |> dispatch)
+        prop.type'.button
+        prop.className "tile select-none"
+        prop.style (
+            tapTileBase sizePx @ [
+                style.custom("background", v.Bg)
+                style.custom("border", v.Border)
+                style.custom("box-shadow", v.Shadow)
+                style.custom("cursor", "pointer")
+                style.custom("transition", "transform 0.15s ease, filter 0.15s ease")
+            ]
+        )
+        prop.onClick (fun _ -> DestroyTile tapTile |> dispatch)
         prop.children [
-            Html.span [
-                match tapTile.Value with
-                | TapTileValue.Bomb -> prop.text SharedViewModule.GamePieceIcons.bomb
-                | TapTileValue.Heart -> prop.text SharedViewModule.GamePieceIcons.heart
-                | Minor | Modest | Major -> prop.text "★" // Use a star icon for balls
+            // optional hatch overlay (bomb)
+            if v.OverlayHatch then
+                Html.div [
+                    prop.className "absolute inset-0"
+                    prop.style [
+                        style.custom(
+                            "background",
+                            "repeating-linear-gradient(45deg, transparent, transparent 8px, rgba(255,0,100,0.18) 8px, rgba(255,0,100,0.18) 16px)"
+                        )
+                    ]
+                ]
+
+            // icon
+            Html.div [
+                prop.className "text-[26px] font-black"
+                prop.style [
+                    style.custom("color", v.IconColor)
+                    style.custom("text-shadow", v.IconShadow)
+                ]
+                prop.text v.Icon
             ]
-            Html.span [
-                prop.className "mt-1 text-xs font-bold text-white"
-                prop.text (SharedViewModule.gameTickClock tapTile.LifeTime)
-            ]
+
+            // timer badge
+            timerBadge timeTxt
         ]
     ]
 
 let tileTapRowCreator (rowPositions: LaneObject list) (dispatch: Msg -> unit) =
     Html.div [
-        prop.className "flex justify-center items-center space-x-2 my-2"
+        prop.className "flex justify-center items-center gap-1 my-1"
         prop.children [
             for position in rowPositions do
                 match position with
                 | TapTile tile ->
-                    let colorClass = tileColorClass tile
-                    tileView
-                        colorClass
-                        tile
-                        "" // icon now handled in tileView
-                        dispatch
+                    tileView tile dispatch
+
                 | _ ->
-                    Html.div [
-                        prop.className "blankTile bg-base-200 w-10 h-10 flex items-center justify-center rounded-lg shadow cursor-pointer"
-                        prop.onClick (fun _ -> Mistake(1) |> dispatch)
-                        prop.text SharedViewModule.GamePieceIcons.empty
+                    // blank (click = mistake)
+                    Html.button [
+                        prop.type'.button
+                        prop.className "tile select-none"
+                        prop.style (
+                            tapTileBase 64 @ [
+                                style.custom("background", "rgba(10,20,40,0.55)")
+                                style.custom("border", "1px solid rgba(255,255,255,0.10)")
+                                style.custom("box-shadow", "inset 0 0 10px rgba(0,0,0,0.55)")
+                                style.custom("cursor", "pointer")
+                            ]
+                        )
+                        prop.onClick (fun _ -> Mistake 1 |> dispatch)
+                        prop.children [
+                            Html.div [
+                                prop.className "text-[18px] opacity-40"
+                                prop.style [ style.custom("color", "#9aa4b2") ]
+                                prop.text SharedViewModule.GamePieceIcons.empty
+                            ]
+                        ]
                     ]
         ]
     ]
@@ -351,9 +467,10 @@ let tileTapRowCreator (rowPositions: LaneObject list) (dispatch: Msg -> unit) =
 let tileTapBoardView (gridPositions: GridBoard) (dispatch: Msg -> unit) =
     let board = GridGame.getPositionsAsRows gridPositions 8
     Html.div [
-        prop.className "flex flex-col items-center space-y-4"
+        prop.className "flex flex-col items-center"
         prop.children [ for row in board -> tileTapRowCreator row dispatch ]
     ]
+
 
 // *********************************
 
@@ -379,152 +496,62 @@ let startGameLoop ( model : SharedTileTap.Model ) dispatch =
 
 let roundStateToggleString ( model : SharedTileTap.Model ) = 
     if model.GameState = Won || model.GameState = Settings
-        then "Play"
-        elif ( model.DispatchPointer <> 0.0 ) then "Pause" 
-        else if model.CurrentRoundDetails.GameClock <> 0 then "Resume" else "Start"
+        then "PLAY"
+        elif ( model.DispatchPointer <> 0.0 ) then "PAUSE" 
+        else if model.CurrentRoundDetails.GameClock <> 0 then "RESUME" else "START"
 
-let tileTapGameLoopCard (model: SharedTileTap.Model) (dispatch: Msg -> unit) =
+let difficulties = [ Simple; Easy; Medium; Hard ]
+
+[<ReactComponent>]
+let view (model: SharedTileTap.Model) (dispatch: SharedTileTap.Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
+
+    let overlay : ReactElement option =
+        match model.GameState with
+        | Won ->
+            Some (
+                WinOverlay model.CompletedRoundDetails.RoundScore
+                    (fun () -> dispatch ResetRound)
+                    (Some (fun () -> dispatch ResetRound))
+            )
+        | _ -> None
+
     let toggleString = roundStateToggleString model
-    Html.div [
-        prop.className "card bg-base-200 shadow-md p-4 mt-4"
-        prop.children [
-            Html.div [
-                prop.className "flex flex-col space-y-6"
-                prop.children [
-                    Html.div [
-                        prop.className "modalAltContent p-4"
-                        prop.children [ 
+
+    CyberShellResponsive {
+        Left = 
+            Html.div 
+                [
+                    TitlePanel "TILE TAP"
+                    LevelSelectPanel
+                        difficulties
+                        model.Difficulty
+                        (fun a b -> a = b)
+                        (fun diff -> dispatch (ChangeDifficulty diff))
+                    CyberPanel {
+                        ClassName = "p-5"
+                        ClipPath = Some "polygon(0 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%)"
+                        Children = [
                             Html.div [
-                                prop.className "flex flex-col md:flex-row gap-4 justify-between items-stretch"
+                                prop.style [ style.display.flex; style.justifyContent.spaceAround; style.alignItems.center ]
                                 prop.children [
-                                    Html.div [
-                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
-                                        prop.children [
-                                            Html.a [
-                                                prop.className "btn btn-sm btn-primary w-full"
-                                                prop.onClick (fun _ -> startGameLoop model dispatch |> ignore)
-                                                prop.text (toggleString + " Round")
-                                            ]
-                                            Html.a [
-                                                prop.className "btn btn-sm btn-secondary w-full"
-                                                prop.onClick (fun _ -> ResetRound |> dispatch)
-                                                prop.text "Restart Round"
-                                            ]
-                                        ]
-                                    ]
-                                    Html.div [
-                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
-                                        prop.children [
-                                            Html.h3 [ prop.className "mb-1 text-error text-center"; prop.text "Game Mode:" ]
-                                            Html.div [
-                                                prop.className "flex flex-row gap-2 justify-center"
-                                                prop.children [
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.GameMode = SharedTileTap.TileTapGameMode.Survival then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> ChangeGameMode SharedTileTap.TileTapGameMode.Survival |> dispatch)
-                                                        prop.text "Survival"
-                                                    ]
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.GameMode = SharedTileTap.TileTapGameMode.TimeAttack then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> ChangeGameMode SharedTileTap.TileTapGameMode.TimeAttack |> dispatch)
-                                                        prop.text "Time Attack"
-                                                    ]
-                                                ]
-                                            ]
-                                        ]
-                                    ]
-                                    Html.div [
-                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
-                                        prop.children [
-                                            Html.h3 [ prop.className "mb-1 text-center"; prop.text "Round Difficulty:" ]
-                                            Html.div [
-                                                prop.className "flex flex-row gap-2 justify-center"
-                                                prop.children [
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileTap.TileTapDifficulty.Simple then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> ChangeDifficulty SharedTileTap.TileTapDifficulty.Simple |> dispatch)
-                                                        prop.text "Simple"
-                                                    ]
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileTap.TileTapDifficulty.Easy then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> ChangeDifficulty SharedTileTap.TileTapDifficulty.Easy |> dispatch)
-                                                        prop.text "Easy"
-                                                    ]
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileTap.TileTapDifficulty.Intermediate then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> ChangeDifficulty SharedTileTap.TileTapDifficulty.Intermediate |> dispatch)
-                                                        prop.text "Medium"
-                                                    ]
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileTap.TileTapDifficulty.Hard then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> ChangeDifficulty SharedTileTap.TileTapDifficulty.Hard |> dispatch)
-                                                        prop.text "Hard"
-                                                    ]
-                                                ]
-                                            ]
-                                        ]
-                                    ]
+                                    StatBlock "" $"HP: {model.AllowableRoundMistakes - model.CurrentRoundDetails.RoundMistakes}" "#00ffff"
+                                    StatBlock "" $"Game Clock: {SharedViewModule.gameTickClock model.CurrentRoundDetails.GameClock}" "#ff00ff"
+                                    StatBlock " " $"Score: {model.CurrentRoundDetails.RoundScore}" "#ff00ff"
                                 ]
                             ]
                         ]
+                    }
+                    InstructionsPanel 
+                        "HOW TO PLAY" 
+                        tileTapDescriptions
+                        ""
+                        (fun () -> ())
+                    ControlsPanel [
+                        ControlButton toggleString Purple (model.RoundTimer > 0) (fun () -> startGameLoop model dispatch |> ignore ) (Some (LucideIcon.RotateCcw "w-4 h-4"))
+                        ControlButton "RESTART" Red true (fun () -> dispatch ResetRound) None
                     ]
                 ]
-            ]
-        ]
-    ]
-    
-// -------------------------------------
-
-let tileTapModalContent (model: SharedTileTap.Model) dispatch =
-    SharedViewModule.gameModalContent (
-        Html.div [
-            match model.GameState with
-            | Won -> SharedViewModule.roundCompleteContent (modelTileTapRoundDetails model) (fun () -> SharedTileTap.Msg.ResetRound |> dispatch)
-            | _ ->
-                Html.div [
-                    prop.className "flex flex-row justify-between items-center w-full mb-4 gap-4 relative p-2"
-                    prop.children [
-                        Html.div [
-                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-success-content"
-                            prop.children [
-                                Html.div [
-                                    prop.className "text-success font-bold text-lg text-center"
-                                    prop.text $"HP: {model.AllowableRoundMistakes - model.CurrentRoundDetails.RoundMistakes}"
-                                ]
-                            ]
-                        ]
-                        Html.div [
-                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-info-content"
-                            prop.children [
-                                Html.div [
-                                    prop.className "text-error font-bold text-lg text-center"
-                                    prop.text $"Game Clock: {SharedViewModule.gameTickClock model.CurrentRoundDetails.GameClock}"
-                                ]
-                            ]
-                        ]
-                        Html.div [
-                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-warning-content"
-                            prop.children [
-                                Html.div [
-                                    prop.className "text-info font-bold text-lg text-center"
-                                    prop.text $"Round Score: {model.CurrentRoundDetails.RoundScore}"
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-                Html.div [
-                    prop.className "my-4"
-                    prop.children [ tileTapBoardView model.TileTapGridBoard dispatch ]
-                ]
-                tileTapGameLoopCard model dispatch
-        ]
-    )
-
-// -------------------------------------
-// MODULE VIEW ----
-let view model dispatch =
-    Html.div [
-        SharedViewModule.sharedModalHeader "Tile Tap" tileTapDescriptions QuitGame dispatch
-        tileTapModalContent model dispatch
-    ]
+        Board = BoardPanel ( tileTapBoardView model.TileTapGridBoard dispatch )
+        Overlay = overlay
+        OnQuit = (fun () -> dispatchParent quitMsg)
+    }

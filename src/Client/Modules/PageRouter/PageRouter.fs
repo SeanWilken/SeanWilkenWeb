@@ -21,6 +21,7 @@ let toPath =
         | GoalRoll -> "/portfolio-goalRoll" 
         | TileTap -> "/portfolio-tileSmash" 
         | TileSort -> "/portfolio-tileSort"
+        | PivotPoint -> "/portfolio-pivotPoint"
         | CodeSection.CodeLanding -> "/portfolio-code"
     | Some ( Portfolio Design ) -> "/portfolio-design"
     | Some ( Portfolio _ )
@@ -94,6 +95,7 @@ let pageParser : Parser<Page -> Page,_> =
         map (Page.Portfolio (Code CodeSection.CodeLanding)) (s "portfolio-code")
         // map Page.Portfolio (PortfolioSection.Code (s "portfolio-code" </> codeGalleryParser))
         map (Page.Portfolio Design) (s "portfolio-design")
+        map (Page.Portfolio (Code CodeSection.GoalRoll)) (s "pivotPoint")
         map (Page.Portfolio (Code CodeSection.GoalRoll)) (s "goalRoll")
         map (Page.Portfolio (Code CodeSection.TileSort)) (s "tileSort")
         map (Page.Portfolio (Code CodeSection.TileTap)) (s "tileSmash")

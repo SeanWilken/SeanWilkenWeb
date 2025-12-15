@@ -32,8 +32,6 @@
 
         <!-- F# Components -->
         <Compile Include="Components\FSharp\Layout\Elements\Pagination.fs" />
-        <Compile Include="Components\FSharp\Layout\Elements\ProductCard.fs" />
-        <Compile Include="Components\FSharp\Layout\Elements\ProductGrid.fs" />
         <Compile Include="Components\FSharp\Layout\LayoutElements.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\GoalRoll\GoalRoll.fs" />
         <Compile Include="Components\FSharp\Portfolio\Games\PivotPoints\PivotPoints.fs" />

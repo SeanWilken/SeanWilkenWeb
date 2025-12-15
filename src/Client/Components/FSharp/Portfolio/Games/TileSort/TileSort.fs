@@ -4,17 +4,10 @@ open Elmish
 open Client.Domain
 open SharedTileSort
 open GridGame
+open Feliz
+open SharedViewModule.SharedMicroGames
+open Bindings.LucideIcon
 
-// CURRENTLY BROKEN WHEN USING SHARED, AS I TRIED TO UPDATE TO USE GRIDGAME AND BROKE STUFF
-// TODO:
-    //IMPLEMENT:
-        //Move Count Display
-        //Round Timer
-        // Unsolvable Puzzles can't be generated..check inversions...https://www.geeksforgeeks.org/check-instance-8-puzzle-solvable/
-
-
-// DIFFICULTY HELPERS
-// GET CASES FROM DESCRIMINATED UNION
 open FSharp.Reflection
 let tileDifficulties = FSharpType.GetUnionCases typeof<TileSortDifficulty>
 let decodeDifficultyByString string =
@@ -85,8 +78,15 @@ let update ( msg: Msg ) ( model: Model ): Model * Cmd<Msg> =
     | MoveTile gameTile ->
         match gameTile.Value with
         | Some i ->
-            let gridAfterTileMove = selectedCanSwapWithBlank model.CurrentTiles ( TileSortLaneObject gameTile ) ( getGridDimension model.Difficulty )
-            { model with CurrentTiles = gridAfterTileMove}, Cmd.ofMsg CheckSolution
+            let gridAfterTileMove, moveMade = selectedCanSwapWithBlank model.CurrentTiles ( TileSortLaneObject gameTile ) ( getGridDimension model.Difficulty )
+            if moveMade
+            then
+                { model with 
+                    CurrentTiles = gridAfterTileMove 
+                    Turns = [ i ] @ model.Turns
+                }, Cmd.ofMsg CheckSolution
+            else
+                model, Cmd.none
         | None ->
             model, Cmd.none
     | RewindMove ->
@@ -103,149 +103,170 @@ let update ( msg: Msg ) ( model: Model ): Model * Cmd<Msg> =
     | Solved -> { model with GameState = Won }, Cmd.none // Was used as a test state for button
     | QuitGame -> model, Cmd.none
 
-open Fable.React
-open Feliz
-let laneObjectToTileSortTile tile dispatch =
-    let (tileContent, onClickHandler, cssClass) =
-        match tile with
-        | TileSortLaneObject tileValue ->
-            let displayValue = convertValueToProperString (getValueOrZeroFromGameTile tile)
-            displayValue,
-            (fun _ -> MoveTile tileValue |> dispatch),
-            "valueTile bg-blue-800 hover:bg-blue-600 text-white font-bold text-xl w-16 h-16 flex items-center justify-center rounded shadow"
-        | _ ->
-            "",
-            (fun _ -> MoveTile { Value = None } |> dispatch),
-            "emptyTile bg-gray-700 w-16 h-16 rounded shadow"
 
-    Html.div [
-        prop.className cssClass
-        prop.onClick onClickHandler
-        prop.children [ Html.text tileContent ]
+
+
+let private tileSortTileBase (sizePx: int) : IStyleAttribute list =
+    [
+        style.width sizePx
+        style.height sizePx
+        style.custom("border-radius", "0")
+        style.custom("clip-path", "polygon(10% 0, 100% 0, 100% 90%, 90% 100%, 0 100%, 0 10%)")
+        style.position.relative
+        style.display.flex
+        style.alignItems.center
+        style.justifyContent.center
+        style.userSelect.none
     ]
+
+let private tileSortEmptyTile (sizePx: int) =
+    tileSortTileBase sizePx @ [
+        style.custom("background", "rgba(10, 20, 40, 0.55)")
+        style.custom("border", "1px solid rgba(255,255,255,0.10)")
+        style.custom("box-shadow", "inset 0 0 10px rgba(0,0,0,0.55)")
+    ]
+
+let private tileSortValueTile (sizePx: int) (isClickable: bool) =
+    tileSortTileBase sizePx @ [
+        style.custom("background", "linear-gradient(135deg, rgba(0,255,255,0.22), rgba(0,139,139,0.20))")
+        style.custom("border", "1px solid rgba(0,255,255,0.55)")
+        style.custom("box-shadow", "inset 0 0 18px rgba(0,255,255,0.10), 0 0 14px rgba(0,255,255,0.18)")
+        style.custom("cursor", if isClickable then "pointer" else "default")
+        style.custom("filter", if isClickable then "brightness(1.02)" else "none")
+    ]
+
+
+
+
+
+// let laneObjectToTileSortTile tile dispatch =
+//     let (tileContent, onClickHandler, cssClass) =
+//         match tile with
+//         | TileSortLaneObject tileValue ->
+//             let displayValue = convertValueToProperString (getValueOrZeroFromGameTile tile)
+//             displayValue,
+//             (fun _ -> MoveTile tileValue |> dispatch),
+//             "valueTile bg-blue-800 hover:bg-blue-600 text-white font-bold text-xl w-16 h-16 flex items-center justify-center rounded shadow"
+//         | _ ->
+//             "",
+//             (fun _ -> MoveTile { Value = None } |> dispatch),
+//             "emptyTile bg-gray-700 w-16 h-16 rounded shadow"
+
+//     Html.div [
+//         prop.className cssClass
+//         prop.onClick onClickHandler
+//         prop.children [ Html.text tileContent ]
+//     ]
+
+
+let laneObjectToTileSortTile tile dispatch =
+    // tweak per difficulty if you want (e.g., small on harder)
+    let sizePx = 64
+
+    match tile with
+    | TileSortLaneObject tileValue ->
+        let displayValue = convertValueToProperString (getValueOrZeroFromGameTile tile)
+
+        Html.button [
+            prop.type'.button
+            prop.className "tile select-none"
+            prop.style (
+                tileSortValueTile sizePx true @ [
+                    // Typography (use custom text-shadow)
+                    style.custom("color", "#cfffff")
+                    style.custom("font-weight", "800")
+                    style.custom("font-size", "22px")
+                    style.custom("letter-spacing", "1px")
+                    style.custom("text-shadow", "0 0 12px rgba(0,255,255,0.45)")
+                    // hover/active without relying on Tailwind arbitrary classes
+                    style.custom("transition", "transform 0.15s ease, filter 0.15s ease")
+                ]
+            )
+            prop.onClick (fun _ -> MoveTile tileValue |> dispatch)
+            prop.onMouseEnter (fun _ -> ()) // placeholder if you want preview logic later
+            prop.children [ Html.text displayValue ]
+        ]
+
+    | _ ->
+        Html.div [
+            prop.className "tile"
+            prop.style (tileSortEmptyTile sizePx)
+        ]
+
+
+
+// let tileSortRowCreator (tileRow: LaneObject list) (dispatch: Msg -> unit) =
+//     Html.div [
+//         prop.className "flex justify-center gap-2 my-2"
+//         prop.children [
+//             for tile in tileRow -> laneObjectToTileSortTile tile dispatch
+//         ]
+//     ]
+
+// let tileSortGameBoard model dispatch =
+//     let tileRows = getPositionsAsRows model.CurrentTiles (getGridDimension model.Difficulty)
+//     Html.div [
+//         prop.className "flex flex-col items-center gap-2"
+//         prop.children [ for row in tileRows -> tileSortRowCreator row dispatch ]
+//     ]
 
 let tileSortRowCreator (tileRow: LaneObject list) (dispatch: Msg -> unit) =
     Html.div [
-        prop.className "flex justify-center gap-2 my-2"
-        prop.children [
-            for tile in tileRow -> laneObjectToTileSortTile tile dispatch
-        ]
+        prop.className "flex justify-center gap-1 my-1"
+        prop.children [ for tile in tileRow -> laneObjectToTileSortTile tile dispatch ]
     ]
 
 let tileSortGameBoard model dispatch =
     let tileRows = getPositionsAsRows model.CurrentTiles (getGridDimension model.Difficulty)
+
     Html.div [
-        prop.className "flex flex-col items-center gap-2"
+        prop.className "flex flex-col items-center"
         prop.children [ for row in tileRows -> tileSortRowCreator row dispatch ]
     ]
+    
+let difficulties = [ Simple; Easy; Medium; Hard ]
 
+[<ReactComponent>]
+let view (model: SharedTileSort.Model) (dispatch: SharedTileSort.Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
 
-let tileSortGameLoopCard (model: SharedTileSort.Model) (dispatch: Msg -> unit) =
-    Html.div [
-        prop.className "card bg-base-200 shadow-md p-4 mt-4"
-        prop.children [
-            Html.div [
-                // prop.className "flex flex-col space-y-6"
-                prop.children [
-                    Html.div [
-                        prop.className "modalAltContent p-4"
-                        prop.children [ 
-                            Html.div [
-                                prop.className "flex flex-col md:flex-row gap-4 justify-between items-stretch"
-                                prop.children [
-                                    Html.div [
-                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
-                                        prop.children [
-                                            Html.button [ 
-                                                prop.className "btn btn-sm btn-secondary w-full"
-                                                prop.onClick (fun _ -> ResetRound |> dispatch)
-                                                prop.text "Restart Round"
-                                            ]
-                                        ]
-                                    ]
-                                    Html.div [
-                                        prop.className "flex flex-col items-center justify-center gap-2 flex-1"
-                                        prop.children [
-                                            Html.h3 [ prop.className "mb-1 text-center"; prop.text "Select Level:" ]
-                                            Html.div [
-                                                prop.className "flex flex-row gap-2 justify-center"
-                                                prop.children [
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileSort.TileSortDifficulty.Simple then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> Msg.UpdateDifficulty SharedTileSort.TileSortDifficulty.Simple |> dispatch)
-                                                        prop.text "Simple"
-                                                    ]
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileSort.TileSortDifficulty.Easy then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> Msg.UpdateDifficulty SharedTileSort.TileSortDifficulty.Easy |> dispatch)
-                                                        prop.text "Easy"
-                                                    ]
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileSort.TileSortDifficulty.Medium then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> Msg.UpdateDifficulty SharedTileSort.TileSortDifficulty.Medium |> dispatch)
-                                                        prop.text "Medium"
-                                                    ]
-                                                    Html.a [
-                                                        prop.className ("btn btn-xs btn-outline" + (if model.Difficulty = SharedTileSort.TileSortDifficulty.Hard then " text-primary" else ""))
-                                                        prop.onClick (fun _ -> Msg.UpdateDifficulty SharedTileSort.TileSortDifficulty.Hard |> dispatch)
-                                                        prop.text "Hard"
-                                                    ]
-                                                ]
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
+    let overlay : ReactElement option =
+        match model.GameState with
+        | Won ->
+            Some (
+                WinOverlay model.Turns.Length
+                    (fun () -> dispatch ResetRound)
+                    (Some (fun () -> dispatch ResetRound))
+            )
+        | _ -> None
+
+    CyberShellResponsive {
+        Left = 
+            Html.div 
+                [
+                    TitlePanel "TILE SORT"
+                    LevelSelectPanel
+                        difficulties
+                        model.Difficulty
+                        (fun a b -> a = b)
+                        (fun diff -> dispatch (UpdateDifficulty diff))
+                    InstructionsPanel 
+                        "HOW TO PLAY" 
+                        tileSortDescriptions
+                        ""
+                        (fun () -> ())
+                    ControlsPanel [
+                        ControlButton "UNDO" Purple (model.Turns.Length > 0) (fun () -> dispatch RewindMove) (Some (LucideIcon.RotateCcw "w-4 h-4"))
+                        ControlButton "RESTART" Red true (fun () -> dispatch ResetRound) None
                     ]
                 ]
-            ]
-        ]
-    ]
-
-let tileSortModalContent model dispatch =
-    SharedViewModule.gameModalContent (
-        Html.div [
-            match model.GameState with
-            | Won ->
-                SharedViewModule.roundCompleteContent (modelTileSortRoundDetails model) (fun () -> SharedTileSort.Msg.ResetRound |> dispatch)
-            | _ ->
+        Board =  
+            BoardPanel (
                 Html.div [
-                    prop.className "flex flex-row justify-between items-center w-full mb-4 gap-4 relative p-2"
-                    prop.children [
-                        Html.div [
-                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-success-content"
-                            prop.children [
-                                Html.div [
-                                    prop.className "text-success font-bold text-lg text-center"
-                                    prop.text $"Difficulty: {model.Difficulty |> difficultyToString}"
-                                ]
-                            ]
-                        ]
-                        Html.div [
-                            prop.className "card bg-base-200 shadow-lg p-4 flex-1 border-2 border-warning-content"
-                            prop.children [
-                                Html.div [
-                                    prop.className "text-info font-bold text-lg text-center"
-                                    prop.text $"Total Moves: {model.Turns.Length}"
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-                Html.div [
-                    prop.className "my-4"
+                    // center grid exactly like the mock
+                    prop.className "flex items-center justify-center"
                     prop.children [ tileSortGameBoard model dispatch ]
                 ]
-                tileSortGameLoopCard model dispatch
-            
-        ]
-            
-    )
-    
-
-let view model dispatch =
-    Html.div [
-        SharedViewModule.sharedModalHeader "Tile Sort" tileSortDescriptions QuitGame dispatch
-        tileSortModalContent model dispatch
-    ]
+            )
+        Overlay = overlay
+        OnQuit = (fun () -> dispatchParent quitMsg)
+    }

@@ -67,13 +67,7 @@ module Ui =
 
     module CatalogHeader =
         
-        open Feliz
-        open Feliz.DaisyUI
-        open Shared.SharedShopV2
-        open Shared.SharedShopV2.PrintfulCatalog
         open Shared.PrintfulCommon
-        open Components.FSharp.Layout.Elements.Pagination
-
         type SortOption = {
             Key   : string   // maps to sort_type
             Label : string

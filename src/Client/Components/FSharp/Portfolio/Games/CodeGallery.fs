@@ -294,10 +294,10 @@ let view model dispatch =
         ]
 
 
-    | GoalRoll m   -> GoalRoll.view m (GoalRollMsg   >> dispatch)
-    | TileSort m   -> TileSort.view m (TileSortMsg   >> dispatch)
-    | TileTap m    -> TileTap.view  m (TileTapMsg    >> dispatch)
-    | PivotPoint m -> PivotPoints.view m (PivotPointMsg >> dispatch)
+    | GoalRoll m   -> GoalRoll.view m (GoalRollMsg >> dispatch) (LoadSection Gallery) dispatch
+    | TileSort m   -> TileSort.view m (TileSortMsg >> dispatch) (LoadSection Gallery) dispatch
+    | TileTap m    -> TileTap.view  m (TileTapMsg >> dispatch) (LoadSection Gallery) dispatch
+    | PivotPoint m -> PivotPoints.view m (PivotPointMsg >> dispatch) (LoadSection Gallery) dispatch
     | SourceCode gallerySection ->
         SourceViewer {|
             Section = gallerySection
