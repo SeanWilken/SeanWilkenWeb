@@ -390,12 +390,12 @@ module SharedMicroGames =
 
                 Html.div [
                     // padding like the mockup, and keep it full width
-                    prop.className "relative z-[1] w-full px-6 py-6 lg:px-10 lg:py-10"
+                    prop.className "relative z-[1] w-full min-h-screen px-6 py-6 lg:px-10 lg:py-10"
                     prop.children [
                         Html.div [
                             // Mobile: 1 col (stack)
                             // lg+: 3 cols where left spans 1, board spans 2
-                            prop.className "mx-auto w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 items-start"
+                            prop.className "mx-auto w-full max-w-[1600px] grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10"
                             prop.children [
                                 Html.div [
                                     // Controls rail
@@ -557,7 +557,7 @@ module SharedMicroGames =
 
     let BoardPanel (board: ReactElement) =
         CyberPanel {
-            ClassName = "p-6 sm:p-10 flex items-center justify-center min-h-[520px] sm:min-h-[680px] lg:min-h-[820px]"
+            ClassName = "p-6 h-full aspect-square max-h-full sm:p-10 flex items-center justify-center min-h-[520px] sm:min-h-[680px] lg:min-h-[820px]"
             ClipPath = Some "polygon(15px 0, 100% 0, 100% calc(100% - 15px), calc(100% - 15px) 100%, 0 100%, 0 15px)"
             Children = [ board ]
         }

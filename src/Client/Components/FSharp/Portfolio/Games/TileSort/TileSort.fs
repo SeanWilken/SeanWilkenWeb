@@ -260,13 +260,7 @@ let view (model: SharedTileSort.Model) (dispatch: SharedTileSort.Msg -> unit) (q
                     ]
                 ]
         Board =  
-            BoardPanel (
-                Html.div [
-                    // center grid exactly like the mock
-                    prop.className "flex items-center justify-center"
-                    prop.children [ tileSortGameBoard model dispatch ]
-                ]
-            )
+            BoardPanel ( tileSortGameBoard model dispatch )
         Overlay = overlay
         OnQuit = (fun () -> dispatchParent quitMsg)
     }

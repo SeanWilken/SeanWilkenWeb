@@ -360,20 +360,7 @@ let goalRollLevelCreator model dispatch =
         prop.className "flex flex-col"
         prop.children [ for row in rows -> goalRollRowCreator row dispatch ]
     ]
-let goalRollModalContent model dispatch =
-    Html.div [
-        match model.GameState with
-        | Won ->
-            SharedViewModule.roundCompleteContent (modelGoalRollRoundDetails model) (fun () -> ResetRound |> dispatch)
-        | _ ->
-            BoardPanel (
-                Html.div [
-                    // center grid exactly like the mock
-                    prop.className "flex items-center justify-center"
-                    prop.children [ goalRollLevelCreator model dispatch ]
-                ]
-            )
-    ]
+
 
 
 open SharedViewModule.SharedMicroGames
@@ -442,7 +429,8 @@ let view (model: SharedGoalRoll.Model) (dispatch: SharedGoalRoll.Msg -> unit) (q
                         ControlButton "RESTART" Red true (fun () -> dispatch ResetRound) None
                     ]
                 ]
-        Board =  goalRollModalContent model dispatch
+        Board =  
+            BoardPanel ( goalRollLevelCreator model dispatch )
         Overlay = overlay
         OnQuit = (fun () -> dispatchParent quitMsg)
     }

@@ -432,7 +432,7 @@ let tileView (tapTile: TapTile) (dispatch: Msg -> unit) =
 
 let tileTapRowCreator (rowPositions: LaneObject list) (dispatch: Msg -> unit) =
     Html.div [
-        prop.className "flex justify-center items-center gap-1 my-1"
+        prop.className "flex align-center items-center gap-1 my-1"
         prop.children [
             for position in rowPositions do
                 match position with
@@ -467,7 +467,7 @@ let tileTapRowCreator (rowPositions: LaneObject list) (dispatch: Msg -> unit) =
 let tileTapBoardView (gridPositions: GridBoard) (dispatch: Msg -> unit) =
     let board = GridGame.getPositionsAsRows gridPositions 8
     Html.div [
-        prop.className "flex flex-col items-center"
+        prop.className "flex flex-col"
         prop.children [ for row in board -> tileTapRowCreator row dispatch ]
     ]
 
