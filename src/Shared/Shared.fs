@@ -1,7 +1,6 @@
 namespace Shared
 
-
-module SharedShopDomain =
+module StorePrintfulShippingApi =
         
     type QuantityAdjustment =
         | Increment
@@ -68,10 +67,10 @@ module SharedShopDomain =
         // [<JsonPropertyName("data")>]
         data : ShippingRateDto array
     }
+open StorePrintfulShippingApi
 
+[<AutoOpen>]
 module PrintfulCommon =
-
-    open System
 
     /// Paging information
     type PagingInfoDTO = {
@@ -165,39 +164,40 @@ module PrintfulCommon =
         | LeftHalf
         | RightHalf
         | Center
+        | OutsideLabel
         | Custom of string
 
         member this.ToPrintfulPlacement() =
             match this with
-            | Front        -> "front"
-            | Back         -> "back"
-            | Pocket       -> "embroidery_chest_left"
-            | LeftSleeve   -> "sleeve_left"
-            | RightSleeve  -> "sleeve_right"
-            | LeftLeg      -> "leg_left"
-            | RightLeg     -> "leg_right"
-            | LeftHalf     -> "default"
-            | RightHalf    -> "default"
-            | Center       -> "default"
+            | Front -> "front"
+            | Back -> "back"
+            | LeftSleeve -> "left_sleeve"
+            | RightSleeve -> "right_sleeve"
+            | Pocket -> "embroidery_pocket"          // “pocket” is typically front embroidery area in Printful UI
+            | Center -> "default"
+            | LeftLeg -> "left_leg"
+            | RightLeg -> "right_leg"
+            | LeftHalf -> "left_half"
+            | RightHalf -> "right_half"
+            | OutsideLabel -> "outside_label"
             | Custom name  -> name
 
     let designHitAreaFromPrintfulString str =
         match str with
-        | "front"                  -> Front 
-        | "back"                   -> Back 
-        | "embroidery_chest_left"  -> Pocket 
-        | "sleeve_left"            -> LeftSleeve
-        | "sleeve_right"           -> RightSleeve 
-        | "leg_left"               -> LeftLeg
-        | "leg_right"              -> RightLeg
+        | "front"                  -> Front
+        | "back"                   -> Back
+        | "embroidery_pocket"      -> Pocket
+        | "left_sleeve"            -> LeftSleeve
+        | "right_sleeve"           -> RightSleeve 
+        | "left_leg"               -> LeftLeg
+        | "right_leg"              -> RightLeg
+        | "left_half"              -> LeftHalf
+        | "right_half"             -> RightHalf
         | "default"                -> Center 
+        | "outside_label"          -> OutsideLabel 
         | name                     -> Custom name
 
-open PrintfulCommon
-
-// Refactor Shop Types
-module SharedShopV2 =
-
+    [<AutoOpen>]
     module PrintfulCatalog =
         /// Simplified type for displaying catalog products in your app
         type CatalogProduct = {
@@ -239,8 +239,7 @@ module SharedShopV2 =
             SortType = None
         }
 
-    open PrintfulCatalog
-
+    [<AutoOpen>]
     module ProductTemplate =
 
         // Fable-safe DTOs only
@@ -291,8 +290,12 @@ module SharedShopV2 =
             code   : int
             result : ProductTemplate list
             extra  : string array
-            paging : PrintfulCommon.PagingInfoDTO
+            paging : PagingInfoDTO
         }
+
+module Store =
+
+    [<AutoOpen>]
 
     module Cart =
 
@@ -385,10 +388,24 @@ module SharedShopV2 =
             Totals = emptyTotals
         }
 
+        let private designUpchargeFromPlacements (placements: PrintfulPlacement list) : decimal =
+            placements
+            |> List.sumBy (fun p ->
+                let perDesign =
+                    match p.Placement with
+                    | "outside_label" -> 5m
+                    | _ -> 10m
+
+                perDesign * decimal p.Layers.Length
+            )
+
         let private lineTotal (item: CartLineItem) : decimal =
             match item with
-            | CartLineItem.Custom   c -> c.UnitPrice * decimal c.Quantity
-            | CartLineItem.Template t -> t.UnitPrice * decimal t.Quantity
+            | CartLineItem.Custom c ->
+                let upcharge = designUpchargeFromPlacements c.Placements
+                (c.UnitPrice + upcharge) * decimal c.Quantity
+            | CartLineItem.Template t ->
+                t.UnitPrice * decimal t.Quantity
 
         let private recomputeTotals (items: CartLineItem list) : CartTotals =
             let subtotal =
@@ -451,6 +468,7 @@ module SharedShopV2 =
             Quantity         : int
         }
 
+    [<AutoOpen>]
     module Checkout =
 
         /// A richer recipient address than TaxAddress – matches Printful "recipient"
@@ -498,14 +516,152 @@ module SharedShopV2 =
         }
 
 
-// module SharedStore =
-module SharedShopV2Domain =
+
+open Store
+
+module StoreProductViewer =
+
+    type ProductKey =
+        | Template of templateId:int
+        | Catalog  of catalogProductId:int
+
+    // ---------------------------------------
+    // “Seed” data so the page can render fast
+    // (what you already have in lists)
+    // ---------------------------------------
+    type ProductSeed =
+        | SeedTemplate of ProductTemplate
+        | SeedCatalog  of CatalogProduct
+
+    // ---------------------------------------
+    // Where to go back to
+    // ---------------------------------------
+    type ReturnTo =
+        | BackToCollection
+        | BackToDesignerBaseSelect
+    
+    // ---------------------------------------
+    // What the UI can do with the item
+    // ---------------------------------------
+    type ProductAction =
+        | CanAddTemplateToCart
+        | CanSelectCatalogForDesigner
+
+    // ---------------------------------------
+    // Details from server (shape you control)
+    // ---------------------------------------
+    type Money = { Amount: decimal; Currency: string }
+
+    type CatalogVariantSummary =
+        { VariantId : int
+          Size      : string option
+          Color     : string option
+          Price     : Money option
+          InStock   : bool option
+          ImageUrl  : string option }
+
+    type TemplateVariantSummary =
+        { VariantId : int
+          Size      : string option
+          Color     : string option
+          Price     : Money option
+          InStock   : bool option
+          ImageUrl  : string option }
+
+    type CatalogDetails =
+        { ProductId     : int
+          Name          : string
+          Description   : string option
+          ThumbnailUrl  : string option
+          Brand         : string option
+          Model         : string option
+          Sizes         : string list
+          Colors        : {| Color : string; ColorCodeOpt : string option |} list
+          Placements    : string list
+          Techniques    : string list
+          Variants      : CatalogVariantSummary list }
+
+    type TemplateDetails =
+        { TemplateId    : int
+          Title         : string
+          MockupUrl     : string option
+          Description   : string option
+          Sizes         : string list
+          Colors        : Color list
+          Placements    : PlacementOption list
+          Techniques    : string list
+          Variants      : TemplateVariantSummary list }
+
+    type ProductDetails =
+        | DetailsTemplate of TemplateDetails
+        | DetailsCatalog  of CatalogDetails
+
+
+    // ---------------------------------------
+    // Request/Response payloads
+    // ---------------------------------------
+    type GetDetailsRequest =
+        { Key               : ProductKey
+          // optional selection hints to fetch pricing/image for “current selection”
+          SelectedColorOpt  : string option
+          SelectedSizeOpt   : string option
+          SelectedVariantId : int option }
+
+    type GetDetailsResponse =
+        { Key     : ProductKey
+          Details : ProductDetails }
+
+open StoreProductViewer
+
+// This is the responses from the API
+module PrintfulStoreDomain =
 
     module ProductTemplateResponse =
+        
+        type StoreCardColor = {
+            Name       : string
+            CodeOpt    : string option
+            VariantIds : int list
+        }
+
+        type StoreCard = {
+            TemplateId      : int
+            PriceMin        : decimal option
+            PriceMax        : decimal option
+            CurrencyOpt     : string option
+            Colors          : StoreCardColor list
+            Sizes           : string list
+            DefaultVariantId: int option
+        }
+
         type ProductTemplatesResponse = {
-            templateItems : SharedShopV2.ProductTemplate.ProductTemplate list
+            templateItems : ProductTemplate.ProductTemplate list
+            storeCards : StoreCard list
             paging : PrintfulCommon.PagingInfoDTO
         }
+
+
+        // type TemplateColorDTO = {
+        //     Name      : string
+        //     CodeOpt       : string option
+        //     VariantIds: int list
+        // }
+
+        // type StoreTemplateCardDTO = {
+        //     templateId   : int
+        //     name         : string
+        //     thumbnailURL : string option
+
+        //     // hydrated from store/variants
+        //     colors       : TemplateColorDTO list
+        //     sizes        : string list
+        //     priceMin     : decimal option
+        //     priceMax     : decimal option
+        //     currencyOpt  : string option
+
+        //     // useful for debugging / UX
+        //     variantCount : int
+        // }
 
     module CatalogProductResponse =
         
@@ -567,7 +723,7 @@ module SharedShopV2Domain =
                 _links : ProductLinks
             }
 
-        let mapPrintfulProduct (p: CatalogProduct.PrintfulProduct) : SharedShopV2.PrintfulCatalog.CatalogProduct =
+        let mapPrintfulProduct (p: CatalogProduct.PrintfulProduct) : PrintfulCatalog.CatalogProduct =
             System.Console.WriteLine($"Mapping product: {p.name} with id {p.id}")
             p.colors |> Array.iter (fun (c: CatalogProduct.Color) -> 
                 System.Console.WriteLine $"COLOR: {c.name} with code {c.value}"
@@ -588,7 +744,7 @@ module SharedShopV2Domain =
         
         /// API response shaped for the client
         type CatalogProductsResponse = {
-            products: SharedShopV2.PrintfulCatalog.CatalogProduct list
+            products: PrintfulCatalog.CatalogProduct list
             paging: PrintfulCommon.PagingInfoDTO
             links: PrintfulCommon.LinksDTO
         }
@@ -610,12 +766,8 @@ module SharedShopV2Domain =
             }
 
 
-
-open SharedShopV2Domain
-
+// | ** API ** |
 module Api =
-
-    open System.Threading.Tasks
 
     type TaxAddress = {
         Country : string
@@ -653,7 +805,7 @@ module Api =
                 destination_country: string option
             }
 
-            let toApiQuery (paging: PrintfulCommon.PagingInfoDTO) (stateFilters: SharedShopV2.PrintfulCatalog.Filters) : CatalogProductsQuery =
+            let toApiQuery (paging: PrintfulCommon.PagingInfoDTO) (stateFilters: PrintfulCatalog.Filters) : CatalogProductsQuery =
                 {
                     category_ids = if stateFilters.Categories |> List.isEmpty then None else Some stateFilters.Categories
                     colors = if stateFilters.Colors |> List.isEmpty then None else Some stateFilters.Colors
@@ -671,15 +823,16 @@ module Api =
     type ProductApi = {
         getProducts : 
             Printful.CatalogProductRequest.CatalogProductsQuery -> 
-                Async<SharedShopV2Domain.CatalogProductResponse.CatalogProductsResponse>
+                Async<PrintfulStoreDomain.CatalogProductResponse.CatalogProductsResponse>
         getProductTemplates : 
             Printful.CatalogProductRequest.CatalogProductsQuery -> 
-                Async<SharedShopV2Domain.ProductTemplateResponse.ProductTemplatesResponse>
+                Async<PrintfulStoreDomain.ProductTemplateResponse.ProductTemplatesResponse>
+        getProductDetails : GetDetailsRequest -> Async<GetDetailsResponse>
         // getProductVariants : int -> Async<SharedShopDomain.CatalogVariant list>
     }
 
     type PaymentApi = {
-        getTaxRate : TaxAddress -> Async<SharedShopDomain.CheckoutTax>
+        getTaxRate : TaxAddress -> Async<CheckoutTax>
         getShipping : ShippingRequest -> Async<decimal>
         createPayPalOrder : decimal -> Async<string>   // returns order id
         capturePayPalOrder : string -> Async<bool>     // capture by order id
@@ -687,17 +840,15 @@ module Api =
 
     type CheckoutApi = {
         /// Get shipping methods + rates for the given cart & address
-        getShippingRates : SharedShopV2.Checkout.ShippingQuoteRequest
-                        -> Async<SharedShopV2.Checkout.ShippingQuoteResponse>
-
+        getShippingRates : ShippingQuoteRequest -> Async<ShippingQuoteResponse>
         /// (Optional) if you want a server-driven "canonical" tax calc later
-        getTaxEstimate   : SharedShopV2.Checkout.ShippingQuoteRequest
-                        -> Async<SharedShopDomain.CheckoutTax>
-
+        getTaxEstimate   : ShippingQuoteRequest -> Async<CheckoutTax>
         /// Create a Printful draft order (no payment capture here)
-        createDraftOrder : SharedShopV2.Checkout.DraftOrderRequest
-                        -> Async<SharedShopDomain.DraftResult>
+        createDraftOrder : DraftOrderRequest  -> Async<DraftResult>
     }
+
+
+
 
 // Ensure that the Client and Server use same end-point
 module Route =

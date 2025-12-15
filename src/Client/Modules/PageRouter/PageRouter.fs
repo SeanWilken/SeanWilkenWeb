@@ -31,6 +31,7 @@ let toPath =
     | Some (Shop Store.ShopSection.ShopLanding) -> "/shop/drop"
     | Some (Shop (Store.ShopSection.CollectionBrowser _)) -> "/shop/collection"
     | Some (Shop (Store.ShopSection.ProductDesigner _)) -> "/shop/designer"
+    | Some (Shop (Store.ShopSection.ProductViewer _)) -> "/shop/product"
     | Some (Shop Store.ShopSection.ShoppingBag) -> "/shop/shoppingBag"
     | Some (Shop Store.ShopSection.Checkout) -> "/shop/checkout"
     | Some (Shop Store.ShopSection.Payment) -> "/shop/payment"
@@ -43,10 +44,24 @@ let shopParser : Parser<Store.ShopSection->Page,_> =
     oneOf [
         map Store.ShopSection.ShopLanding (s "drop")
         // map Store.ShopSection.ShopTypeSelector (s "select")
+        // map (Store.ShopSection.ProductViewer (
+        //         ProductViewer.initModel
+        //             (Shared.StoreProductViewer.ProductKey.Template 0)
+        //             None
+        //             Shared.StoreProductViewer.ReturnTo.BackToCollection 
+        //     )) (s "product")
+        map
+            (fun templateId ->
+                Store.ShopSection.ProductViewer (
+                    ProductViewer.initModel
+                        (Shared.StoreProductViewer.ProductKey.Template templateId)
+                        None
+                        Shared.StoreProductViewer.ReturnTo.BackToCollection
+                )
+            )
+            (s "product" </> s "template" </> i32)
         map (Store.ShopSection.CollectionBrowser  (Collection.initModel ()) ) (s "collection")
         map (Store.ShopSection.ProductDesigner  (ProductDesigner.initialModel ()) ) (s "designer")
-        // map (Store.ShopSection.ProductTemplateBrowser (Store.ProductTemplate.ProductTemplateBrowser.initialModel())) (s "templates")
-        // map (Store.ShopSection.BuildYourOwnWizard (Store.BuildYourOwnProductWizard.initialState ())) (s "build")
         map Store.ShopSection.ShoppingBag (s "shoppingBag")
         map Store.ShopSection.Checkout (s "checkout")
         map Store.ShopSection.Payment (s "payment")
@@ -131,8 +146,7 @@ let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebApp
         match model.CurrentAreaModel with
         | SharedWebAppModels.Shop shop ->
             { model with CurrentAreaModel = SharedWebAppModels.Shop { shop with Section = area } }
-        | _ ->
-            { model with CurrentAreaModel = SharedWebAppModels.Shop (Store.getInitialModel area)  }
+        | _ -> { model with CurrentAreaModel = SharedWebAppModels.Shop (Store.getInitialModel area)  }
         , Navigation.newUrl (toPath (Some (Shop area)))
     | None
     | Some SharedPage.Page.Welcome ->

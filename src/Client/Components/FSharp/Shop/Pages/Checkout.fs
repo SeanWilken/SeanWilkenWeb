@@ -2,9 +2,7 @@ namespace Client.Components.Shop.Checkout
 
 open Feliz
 open Client.Components.Shop.Common
-open Client.Components.Shop.Common.Types
-open Client.Components.Shop.Cart
-open Client.Components.Shop.Cart.Cart
+open Shared.Store.Cart
 
 module Checkout =
 
@@ -41,7 +39,7 @@ module Checkout =
         ShippingInfo   : ShippingInfo
         ShippingMethod : ShippingMethod
         PaymentMethod  : PaymentMethod
-        Items          : CartItem list
+        Items          : CartLineItem list
     }
 
     type Field =
@@ -78,10 +76,20 @@ module Checkout =
         Phone     = ""
     }
 
-    let computeTotals (items: CartItem list) (shippingMethod: ShippingMethod) =
+    let placedUpcharge (d: Client.Domain.Store.ProductDesigner.Designs.DesignOptions) =
+        match d.HitArea with
+        | Shared.PrintfulCommon.DesignHitArea.OutsideLabel -> 5m
+        | _ -> 10m
+
+
+    let computeTotals (items: CartLineItem list) (shippingMethod: ShippingMethod) =
         let subtotal =
             items
-            |> List.sumBy (fun i -> i.Price * decimal i.Quantity)
+            |> List.sumBy (fun i -> 
+                match i with
+                | Custom c -> c.UnitPrice * decimal c.Quantity
+                | Template t -> t.UnitPrice * decimal t.Quantity
+            )
 
         let shippingCost =
             match shippingMethod with
@@ -614,6 +622,15 @@ module Checkout =
             ]
         ]
 
+    let getCartLineItemDetails item = //imgLabel, name, color, size, quantity, price =
+        match item with
+        | Custom c ->
+            (string c.CatalogProductId) + ":" + (string c.CatalogVariantId)
+            , c.ThumbnailUrl, c.Name, c.ColorName, c.Size, c.Quantity, c.UnitPrice
+        | Template t ->
+            (string t.CatalogProductId) + ":" + (string t.VariantId) + ":" + (string t.TemplateId)
+            , t.PreviewImage |> Option.defaultValue t.Name, t.Name, t.ColorName, t.Size, t.Quantity, t.UnitPrice
+
     let private review (model: Model) (dispatch: Msg -> unit) =
         let subtotal, shippingCost, tax, total =
             computeTotals model.Items model.ShippingMethod
@@ -725,30 +742,31 @@ module Checkout =
                             prop.className "space-y-3"
                             prop.children [
                                 for item in model.Items do
+                                    let idx, imgLabel, name, color, size, quantity, price = getCartLineItemDetails item
                                     Html.div [
-                                        prop.key item.Id
+                                        prop.key idx
                                         prop.className "flex gap-3 pb-3 border-b border-base-300 last:border-0"
                                         prop.children [
                                             Html.div [
                                                 prop.className "w-16 h-16 bg-base-200 rounded-md flex items-center justify-center text-xl font-light text-base-content/30 flex-shrink-0"
-                                                prop.text item.ImageLabel
+                                                prop.text imgLabel
                                             ]
                                             Html.div [
                                                 prop.className "flex-1"
                                                 prop.children [
                                                     Html.p [
                                                         prop.className "text-sm font-medium"
-                                                        prop.text item.Name
+                                                        prop.text name
                                                     ]
                                                     Html.p [
                                                         prop.className "text-xs text-base-content/60"
-                                                        prop.text $"{item.Color} – {item.Size} – Qty: {item.Quantity}"
+                                                        prop.text $"{color} - {size} - Qty: {quantity}"
                                                     ]
                                                 ]
                                             ]
                                             Html.p [
                                                 prop.className "text-sm font-light"
-                                                prop.text (sprintf "$%.2f" (item.Price * decimal item.Quantity))
+                                                prop.text (sprintf "$%.2f" (price * decimal quantity))
                                             ]
                                         ]
                                     ]
@@ -791,30 +809,31 @@ module Checkout =
                     prop.className "space-y-3 text-sm"
                     prop.children [
                         for item in model.Items do
+                            let idx, imgLabel, name, color, size, quantity, price = getCartLineItemDetails item
                             Html.div [
-                                prop.key item.Id
+                                prop.key idx
                                 prop.className "flex items-center gap-3"
                                 prop.children [
                                     Html.div [
                                         prop.className "w-14 h-14 bg-base-200 rounded-md flex items-center justify-center text-lg font-light text-base-content/30 flex-shrink-0"
-                                        prop.text item.ImageLabel
+                                        prop.text imgLabel
                                     ]
                                     Html.div [
                                         prop.className "flex-1 min-w-0"
                                         prop.children [
                                             Html.p [
                                                 prop.className "text-sm font-medium truncate"
-                                                prop.text item.Name
+                                                prop.text name
                                             ]
                                             Html.p [
                                                 prop.className "text-[0.7rem] text-base-content/60"
-                                                prop.text $"Qty: {item.Quantity}"
+                                                prop.text $"Qty: {quantity}"
                                             ]
                                         ]
                                     ]
                                     Html.p [
                                         prop.className "text-sm font-light"
-                                        prop.text (sprintf "$%.2f" (item.Price * decimal item.Quantity))
+                                        prop.text (sprintf "$%.2f" (price * decimal quantity))
                                     ]
                                 ]
                             ]

@@ -9,7 +9,9 @@ open Client.Components.Shop.Common
 open Client.Components.Shop.Collection
 open Client.Components.Shop.ShopHero
 open Client.Domain.Store.PrintfulMapping
-open Shared.SharedShopV2.Cart
+open Shared.Store.Cart
+
+
 
 let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
     match msg with
@@ -50,29 +52,88 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
     | ShopCollectionMsg subMsg ->
         match model.Section with
         | CollectionBrowser cb ->
-            let collectionModel, cmd' = State.update subMsg cb
-            { model with Section = CollectionBrowser collectionModel },
-            cmd' |> Cmd.map ShopCollectionMsg
+            let updatedModel, cmd' =
+                match subMsg with
+                | Collection.ViewProduct pt ->
+                    // navigate to product viewer
+                    let seed =  Shared.StoreProductViewer.ProductSeed.SeedTemplate pt
+                    // let pvModel, pvCmd = 
+                    Client.Components.Shop.Product.initFromSeed seed Shared.StoreProductViewer.ReturnTo.BackToCollection
+                    |> fun (m, cmd) -> 
+                        { model with Section = ProductViewer m }, 
+                        Cmd.batch [
+                            // cmd |> Cmd.map (fun m -> ViewProduct (Shared.StoreProductViewer.ProductKey.Template pt.product_id, Some seed, Shared.StoreProductViewer.ReturnTo.BackToCollection) )
+                            // Cmd.ofMsg (NavigateTo (ShopSection.ProductViewer m))
+                            // Navigation.newUrl $"/shop/product/template/{pt.product_id}"   
+                        ]
+                | _ -> 
+                    State.update subMsg cb
+                    |> fun (m, cmd) -> 
+                        { model with Section = CollectionBrowser m }, 
+                        cmd |> Cmd.map ShopCollectionMsg
+            updatedModel,
+            cmd' 
+
         | _ ->
             let landingModel, msg = State.init None            
             { model with Section = CollectionBrowser landingModel },
             Cmd.map ShopCollectionMsg msg
+    
+    | ViewProduct (productKey, productSeedOpt, returnTo) ->
+            // let collectionModel, cmd' = Produc.update subMsg cb
+            let productViewModel =
+                ProductViewer (
+                    ProductViewer.initModel
+                        productKey
+                        productSeedOpt
+                        returnTo
+                ) 
+            { model with Section = productViewModel },
+            // Cmd.none |> Cmd.map ShopCollectionMsg
+            // Cmd.batch [
+            //     // Cmd.ofMsg  (ViewProduct (productKey, productSeedOpt, returnTo) )
+            // ]
+            Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
+            // Cmd.ofMsg ( productViewModel)
+    
+    | ShopProduct subMsg ->
+        match model.Section with
+        | ProductViewer pv ->
+            let productViewMdl, cmd' = Client.Components.Shop.Product.update subMsg pv
+            { model with Section = ProductViewer productViewMdl },
+            cmd' |> Cmd.map ShopProduct
+        | _ ->
+            let landingModel = 
+                ProductViewer.initModel 
+                    (Shared.StoreProductViewer.ProductKey.Template 0)
+                    None
+                    Shared.StoreProductViewer.ReturnTo.BackToCollection    
+            { model with Section = ProductViewer landingModel },
+            // Cmd.map ShopProduct
+            Cmd.ofMsg (NavigateTo (ProductViewer landingModel))
+            // Cmd.none
 
     | NavigateTo section ->
         // need to do url here?
         match section with
-        | ShopSection.ProductDesigner _ ->
+        | ShopSection.ProductDesigner pd ->
             // fresh designer state
-            let pdModel = ProductDesigner.initialModel ()
 
-            let model' =
-                { model with Section = ShopSection.ProductDesigner pdModel }
+            let model' = { model with Section = ShopSection.ProductDesigner pd }
 
             // immediately ask the designer to load products
             let cmd =
                 ProductDesigner.Msg.LoadProducts
                 |> ShopDesignerMsg
                 |> Cmd.ofMsg
+
+            model', cmd
+        | ShopSection.ProductViewer pv ->
+            let model' = { model with Section = ShopSection.ProductViewer pv }
+
+            // immediately ask the designer to load products
+            let cmd =
+                ProductViewer.Msg.LoadDetails |> ShopProduct |> Cmd.ofMsg
 
             model', cmd
 
@@ -89,182 +150,200 @@ open Feliz
 open Shared
 open Bindings.LucideIcon
 
-// For now, just hard-code your hero video path.
-// Later we can make this configurable or pull from CMS.
-let heroVideoUrl = "/media/xero-effort-hero.mp4"
 
-// Optional: fallback image (poster) if video fails or while loading
-let heroPosterUrl = "/img/xero-effort/hero-poster.jpg"
+let tabToSection tab =
+    match tab with
+    | Hero -> ShopSection.ShopLanding
+    | Collection -> ShopSection.CollectionBrowser (Collection.initModel())
+    | Designer -> ShopSection.ProductDesigner (ProductDesigner.initialModel())
+    | Cart  -> ShopSection.ShoppingBag
+    | Checkout -> ShopSection.Payment
+    | Product -> ShopSection.ProductViewer (ProductViewer.initModel (StoreProductViewer.ProductKey.Template 0) None StoreProductViewer.ReturnTo.BackToCollection )
 
-let private featuredDrops (homeGifUrls: string list) =
-    let cards =
-        homeGifUrls
-        |> List.mapi (fun idx url ->
-            Html.div [
-                prop.key (string idx)
-                prop.className
-                    "rounded-3xl overflow-hidden shadow-lg border border-base-300/60 \
-                     bg-base-100/90 hover:-translate-y-[3px] hover:shadow-xl transition-transform duration-200"
-                prop.children [
-                    Html.img [
-                        prop.src url
-                        prop.alt (sprintf "Featured drop %d" (idx + 1))
-                        prop.className "w-full h-full object-cover"
-                    ]
-                ]
-            ])
+let sectionToTab section =
+    match section with
+    | ShopSection.ShopLanding -> Hero
+    | ShopSection.CollectionBrowser _ -> Collection
+    | ShopSection.ProductDesigner _ -> Designer
+    | ShopSection.ShoppingBag -> Cart
+    | ShopSection.ProductViewer _ -> Product
+    | ShopSection.Payment
+    | ShopSection.Checkout -> Checkout
+    | ShopSection.NotFound -> Hero
 
-    Html.section [
-        prop.className "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 space-y-4"
-        prop.children [
-            Html.div [
-                prop.className "flex items-center justify-between gap-3"
-                prop.children [
-                    Html.div [
-                        Html.h2 [
-                            prop.className "text-sm font-semibold tracking-wide uppercase"
-                            prop.text "Featured drops"
-                        ]
-                        Html.p [
-                            prop.className "text-[11px] text-base-content/60"
-                            prop.text "Just a taste. Collections go deeper."
-                        ]
-                    ]
-                ]
-            ]
-            Html.div [
-                prop.className "grid gap-6 md:grid-cols-2"
-                prop.children cards
-            ]
-        ]
-    ]
+module Shop =
+    open Client.Domain.Store.ProductViewer
 
-let hero dispatch =
-    Html.section [
-        prop.className
-            "relative w-full min-h-[75vh] flex flex-col justify-center items-center \
-             bg-black text-white overflow-hidden"
+    [<ReactComponent>]
+    let view model (dispatch: Store.ShopMsg -> unit) =
+        let tab = sectionToTab model.Section
 
-        prop.children [
+        Html.div [
+            prop.className "min-h-screen bg-base-100 text-base-content"
+            prop.children [
 
-            // fog, no PNG
-            Html.div [ prop.className "fog-layer" ]
-
-            Html.h1 [
-                prop.className "text-6xl font-black tracking-tight text-center"
-                prop.text "Xero Effort"
-            ]
-            Html.h5 [
-                prop.className "mt-4 text-sm text-white/60 uppercase  text-center"
-                prop.text  "Streetwear, prints, and digital mischief for people who took one step past the EXIT sign on purpose. Out with the old, in with the new—never to be heard from again."
-            ]
-
-            Html.p [
-                prop.className "mt-4 text-sm text-white/60 uppercase tracking-[0.15em]"
-                prop.children [
-                    Html.strong [ prop.text "Limited-time drops" ]
-                    Html.text " • "
-                    Html.strong [ prop.text "No restocks" ]
-                    Html.text " • "
-                    Html.strong [ prop.text "Get it before it's gone" ]
-                ]
-                // prop.text "Limited-time drops • No restocks • Digital relics"
-            ]
-
-            Html.button [
-                prop.className "mt-10 btn btn-sm px-6 bg-white text-black hover:bg-white/80"
-                prop.onClick (fun _ -> dispatch (NavigateTo (CollectionBrowser (Collection.initModel()))))
-                prop.text "Enter collections →"
-            ]
-        ]
-    ]
-
-let shopHero dispatch =
-    Html.section [
-        prop.className
-            // "relative w-full min-h-[72vh] sm:min-h-[80vh] overflow-hidden flex items-center justify-center"
-            "relative w-full min-h-[75vh] flex flex-col justify-center items-center \
-             bg-black text-white overflow-hidden"
-        prop.children [
-
-            // 🎥 Background video
-            Html.video [
-                prop.className "absolute inset-0 w-full h-full object-cover hero-video"
-                prop.src "/videos/xero-hero.mp4"      // ⬅️ put your mp4 here
-                prop.autoPlay true
-                prop.loop true
-                prop.muted true
-                prop.playsInline true
-            ]
-
-            // 🌫 theme-tinted scrim so text is readable in all themes
-            Html.div [ prop.className "hero-scrim" ]
-
-            // 🌫 fog + 👁‍🗨 film grain (both theme-tinted via CSS vars)
-            Html.div [ prop.className "fog-layer" ]
-            Html.div [ prop.className "hero-noise" ]
-
-            // 🧊 foreground content (all using DaisyUI utility colors)
-            Html.div [
-                prop.className
-                    "relative z-10 max-w-3xl px-6 py-10 text-center space-y-4 text-base-content"
-                prop.children [
-
-                    // main title
-                    Html.h1 [
-                        prop.className
-                            "text-4xl sm:text-6xl md:text-7xl font-black leading-tight text-primary-content drop-shadow-lg"
-                        prop.text "Xero Effort"
-                    ]
-
-                    Html.h5 [
-                        prop.className "mt-4 text-sm text-white/60 uppercase  text-center"
-                        prop.text  "Streetwear, prints, and digital mischief for people who took one step past the EXIT sign on purpose. Out with the old, in with the new—never to be heard from again."
-                    ]
-                    
-                    Html.div [
-                        prop.className "flex flex-wrap items-center justify-center gap-3 text-[11px]"
-                        prop.children [
+                // Top tab bar
+                Html.div [
+                    prop.className "sticky top-0 z-40 bg-base-100/90 backdrop-blur border-b border-base-300"
+                    prop.children [
+                        Ui.Section.container [
                             Html.div [
-                                prop.className "flex flex-wrap gap-2"
+                                prop.className "flex gap-6 sm:gap-8 py-3"
                                 prop.children [
-                                    Html.span [
-                                        prop.className
-                                            "badge badge-sm badge-outline border-white/40 text-white/60"
-                                        prop.text "Limited-run drops"
-                                    ]
-                                    Html.span [
-                                        prop.className
-                                            "badge badge-sm badge-outline border-white/40 text-white/60"
-                                        prop.text "Get it before it's gone"
-                                    ]
+                                    let tabBtn t (label: string) =
+                                        Html.button [
+                                            prop.key label
+                                            prop.className (
+                                                Ui.tw [
+                                                    "text-xs sm:text-sm font-medium uppercase tracking-[0.2em] pb-1 transition-all border-b-2 border-transparent"
+                                                    if tab = t then "text-base-content border-base-content"
+                                                    else "text-base-content/50 hover:text-base-content"
+                                                ]
+                                            )
+                                            prop.text label
+                                            prop.onClick (fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection t)) )
+                                        ]
+
+                                    tabBtn Hero       "hero"
+                                    tabBtn Collection "collection"
+                                    tabBtn Designer   "designer"
+                                    tabBtn Product    "product"
+                                    tabBtn Cart       "cart"
+                                    tabBtn Checkout   "checkout"
                                 ]
                             ]
                         ]
                     ]
-
-                    // CTA
-                    Html.div [
-                        prop.className "pt-4"
-                        prop.children [
-                            Html.button [
-                                prop.className
-                                    "btn btn-primary rounded-full px-8 gap-2 shadow-lg shadow-primary/40"
-                                prop.text "Enter collections"
-                                prop.onClick (fun _ -> dispatch (NavigateTo (CollectionBrowser (Collection.initModel()))))
-                            ]
-                        ]
-                    ]
-
-                    // tiny disclaimer line
-                    Html.p [
-                        prop.className "text-[11px]  text-white/60 uppercase pt-2"
-                        prop.text "Limited runs. Once it's gone, it only lives in screenshots and regrets."
-                    ]
                 ]
+
+                // Active body
+                match tab with
+                | Tab.Hero ->
+                    Hero.view {
+                        OnShopCollection = fun () -> dispatch (ShopMsg.NavigateTo (tabToSection Collection))
+                        OnExploreMore    = fun () -> dispatch (ShopMsg.NavigateTo (tabToSection Designer))
+                    }
+
+                | Tab.Collection ->
+                    Collection.collectionView
+                        (
+                            match model.Section with
+                            | CollectionBrowser cmodel -> cmodel
+                            | _ -> State.initModel
+                        )
+                        (ShopCollectionMsg >> dispatch)
+
+                | Tab.Designer ->
+                    Designer.view
+                        (
+                            match model.Section with
+                            | ProductDesigner dmodel -> dmodel
+                            | _ -> ProductDesigner.initialModel ()
+                        )
+                        (ShopDesignerMsg >> dispatch)
+                
+                | Tab.Product ->
+                    printfn $"WE SHOULD HAVE LOADED PRODUCTS"
+                    Product.view 
+                        (
+                            match model.Section with
+                            | ProductViewer pmodel -> pmodel
+                            | _ -> initModel (StoreProductViewer.ProductKey.Template 0) None StoreProductViewer.ReturnTo.BackToCollection
+                        )
+                        (ShopProduct >> dispatch)
+
+                | Tab.Cart ->
+                    Cart.Cart.view 
+                        {
+                            Cart = model.Cart
+                            OnRemove = fun x -> dispatch (RemoveCartItem x) 
+                            OnUpdateQuantity  = fun itemAndQty -> dispatch (UpdateCartQty itemAndQty) 
+                            OnContinueShopping = fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection Hero))
+                            OnCheckout         = fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection Checkout))
+                        }
+
+                | Tab.Checkout ->
+                    Checkout.Checkout.view 
+                        {
+                            Step           = Checkout.Checkout.CheckoutStep.Shipping
+                            ShippingInfo   =
+                                {
+                                    Email     = ""
+                                    FirstName = ""
+                                    LastName  = ""
+                                    Address   = ""
+                                    Apartment = ""
+                                    City      = ""
+                                    State     = ""
+                                    ZipCode   = ""
+                                    Country   = ""
+                                    Phone     = ""
+                                }
+                            ShippingMethod  = Checkout.Checkout.ShippingMethod.Standard
+                            PaymentMethod  = Checkout.Checkout.PaymentMethod.Card
+                            Items          = []
+                        } 
+                        (fun _ -> ())
             ]
         ]
-    ]
+
+[<ReactComponent>]
+let view (model: Store.Model) (dispatch: Store.ShopMsg -> unit) =
+    Shop.view model dispatch
+       
+
+
+
+       
+// For now, just hard-code your hero video path.
+// Later we can make this configurable or pull from CMS.
+// let heroVideoUrl = "/media/xero-effort-hero.mp4"
+
+// Optional: fallback image (poster) if video fails or while loading
+// let heroPosterUrl = "/img/xero-effort/hero-poster.jpg"
+
+// let private featuredDrops (homeGifUrls: string list) =
+//     let cards =
+//         homeGifUrls
+//         |> List.mapi (fun idx url ->
+//             Html.div [
+//                 prop.key (string idx)
+//                 prop.className
+//                     "rounded-3xl overflow-hidden shadow-lg border border-base-300/60 \
+//                      bg-base-100/90 hover:-translate-y-[3px] hover:shadow-xl transition-transform duration-200"
+//                 prop.children [
+//                     Html.img [
+//                         prop.src url
+//                         prop.alt (sprintf "Featured drop %d" (idx + 1))
+//                         prop.className "w-full h-full object-cover"
+//                     ]
+//                 ]
+//             ])
+
+//     Html.section [
+//         prop.className "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 space-y-4"
+//         prop.children [
+//             Html.div [
+//                 prop.className "flex items-center justify-between gap-3"
+//                 prop.children [
+//                     Html.div [
+//                         Html.h2 [
+//                             prop.className "text-sm font-semibold tracking-wide uppercase"
+//                             prop.text "Featured drops"
+//                         ]
+//                         Html.p [
+//                             prop.className "text-[11px] text-base-content/60"
+//                             prop.text "Just a taste. Collections go deeper."
+//                         ]
+//                     ]
+//                 ]
+//             ]
+//             Html.div [
+//                 prop.className "grid gap-6 md:grid-cols-2"
+//                 prop.children cards
+//             ]
+//         ]
+//     ]
 
 // ----------------------------
 // HELPERS
@@ -345,149 +424,3 @@ let shopHero dispatch =
 //             ]
 //         ]
 //     ]
-
-
-let tabToSection tab =
-    match tab with
-    | Hero -> ShopSection.ShopLanding
-    | Collection -> ShopSection.CollectionBrowser (Collection.initModel())
-    | Designer -> ShopSection.ProductDesigner (ProductDesigner.initialModel())
-    | Cart  -> ShopSection.ShoppingBag
-    | Checkout -> ShopSection.Payment
-    | Product -> ShopSection.NotFound
-
-let sectionToTab section =
-    match section with
-    | ShopSection.ShopLanding -> Hero
-    | ShopSection.CollectionBrowser _ -> Collection
-    | ShopSection.ProductDesigner _ -> Designer
-    | ShopSection.ShoppingBag -> Cart
-    | ShopSection.Payment
-    | ShopSection.Checkout -> Checkout
-    | ShopSection.NotFound -> Hero
-
-module Shop =
-
-    [<ReactComponent>]
-    let view model (dispatch: Store.ShopMsg -> unit) =
-        let tab = sectionToTab model.Section
-
-        let productDetails : Product.ProductDetails =
-            {
-                Name        = "Essential Crew Tee"
-                Price       = 45m
-                Description = "Premium cotton construction with a modern fit. Designed for everyday wear with exceptional comfort and durability. Sustainably produced."
-                ReviewCount = 128
-                Sizes       = [ "XS"; "S"; "M"; "L"; "XL"; "XXL" ]
-                Colors      = [ "bg-neutral"; "bg-base-100 border"; "bg-base-300"; "bg-primary" ]
-            }
-
-        Html.div [
-            prop.className "min-h-screen bg-base-100 text-base-content"
-            prop.children [
-
-                // Top tab bar
-                Html.div [
-                    prop.className "sticky top-0 z-40 bg-base-100/90 backdrop-blur border-b border-base-300"
-                    prop.children [
-                        Ui.Section.container [
-                            Html.div [
-                                prop.className "flex gap-6 sm:gap-8 py-3"
-                                prop.children [
-                                    let tabBtn t (label: string) =
-                                        Html.button [
-                                            prop.key label
-                                            prop.className (
-                                                Ui.tw [
-                                                    "text-xs sm:text-sm font-medium uppercase tracking-[0.2em] pb-1 transition-all border-b-2 border-transparent"
-                                                    if tab = t then "text-base-content border-base-content"
-                                                    else "text-base-content/50 hover:text-base-content"
-                                                ]
-                                            )
-                                            prop.text label
-                                            prop.onClick (fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection t)) )
-                                        ]
-
-                                    tabBtn Hero       "hero"
-                                    tabBtn Collection "collection"
-                                    tabBtn Designer   "designer"
-                                    tabBtn Product    "product"
-                                    tabBtn Cart       "cart"
-                                    tabBtn Checkout   "checkout"
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-
-                // Active body
-                match tab with
-                | Tab.Hero ->
-                    Hero.view {
-                        OnShopCollection = fun () -> dispatch (ShopMsg.NavigateTo (tabToSection Collection))
-                        OnExploreMore    = fun () -> dispatch (ShopMsg.NavigateTo (tabToSection Designer))
-                    }
-
-                | Tab.Collection ->
-                    Collection.collectionView
-                        (
-                            match model.Section with
-                            | CollectionBrowser cmodel -> cmodel
-                            | _ -> State.initModel
-                        )
-                        (ShopCollectionMsg >> dispatch)
-
-                | Tab.Designer ->
-                    Designer.view
-                        (
-                            match model.Section with
-                            | ProductDesigner dmodel -> dmodel
-                            | _ -> ProductDesigner.initialModel ()
-                        )
-                        (ShopDesignerMsg >> dispatch)
-                
-                | Tab.Product ->
-                    Product.view {
-                        Product     = productDetails
-                        OnAddToCart = ignore
-                        OnAddToWish = ignore
-                    }
-
-                | Tab.Cart ->
-                    Cart.Cart.view 
-                        {
-                            Cart = model.Cart
-                            OnRemove = fun x -> dispatch (RemoveCartItem x) 
-                            OnUpdateQuantity  = fun itemAndQty -> dispatch (UpdateCartQty itemAndQty) 
-                            OnContinueShopping = fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection Hero))
-                            OnCheckout         = fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection Checkout))
-                        }
-
-                | Tab.Checkout ->
-                    Checkout.Checkout.view 
-                        {
-                            Step           = Checkout.Checkout.CheckoutStep.Shipping
-                            ShippingInfo   =
-                                {
-                                    Email     = ""
-                                    FirstName = ""
-                                    LastName  = ""
-                                    Address   = ""
-                                    Apartment = ""
-                                    City      = ""
-                                    State     = ""
-                                    ZipCode   = ""
-                                    Country   = ""
-                                    Phone     = ""
-                                }
-                            ShippingMethod  = Checkout.Checkout.ShippingMethod.Standard
-                            PaymentMethod  = Checkout.Checkout.PaymentMethod.Card
-                            Items          = []
-                        } 
-                        (fun _ -> ())
-            ]
-        ]
-
-let view (model: Store.Model) (dispatch: Store.ShopMsg -> unit) =
-    Shop.view model dispatch
-       

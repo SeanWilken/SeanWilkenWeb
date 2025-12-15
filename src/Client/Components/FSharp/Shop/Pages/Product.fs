@@ -2,25 +2,84 @@ namespace Client.Components.Shop
 
 open Feliz
 open Client.Components.Shop.Common.Ui
-
+open Client.Domain.Store.ProductViewer
+open Feliz.UseDeferred
+open Elmish
 module Product =
+    open Client.Domain.Store.ProductViewer
+    open Shared.StoreProductViewer
 
-    type ProductDetails = {
-        Name        : string
-        Price       : decimal
-        Description : string
-        ReviewCount : int
-        Sizes       : string list
-        Colors      : string list   // tailwind bg classes for now
-    }
+    // let tryPickVariantId (m: Model) (res: GetDetailsResponse) =
+    //     match res.Details, m.SelectedSize, m.SelectedColor with
+    //     | DetailsCatalog d, Some s, Some c ->
+    //         d.Variants
+    //         |> List.tryFind (fun v -> v.Size = Some s && v.Color = Some c)
+    //         |> Option.map (fun v -> v.VariantId)
+    //     | DetailsTemplate d, Some s, Some c ->
+    //         d.Variants
+    //         |> List.tryFind (fun v -> v.Size = Some s && v.Color = Some c)
+    //         |> Option.map (fun v -> v.VariantId)
+    //     | _ -> None
 
-    type Props = {
-        Product      : ProductDetails
-        OnAddToCart  : unit -> unit
-        OnAddToWish  : unit -> unit
-    }
+    let initFromSeed (seed: ProductSeed) (returnTo: ReturnTo) : Model * Cmd<Msg> =
+        let model = {
+            Key = keyFromSeed seed
+            Seed = Some seed
+            ReturnTo = returnTo
+            Details = Deferred.HasNotStartedYet
+            SelectedVariantId = None
+            SelectedColor = None
+            SelectedSize = None
+        }
 
-    let view (props: Props) =
+        // kick off detail fetch immediately
+        model, Cmd.ofMsg LoadDetails
+
+    let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
+        match msg with
+        | InitWith (key, seed, returnTo) ->
+            initModel key seed returnTo
+            , Cmd.ofMsg LoadDetails
+
+        | LoadDetails ->
+            let m1 = { model with Details = Deferred.InProgress }
+            m1,
+            Cmd.OfAsync.either
+                (fun req -> Client.Api.productsApi.getProductDetails req)
+                (detailsReq m1)
+                GotDetails
+                FailedDetails
+
+        | GotDetails res ->
+            { model with Details = Deferred.Resolved res }, Cmd.none
+
+        | FailedDetails ex ->
+            { model with Details = Deferred.Failed ex }, Cmd.none
+
+        | SelectColor c ->
+            // optionally clear variant on change
+            let m1 = { model with SelectedColor = Some c; SelectedVariantId = None }
+            m1, Cmd.ofMsg LoadDetails
+
+        | SelectSize s ->
+            let m1 = { model with SelectedSize = Some s; SelectedVariantId = None }
+            m1, Cmd.ofMsg LoadDetails
+
+        | SelectVariant vid ->
+            let m1 = { model with SelectedVariantId = Some vid }
+            // if you want pricing/image to reflect variant, reload details
+            m1, Cmd.ofMsg LoadDetails
+
+        | PrimaryAction ->
+            // handled by Shop-level wrapper (Add-to-cart or Select-for-designer)
+            model, Cmd.none
+
+        | GoBack ->
+            model, Cmd.none
+
+
+    [<ReactComponent>]
+    let view (props: Model) dispatch =
         Section.container [
             Html.div [
                 prop.className "py-10 md:py-20 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16"
@@ -59,7 +118,7 @@ module Product =
                                 prop.children [
                                     Html.h1 [
                                         prop.className "text-3xl md:text-4xl font-light tracking-tight text-base-content"
-                                        prop.text props.Product.Name
+                                        prop.text "props.Product.Name"
                                     ]
                                     Html.div [
                                         prop.className "flex items-center gap-3"
@@ -80,20 +139,20 @@ module Product =
                                             ]
                                             Html.span [
                                                 prop.className "text-sm text-base-content/70"
-                                                prop.text $"({props.Product.ReviewCount} reviews)"
+                                                prop.text "({props.Product.ReviewCount} reviews)"
                                             ]
                                         ]
                                     ]
                                     Html.p [
                                         prop.className "text-3xl font-light"
-                                        prop.text $"${props.Product.Price}"
+                                        prop.text "${props.Product.Price}"
                                     ]
                                 ]
                             ]
 
                             Html.p [
                                 prop.className "text-base md:text-lg text-base-content/70 leading-relaxed"
-                                prop.text props.Product.Description
+                                prop.text "props.Product.Description"
                             ]
 
                             // Sizes
@@ -107,7 +166,7 @@ module Product =
                                     Html.div [
                                         prop.className "flex flex-wrap gap-2"
                                         prop.children [
-                                            for size in props.Product.Sizes do
+                                            for size in [ "props.Product.Sizes" ] do
                                                 Html.button [
                                                     prop.key size
                                                     prop.className "btn btn-sm rounded-none border-base-300 hover:border-primary hover:bg-primary hover:text-primary-content"
@@ -129,7 +188,7 @@ module Product =
                                     Html.div [
                                         prop.className "flex flex-wrap gap-3"
                                         prop.children [
-                                            for colorClass in props.Product.Colors do
+                                            for colorClass in ["props.Product.Colors"] do
                                                 Html.button [
                                                     prop.key colorClass
                                                     prop.className (tw [
@@ -149,12 +208,14 @@ module Product =
                                     Html.button [
                                         prop.className (Btn.primary [ "w-full rounded-none py-4" ])
                                         prop.text "Add to Cart"
-                                        prop.onClick (fun _ -> props.OnAddToCart())
+                                        prop.onClick (fun _ -> () )
+                                        // prop.onClick (fun _ -> dispatch (Msg.AddToCart "") )
                                     ]
                                     Html.button [
                                         prop.className (Btn.outline [ "w-full rounded-none py-4" ])
                                         prop.text "Add to Wishlist"
-                                        prop.onClick (fun _ -> props.OnAddToWish())
+                                        prop.onClick (fun _ -> () )
+                                        // prop.onClick (fun _ -> dispatch (Msg.AddToCart "") )
                                     ]
                                 ]
                             ]

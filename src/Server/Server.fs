@@ -11,7 +11,6 @@ open System.Text
 open Fable.Remoting.Server
 open Fable.Remoting.Giraffe
 open Giraffe
-open SharedShopV2Domain
 
 
 // CtxfvCP31MacEZMVh8th76TwH2IflQBoFN6viKrE
@@ -25,6 +24,7 @@ module Api =
 
             // Server-only: raw types with JsonElement
             open System.Text.Json
+            open System.Threading
 
             type RawOptionData = {
                 id    : string
@@ -49,6 +49,23 @@ module Api =
                 options  : JsonElement array
             }
 
+            type RawStoreVariant = {
+                id            : int
+                variant_id    : int option
+
+                size          : string option
+
+                color         : string option
+                color_name    : string option
+                color_code    : string option
+                color_hex     : string option
+
+                retail_price  : decimal option
+                price         : decimal option
+                currency      : string option
+                currency_code : string option
+            }
+
             type RawProductTemplate = {
                 id                    : int
                 product_id            : int
@@ -70,6 +87,11 @@ module Api =
                 items : RawProductTemplate array
             }
 
+            type RawStoreVariantResponse = {
+                code   : int
+                result : RawStoreVariant
+            }
+
             type RawProductTemplateResponse = {
                 code   : int
                 result : RawProductTemplateResult
@@ -77,29 +99,6 @@ module Api =
                 paging : PrintfulCommon.PagingInfoDTO
             }
 
-            type RawColorV2 = {
-                name  : string
-                value : string
-            }
-
-            type RawProductTemplateV2 = {
-                id                        : int
-                external_id               : string option
-                name                      : string
-                catalog_product_id        : int
-                created_at                : string
-                updated_at                : string
-                available_catalog_variants: int array
-                sizes                     : string array
-                colors                    : RawColorV2 array
-                // _links we can ignore or add if needed
-            }
-
-            type RawProductTemplateResponseV2 = {
-                data   : RawProductTemplateV2 array
-                extra  : string array
-                paging : PrintfulCommon.PagingInfoDTO
-            }
 
             // --- Shared DTOs (reuse types from client) ---
             type OptionData = {
@@ -161,7 +160,7 @@ module Api =
 
 
             // --- Mapping functions ---
-            let private normalizeOptionData (raw: RawOptionData) : SharedShopV2.ProductTemplate.OptionData =
+            let private normalizeOptionData (raw: RawOptionData) : ProductTemplate.OptionData =
                 let values =
                     match raw.value.ValueKind with
                     | JsonValueKind.String -> [| raw.value.GetString() |]
@@ -175,7 +174,7 @@ module Api =
                     | _ -> [||]
                 { id = raw.id; value = values }
 
-            let private normalizePlacementOption (raw: RawPlacementOption) : SharedShopV2.ProductTemplate.PlacementOption =
+            let private normalizePlacementOption (raw: RawPlacementOption) : ProductTemplate.PlacementOption =
                 let opts =
                     raw.options
                     |> Array.choose (fun v -> if v.ValueKind = JsonValueKind.String then Some (v.GetString()) else None)
@@ -189,13 +188,84 @@ module Api =
                     HitArea = PrintfulCommon.designHitAreaFromPrintfulString raw.placement
                 }
 
-            let private normalizePlacementOptionData (raw: RawPlacementOptionData) : SharedShopV2.ProductTemplate.PlacementOptionData =
+            let private normalizePlacementOptionData (raw: RawPlacementOptionData) : ProductTemplate.PlacementOptionData =
                 let opts =
                     raw.options
                     |> Array.choose (fun v -> if v.ValueKind = JsonValueKind.String then Some (v.GetString()) else None)
                 { ``type`` = raw.``type``; options = opts }
 
-            let mapProductTemplate (raw: RawProductTemplate) : SharedShopV2.ProductTemplate.ProductTemplate =
+            module StoreCardMapping =
+                open Shared.Api
+                open Shared.PrintfulStoreDomain.ProductTemplateResponse
+
+                let private variantColorName (v: RawStoreVariant) =
+                    v.color |> Option.orElse v.color_name
+
+                let private variantColorCode (v: RawStoreVariant) =
+                    v.color_code |> Option.orElse v.color_hex
+
+                let private variantPrice (v: RawStoreVariant) =
+                    v.retail_price |> Option.orElse v.price
+
+                let private variantCurrency (v: RawStoreVariant) =
+                    v.currency |> Option.orElse v.currency_code
+
+                let private distinctSorted (xs: string list) =
+                    xs |> List.distinct |> List.sort
+
+                let private minMax (xs: decimal list) =
+                    match xs with
+                    | [] -> None, None
+                    | _  -> Some (List.min xs), Some (List.max xs)
+
+                let toStoreCard (tpl: RawProductTemplate) (variants: RawStoreVariant list) : StoreCard =
+                    let prices = variants |> List.choose variantPrice
+                    let pmin, pmax = minMax prices
+
+                    let currencyOpt =
+                        variants |> List.choose variantCurrency |> List.tryHead
+
+                    let sizes =
+                        variants |> List.choose (fun v -> v.size) |> distinctSorted
+
+                    let colors =
+                        variants
+                        |> List.choose (fun v ->
+                            variantColorName v |> Option.map (fun name -> name, variantColorCode v, v.id)
+                        )
+                        |> List.groupBy (fun (name, codeOpt, _vid) -> name, codeOpt)
+                        |> List.map (fun ((name, codeOpt), rows) ->
+                            {
+                                Name = name
+                                CodeOpt = codeOpt
+                                VariantIds = rows |> List.map (fun (_,_,vid) -> vid) |> List.distinct |> List.sort
+                            }
+                        )
+                        |> List.sortBy (fun c -> c.Name)
+
+                    {
+                        TemplateId       = tpl.id
+                        PriceMin         = pmin
+                        PriceMax         = pmax
+                        CurrencyOpt      = currencyOpt
+                        Colors           = colors
+                        Sizes            = sizes
+                        DefaultVariantId = tpl.available_variant_ids |> Array.tryHead
+                    }
+
+            let private parallelThrottled (maxParallel:int) (jobs: Async<'a> list) : Async<'a list> = async {
+                use sem = new SemaphoreSlim(maxParallel)
+                let wrap job = async {
+                    do! sem.WaitAsync() |> Async.AwaitTask
+                    try return! job
+                    finally sem.Release() |> ignore
+                }
+                let! results = jobs |> List.map wrap |> Async.Parallel
+                return results |> Array.toList
+            }
+
+
+            let mapProductTemplate (raw: RawProductTemplate) : ProductTemplate.ProductTemplate =
                 { 
                     id = raw.id
                     product_id = raw.product_id
@@ -213,44 +283,14 @@ module Api =
                     design_id = raw.design_id 
                 }
 
-            let mapPrintfulTemplateResponse (r: RawProductTemplateResponse) : ProductTemplateResponse.ProductTemplatesResponse =
+            let mapPrintfulTemplateResponse (r: RawProductTemplateResponse) : PrintfulStoreDomain.ProductTemplateResponse.ProductTemplatesResponse =
                 { 
                     templateItems = r.result.items |> Array.map mapProductTemplate |> Array.toList
+                    storeCards = []
                     paging = r.paging 
                 }
 
-            let mapProductTemplateV2 (raw: RawProductTemplateV2) : SharedShopV2.ProductTemplate.ProductTemplate =
-                { 
-                    id = raw.id
-                    product_id = raw.catalog_product_id
-                    external_product_id = raw.external_id
-                    title = raw.name
-                    available_variant_ids = raw.available_catalog_variants
-                    option_data = [||] // not returned in v2 list endpoint
-                    colors = 
-                        raw.colors 
-                        |> Array.map (fun c -> { color_name = c.name; color_codes = [| c.value |] })
-                    sizes = raw.sizes
-                    mockup_file_url = "" // not returned in v2 list endpoint
-                    placements = [||]
-                    created_at = System.DateTime.Parse(raw.created_at).Ticks
-                    updated_at = System.DateTime.Parse(raw.updated_at).Ticks
-                    placement_option_data = [||]
-                    design_id = None 
-                }
-
-            let mapPrintfulTemplateResponseV2 (r: RawProductTemplateResponseV2) : ProductTemplateResponse.ProductTemplatesResponse =
-                { 
-                    templateItems = r.data |> Array.map mapProductTemplateV2 |> Array.toList
-                    paging = r.paging
-                }
-
             open System.Net.Http.Headers
-
-            // let private printfulHttpClient =
-            //     new HttpClient(BaseAddress = System.Uri("https://api.printful.com/"))
-            //     // new HttpClient(BaseAddress = System.Uri("https://api.printful.com/v2/"))
-            //     // Authentication (use your API key)
 
             let printfulV1HttpClient =
                 new HttpClient(BaseAddress = System.Uri("https://api.printful.com/"))
@@ -270,24 +310,10 @@ module Api =
                     headers |> Map.iter (fun k v -> client.DefaultRequestHeaders.Add(k, v))
                 if client.DefaultRequestHeaders.Authorization = null then
                     client.DefaultRequestHeaders.Authorization <-
-                        // AuthenticationHeaderValue("Bearer", "CtxfvCP31MacEZMVh8th76TwH2IflQBoFN6viKrE")
                         AuthenticationHeaderValue("Bearer", "GIitSq2Yt71FffXuLTMlMDJ439bngntVemR4QIFG")
 
-            // let configureClient(headers: Map<string, string>) =
-            // // do
-            //     // headers |> Map.iter (fun k v -> printfulHttpClient.DefaultRequestHeaders.Add(k, v))
-            //     printfulHttpClient.DefaultRequestHeaders.Add("X-PF-Store-ID", "6302847")
-            //     printfulHttpClient.DefaultRequestHeaders.Authorization <-
-            //         AuthenticationHeaderValue("Bearer", "TOKEN_HERE")
-                    // let apiKey =
-                    //     match System.Environment.GetEnvironmentVariable("PRINTFUL_API_KEY") with
-                    //     | a when a = null -> "<YOUR_API_KEY>"
-                    //     | str ->  str
-                    // AuthenticationHeaderValue("Bearer", apiKey)
 
             module CatalogProduct = 
-                open System.Threading.Tasks
-
                 let private queryString (q: Printful.CatalogProductRequest.CatalogProductsQuery) =
                     [
                         q.category_ids |> Option.map (fun ids -> "category_ids", String.concat "," (ids |> List.map string))
@@ -309,6 +335,83 @@ module Api =
                         printfn $"Query String: {s}"
                         if s = "" then "" else "?" + s
 
+                // let fetchStoreVariant (variantId:int) : Async<RawStoreVariant> = async {
+                //     configureClient printfulV1HttpClient storeHeaders
+                //     let! resp = printfulV1HttpClient.GetAsync($"store/variants/%d{variantId}") |> Async.AwaitTask
+                //     // resp.EnsureSuccessStatusCode() |> ignore
+                //     let! body = resp.Content.ReadAsStringAsync() |> Async.AwaitTask
+                //     let raw = JsonSerializer.Deserialize<RawStoreVariantResponse>(body)
+                //     return raw.result
+                // }
+
+                let fetchStoreVariant (variantId:int) : Async<RawStoreVariant> = async {
+                    configureClient printfulV1HttpClient storeHeaders
+
+                    let url = $"store/variants/%d{variantId}"
+                    System.Console.WriteLine $"[Printful][StoreVariant] GET {url}"
+
+                    let! resp =
+                        printfulV1HttpClient.GetAsync(url)
+                        |> Async.AwaitTask
+
+                    System.Console.WriteLine $"[Printful][StoreVariant] Status {resp.StatusCode}"
+
+                    let! body = resp.Content.ReadAsStringAsync() |> Async.AwaitTask
+                    System.Console.WriteLine $"[Printful][StoreVariant] Body:\n{body}"
+
+                    if not resp.IsSuccessStatusCode then
+                        failwith $"Store variant fetch failed ({variantId})"
+
+                    let raw =
+                        try
+                            JsonSerializer.Deserialize<RawStoreVariantResponse>(body)
+                        with ex ->
+                            System.Console.WriteLine $"[Printful][StoreVariant] DESERIALIZE ERROR: {ex.Message}"
+                            raise ex
+
+                    System.Console.WriteLine $"[Printful][StoreVariant] Parsed variant {raw.result.id}"
+                    return raw.result
+                }
+
+                type RawSingleCatalogProductResponse = {
+                    data : PrintfulStoreDomain.CatalogProductResponse.CatalogProduct.PrintfulProduct
+                }
+
+                /// Fetch a single Printful catalog product (v2)
+                let fetchCatalogProductById
+                    (catalogProductId: int)
+                    : Async<PrintfulCatalog.CatalogProduct> =
+                    async {
+
+                        configureClient printfulV2HttpClient storeHeaders
+
+                        let url = $"catalog-products/{catalogProductId}"
+                        System.Console.WriteLine $"[Printful][CatalogProduct] GET {url}"
+
+                        let! resp =
+                            printfulV2HttpClient.GetAsync(url)
+                            |> Async.AwaitTask
+
+                        System.Console.WriteLine $"[Printful][CatalogProduct] Status {resp.StatusCode}"
+
+                        let! body =
+                            resp.Content.ReadAsStringAsync()
+                            |> Async.AwaitTask
+
+                        System.Console.WriteLine $"[Printful][CatalogProduct] Body:\n{body}"
+
+                        if not resp.IsSuccessStatusCode then
+                            failwith $"Printful catalog product fetch failed ({catalogProductId})"
+
+                        let raw =
+                            try
+                                JsonSerializer.Deserialize<RawSingleCatalogProductResponse>(body)
+                            with ex ->
+                                System.Console.WriteLine $"[Printful][CatalogProduct] DESERIALIZE ERROR: {ex.Message}"
+                                raise ex
+
+                        return Shared.PrintfulStoreDomain.CatalogProductResponse.mapPrintfulProduct raw.data
+                    }
 
                 // Fetch products (paginated)
                 // V1 only
@@ -329,6 +432,119 @@ module Api =
                     // let raw = JsonSerializer.Deserialize<RawProductTemplateResponseV2>(body)
                     // return mapPrintfulTemplateResponseV2 raw
                 }
+
+                module ProductDetails =
+                    open Shared.StoreProductViewer
+
+                    let fetchCatalogDetails
+                        (productId: int)
+                        : Async<CatalogDetails> =
+                        async {
+
+                            // reuse existing catalog product fetch + mapping
+                            let! product = fetchCatalogProductById productId
+
+                            // fetch variants if needed (later)
+                            return {
+                                ProductId    = product.id
+                                Name         = product.name
+                                Description  = product.description
+                                ThumbnailUrl = Some product.thumbnailURL
+                                Brand        = product.brand
+                                Model        = product.model
+                                Sizes        = product.sizes
+                                Colors       = product.colors
+                                Placements   = []        // from product.placements if needed
+                                Techniques   = []        // from product.techniques if needed
+                                Variants     = []        // optional for now
+                            }
+                        }
+
+
+
+                    let fetchTemplateDetails
+                        (templateId: int)
+                        : Async<TemplateDetails> =
+                        async {
+
+                            // 1. Fetch the single template (reuse existing call)
+                            let! templates =
+                                fetchProductTemplates {
+                                    category_ids = None
+                                    colors = None
+                                    limit = None
+                                    newOnly = None
+                                    offset = None
+                                    selling_region_name = None
+                                    sort_direction = None
+                                    sort_type = None
+                                    placements = None
+                                    techniques = None
+                                    destination_country = None
+                                }
+
+                            let template =
+                                templates.templateItems
+                                |> List.find (fun t -> t.id = templateId)
+
+                            // 2. Fetch store variants for pricing
+                            let! variants =
+                                template.available_variant_ids
+                                |> Array.toList
+                                |> List.map fetchStoreVariant
+                                |> Async.Parallel
+
+                            return {
+                                TemplateId   = template.id
+                                Title        = template.title
+                                MockupUrl    = Some template.mockup_file_url
+                                Description  = None
+                                Sizes        = template.sizes |> Array.toList
+                                Colors       = template.colors |> Array.toList
+                                Placements   = template.placements |> Array.toList
+                                Techniques =
+                                    template.placement_option_data
+                                    |> Array.map (fun p -> p.``type``)
+                                    |> Array.distinct
+                                    |> Array.toList
+                                Variants =
+                                    variants
+                                    |> Array.map (fun v ->
+                                        {
+                                            VariantId        = v.id
+                                            // CatalogVariantId = v.variant_id
+                                            Size             = v.size
+                                            Color            = v.color_name
+                                            Price            = 
+                                                match v.retail_price with
+                                                | Some p -> Some { Amount = p; Currency = v.currency |> Option.defaultValue "USD" }
+                                                | None   -> None
+                                            InStock = None
+                                            ImageUrl        = None
+                                            // Currency         = v.currency
+                                        }
+                                    )
+                                    |> Array.toList
+                            }
+                        }
+
+                    let getProductDetails (req: GetDetailsRequest) : Async<GetDetailsResponse> =
+                        async {
+                            match req.Key with
+                            | Template templateId ->
+                                let! details = fetchTemplateDetails templateId
+                                return {
+                                    Key = req.Key
+                                    Details = DetailsTemplate details
+                                }
+
+                            | Catalog catalogId ->
+                                let! details = fetchCatalogDetails catalogId
+                                return {
+                                    Key = req.Key
+                                    Details = DetailsCatalog details
+                                }
+                        }
 
                 // V2 only
                 // let fetchProducts (queryParams: Printful.CatalogProductRequest.CatalogProductsQuery) = async {
@@ -370,7 +586,7 @@ module Api =
                 
 
                 // Fetch products (paginated)
-                let fetchProducts (queryParams: Printful.CatalogProductRequest.CatalogProductsQuery) : Async<CatalogProductResponse.CatalogProductsResponse> = async {
+                let fetchProducts (queryParams: Printful.CatalogProductRequest.CatalogProductsQuery) : Async<PrintfulStoreDomain.CatalogProductResponse.CatalogProductsResponse> = async {
                     let url = queryString queryParams
 
                     // configureClient storeHeaders
@@ -388,35 +604,15 @@ module Api =
 
                     System.Console.WriteLine $"BODY: {body}"
                     
-                    let raw = JsonSerializer.Deserialize<CatalogProductResponse.CatalogProduct.PrintfulCatalogProductResponse>(body)
-                    return CatalogProductResponse.mapPrintfulResponse raw
+                    let raw = JsonSerializer.Deserialize<PrintfulStoreDomain.CatalogProductResponse.CatalogProduct.PrintfulCatalogProductResponse>(body)
+                    return PrintfulStoreDomain.CatalogProductResponse.mapPrintfulResponse raw
 
-                    // Deserialize into raw Printful schema
-                    // let raw = JsonSerializer.Deserialize<Printful.CatalogProduct.PrintfulStoreProductResponse>(body)
-                    // Map to your clean domain model
-                    // return Printful.CatalogProduct.mapPrintfulStoreResponse raw
                 }
-            
-            // module CatalogVariant =
-            //     let fetchVariant (variantId:int) : Async<SharedShopDomain.CatalogVariant list> = async {
-            //         // let url = $"store/variants/%d{variantId}"
-            //         let url = $"store/products/variants/637a618f21ce44"
-            //         // let url = $"store/products/637a618f21ce44"
-            //         System.Console.WriteLine url
-            //         let! response = printfulV1HttpClient.GetAsync(url) |> Async.AwaitTask
-            //         System.Console.WriteLine $"RESPONSE: {response}"
-            //         // response.EnsureSuccessStatusCode() |> ignore
-            //         let! body = response.Content.ReadAsStringAsync() |> Async.AwaitTask
-            //         System.Console.WriteLine $"BODY: {body}"
-            //         let parsed = JsonSerializer.Deserialize<Api.Printful.ProductVariant.PrintfulVariantsResponse>(body)
-            //         // let parsed = JsonSerializer.Deserialize<Api.Printful.ProductVariant.PrintfulVariantsResponse>(body)
-            //         return Api.Printful.ProductVariant.mapVariants parsed
-            //     }
 
         let private productApi : ProductApi = {
             getProducts = Printful.CatalogProduct.fetchProducts
             getProductTemplates = Printful.CatalogProduct.fetchProductTemplates
-            // getProductVariants = Printful.CatalogVariant.fetchVariant
+            getProductDetails = Printful.CatalogProduct.ProductDetails.getProductDetails
         }
         let handler =
             Remoting.createApi()

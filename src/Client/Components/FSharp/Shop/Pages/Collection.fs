@@ -7,9 +7,9 @@ open Elmish
 open Feliz
 open Shared
 open Client.Domain.Store.Collection
-open Shared.SharedShopV2.PrintfulCatalog
 
 module State =
+    open Feliz.UseDeferred
 
     let getAllProductTemplates (request: Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Msg> =
         Cmd.OfAsync.either
@@ -22,7 +22,7 @@ module State =
         Filters    = defaultFilters
         Paging     = PrintfulCommon.emptyPaging
         SearchTerm = None
-        Products   = []
+        Products   = Deferred.HasNotStartedYet
         TotalCount = 0
         IsLoading  = false
         Error      = None
@@ -89,9 +89,18 @@ module State =
             model.Filters
         |> getAllProductTemplates
 
+    let productsOrEmpty products =
+        match products with
+        | Deferred.HasNotStartedYet
+        | Deferred.InProgress
+        | Deferred.Failed _ -> []
+        | Deferred.Resolved products -> products
+
     let canLoadMore (model: Model) =
-        if List.isEmpty model.Products && model.TotalCount = 0 then
-            true   // initial load allowed
+        if model.Products = Deferred.InProgress
+        then false
+        elif List.isEmpty (productsOrEmpty model.Products) && model.TotalCount = 0 then
+            true
         else
             model.Paging.offset + model.Paging.limit < model.TotalCount
 
@@ -121,9 +130,10 @@ module State =
 
             let products' =
                 if isAppend then
-                    model.Products @ response.templateItems
+                    productsOrEmpty model.Products @ response.templateItems
                 else
                     response.templateItems
+                |> Deferred.Resolved
 
             { model with
                 Products   = products'
@@ -187,6 +197,7 @@ module State =
             m1, Cmd.ofMsg GetProducts
 
         | ViewProduct _p ->
+            printfn $"View product: {_p.id}"
             model, Cmd.none
 
         | FeaturedClick _ ->
@@ -200,15 +211,14 @@ module State =
 
 module Collection =
     open Client.Components.Shop.Common.Ui
-    open Shared.SharedShopV2.ProductTemplate
-    open Client.Components.Shop.Common.Ui
+    open Feliz.UseDeferred
 
     type Props = {
-        Products       : ProductTemplate list
+        Products       : Deferred<ProductTemplate list>
         TotalCount     : int
         IsLoading      : bool
         CanLoadMore    : bool
-        Paging: Shared.PrintfulCommon.PagingInfoDTO
+        Paging: PrintfulCommon.PagingInfoDTO
         Filters: Filters
         SearchTerm: string option
         OnViewProduct  : ProductTemplate -> unit
@@ -223,89 +233,29 @@ module Collection =
         | "Trending"   -> "badge badge-error text-error-content"
         | _            -> "badge badge-secondary text-secondary-content"
 
-    let view (props: Props) =
+    [<ReactComponent>]
+    let view (props: Props) dispatch =
         Section.container [
             Html.div [
                 prop.className "py-10 md:py-20 space-y-16"
                 prop.children [
-                    // Header + filters
-                    // Html.div [
-                    //     prop.className "flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-base-300 pb-6 md:pb-8"
-                    //     prop.children [
-                    //         Html.div [
-                    //             prop.className "space-y-1"
-                    //             prop.children [
-                    //                 Html.h2 [
-                    //                     prop.className "text-3xl md:text-5xl font-light tracking-tight text-base-content"
-                    //                     prop.text "New Arrivals"
-                    //                 ]
-                    //                 Html.p [
-                    //                     prop.className "text-sm text-base-content/60"
-                    //                     prop.text $"{props.TotalCount} Products"
-                    //                 ]
-                    //             ]
-                    //         ]
-
-                    //         Html.div [
-                    //             prop.className "flex flex-wrap gap-3"
-                    //             prop.children [
-                    //                 Html.select [
-                    //                     prop.className "select select-bordered uppercase text-xs tracking-[0.2em] rounded-none"
-                    //                     prop.children [
-                    //                         Html.option "All Categories"
-                    //                         Html.option "Basics"
-                    //                         Html.option "Outerwear"
-                    //                         Html.option "Streetwear"
-                    //                     ]
-                    //                 ]
-                    //                 Html.select [
-                    //                     prop.className "select select-bordered uppercase text-xs tracking-[0.2em] rounded-none"
-                    //                     prop.children [
-                    //                         Html.option "Sort: Featured"
-                    //                         Html.option "Price: Low → High"
-                    //                         Html.option "Price: High → Low"
-                    //                         Html.option "Newest"
-                    //                     ]
-                    //                 ]
-                    //             ]
-                    //         ]
-                    //     ]
-                    // ]
-                    Client.Components.Shop.Common.Ui.CatalogHeader.CatalogHeader {
+                    CatalogHeader.CatalogHeader {
                         Title      = "New Arrivals"
                         Subtitle   = Some "Curated templates from the Xero Effort catalog."
                         TotalCount = props.TotalCount
                         Filters    = props.Filters
                         Paging     = props.Paging
                         SearchTerm = props.SearchTerm
-
-                        OnSearchChanged = (fun term ->
-                            // dispatch (SearchChanged term)
-                            ()
-                        )
-
-                        OnSortChanged = (fun (sortType, sortDir) ->
-                            // dispatch (SortChanged (sortType, sortDir))
-                            ()
-                        )
-
-                        OnToggleNewOnly = (fun isNew ->
-                            let newFilters = { props.Filters with OnlyNew = isNew }
-                            // dispatch (FiltersChanged newFilters)
-                            ()
-                        )
-
-                        OnPageChange = (fun newOffset ->
-                            // You already have LoadMore, but this is more general:
-                            let updated =
-                                { props.Paging with offset = newOffset }
-                            // dispatch (PagingChanged updated) // or a new Msg if you like
-                            ()
-                        )
+                        OnSearchChanged = (fun term -> dispatch (SearchChanged term))
+                        OnFiltersChanged = (fun newFilters -> dispatch (FiltersChanged newFilters))
+                        OnPageChange = (fun _ -> dispatch LoadMore)
                     }
 
                     // Featured block
-                    let featured = props.Products |> List.tryHead
+                    let featured = 
+                        props.Products
+                        |> State.productsOrEmpty
+                        |> List.tryHead
 
                     match featured with
                     | Some f ->
@@ -325,15 +275,6 @@ module Collection =
                                                     prop.src f.mockup_file_url
                                                     prop.alt f.title
                                                     prop.className "absolute inset-0 w-full h-full object-cover"
-                                                ]
-                                                Html.div [
-                                                    prop.className "absolute inset-0 bg-neutral/0 group-hover:bg-neutral/10 transition-colors duration-300 flex items-center justify-center opacity-0 group-hover:opacity-100"
-                                                    prop.children [
-                                                        Html.button [
-                                                            prop.className (Btn.primary [ "rounded-none px-10 py-3 shadow-lg" ])
-                                                            prop.text "View Product"
-                                                        ]
-                                                    ]
                                                 ]
                                             ]
                                         ]
@@ -358,21 +299,27 @@ module Collection =
                                                     prop.className "flex items-center gap-8 pt-4"
                                                     prop.children [
                                                         Html.div [
-                                                            prop.className "space-y-1"
+                                                            prop.className "space-y-1 flex gap-2 items-baseline"
                                                             prop.children [
                                                                 Html.p [
                                                                     prop.className "text-2xl md:text-3xl font-light"
-                                                                    prop.text "From $25"
+                                                                    prop.text $"{f.available_variant_ids.Length} "
                                                                 ]
                                                                 Html.p [
-                                                                    prop.className "text-xs text-base-content/60"
-                                                                    prop.text $"{f.available_variant_ids.Length} variants available"
+                                                                    prop.className "text-md text-base-content/60"
+                                                                    prop.text $" variants available"
                                                                 ]
                                                             ]
                                                         ]
-                                                        Html.button [
-                                                            prop.className "btn btn-ghost no-animation px-0 gap-2 uppercase text-xs tracking-[0.25em]"
-                                                            prop.text "Shop now"
+                                                        Html.div [
+                                                            prop.className "inset-0 bg-neutral/0 group-hover:bg-neutral/10 transition-colors duration-300 flex items-center justify-center"
+                                                            prop.children [
+                                                                Html.button [
+                                                                    prop.className (Btn.primary [ "rounded-none px-10 py-3 shadow-lg" ])
+                                                                    prop.onClick (fun e -> props.OnViewProduct f)
+                                                                    prop.text "Shop now"
+                                                                ]
+                                                            ]
                                                         ]
                                                     ]
                                                 ]
@@ -389,7 +336,7 @@ module Collection =
                     Html.div [
                         prop.className "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-12"
                         prop.children [
-                            for p in props.Products do
+                            for p in State.productsOrEmpty props.Products do
                                 Html.div [
                                     prop.key p.id
                                     prop.className "group cursor-pointer space-y-3"
@@ -406,15 +353,7 @@ module Collection =
                                                     prop.className "absolute inset-0 w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110 group-hover:opacity-80"
                                                 ]
 
-                                                Html.div [
-                                                    prop.className "absolute inset-x-0 bottom-0 pb-6 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                                                    prop.children [
-                                                        Html.button [
-                                                            prop.className "btn btn-primary btn-sm rounded-none shadow-lg"
-                                                            prop.text "Quick View"
-                                                        ]
-                                                    ]
-                                                ]
+                                            
                                             ]
                                         ]
 
@@ -423,7 +362,7 @@ module Collection =
                                             prop.className "space-y-1"
                                             prop.children [
                                                 Html.div [
-                                                    prop.className "flex items-start justify-between gap-2"
+                                                    prop.className "flex items-start justify-between gap-2 align-middle"
                                                     prop.children [
                                                         Html.div [
                                                             prop.className "flex-1 min-w-0"
@@ -438,9 +377,11 @@ module Collection =
                                                                 ]
                                                             ]
                                                         ]
-                                                        Html.p [
-                                                            prop.className "text-lg font-light flex-shrink-0"
-                                                            prop.text "From $25"
+                                                        Html.button [
+                                                            prop.className
+                                                                "btn btn-primary btn-md rounded-none shadow-lg" 
+                                                            prop.text "Shop now"
+                                                            prop.onClick (fun e -> props.OnViewProduct p)
                                                         ]
                                                     ]
                                                 ]
@@ -466,17 +407,26 @@ module Collection =
 
     [<ReactComponent>]
     let collectionView (model: Model) (dispatch: Client.Domain.Store.Collection.Msg -> unit) : ReactElement =
-        view {
-            Products       = model.Products
-            TotalCount     = model.TotalCount
-            IsLoading      = model.IsLoading
-            Filters = model.Filters
-            Paging = model.Paging
-            SearchTerm = model.SearchTerm
-            CanLoadMore    = State.canLoadMore model
-            OnViewProduct  = (fun p -> dispatch (ViewProduct p))
-            OnFeaturedClick = (fun pOpt ->
-                FeaturedClick pOpt |> dispatch
-            )
-            OnLoadMore     = (fun _ -> LoadMore |> dispatch)
-        }
+        React.useEffect(
+            fun _ ->
+                match model.Products with
+                | Deferred.HasNotStartedYet -> dispatch LoadMore
+                | _ -> ()
+            , [| box model.Products |]
+        ) 
+        view 
+            {
+                Products       = model.Products
+                TotalCount     = model.TotalCount
+                IsLoading      = model.IsLoading
+                Filters = model.Filters
+                Paging = model.Paging
+                SearchTerm = model.SearchTerm
+                CanLoadMore    = State.canLoadMore model
+                OnViewProduct  = (fun p -> dispatch (ViewProduct p))
+                OnFeaturedClick = (fun pOpt ->
+                    FeaturedClick pOpt |> dispatch
+                )
+                OnLoadMore     = (fun _ -> LoadMore |> dispatch)
+            }
+            dispatch

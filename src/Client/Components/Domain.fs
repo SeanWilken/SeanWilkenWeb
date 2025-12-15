@@ -1,6 +1,7 @@
 namespace Client.Domain
 
 open System
+open Feliz.UseDeferred
 
 // GRID GAMES THAT USE LIST OF LANE OBJECTS TO DEFINE THEIR GRID BOARD AND CONTENTS
 module GridGame =
@@ -998,13 +999,30 @@ module SharedWelcome =
     type Msg =
         | SwitchSection of SharedWebAppViewSections.AppView
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 module Store =
 
-    open Shared.SharedShopV2.PrintfulCatalog
-    open Shared.SharedShopV2.ProductTemplate
-    open Shared.SharedShopV2Domain.ProductTemplateResponse
-    open Shared.SharedShopV2Domain.CatalogProductResponse
     open Shared.PrintfulCommon
+    open Shared.PrintfulStoreDomain.ProductTemplateResponse
 
     module Collection =
 
@@ -1012,7 +1030,7 @@ module Store =
             Filters    : Filters
             Paging     : PagingInfoDTO
             SearchTerm : string option
-            Products   : ProductTemplate list
+            Products   : Deferred<ProductTemplate list>
             TotalCount : int
             IsLoading  : bool
             Error      : string option
@@ -1037,26 +1055,30 @@ module Store =
                 Filters    = defaultFilters
                 Paging     = emptyPaging
                 SearchTerm = None
-                Products   = []
+                Products   = Deferred.HasNotStartedYet
                 TotalCount = 0
                 IsLoading  = false
                 Error      = None 
             }
-        
+
+
     module ProductDesigner =
 
-        type StepDesigner =
-            | SelectBaseProduct
-            | SelectVariants
-            | ProductDesigner
-            | ReviewDesign
-
-        module Designs =
+        module DesignerOptions =
 
             type DesignSize =
                 | Small
                 | Medium
                 | Large
+
+            type VerticalAlign = Top | Center | Bottom
+            type TransformMode = ModePosition | ModeRotate | ModeScale
+
+        open DesignerOptions
+        
+        module ProductOptions =
+
+            // Color and Size ?
 
             type DesignTechnique =
                 | DTG
@@ -1088,14 +1110,28 @@ module Store =
                 ImageUrl      : string
                 Tagline       : string option
                 TechniqueHint : DesignTechnique option
+                WidthPx  : int option
+                HeightPx : int option
             }
+
+        open ProductOptions
+
+        type StepDesigner =
+            | SelectBaseProduct
+            | SelectVariants
+            | ProductDesigner
+            | ReviewDesign
+
+        module Designs =
+
+            open DesignerOptions
 
             // ------------------------
             // Placed instance
             // ------------------------
 
             /// One *use* of an ImageAsset on a specific product (front, back, etc.)
-            type PlacedDesign = {
+            type DesignOptions = {
                 /// Distinguishes multiple uses of the *same* asset (front + back, etc.)
                 InstanceId   : Guid
                 Asset        : ImageAsset
@@ -1103,20 +1139,31 @@ module Store =
                 Size         : DesignSize
                 Technique    : DesignTechnique
                 Position     : PrintfulPosition option
+                VerticalAlign : VerticalAlign option
                 LayerOptions : PrintfulLayerOption list
             }
 
+            
+            type Placement =
+                | Front
+                | Back
+                | LargeBack
+                | LeftSleeve
+                | RightSleeve
+                | OutsideLabel
+
             module Defaults =
 
-                /// “Promote” a raw ImageAsset into a first PlacedDesign with defaults
-                let toPlaced (hitArea: DesignHitArea) (size: DesignSize) (asset: ImageAsset) : PlacedDesign =
+                /// “Promote” a raw ImageAsset into a first DesignOptions with defaults
+                let toPlaced (hitArea: DesignHitArea) (size: DesignSize) (asset: ImageAsset) : DesignOptions =
                     {
                         InstanceId   = Guid.NewGuid()
                         Asset        = asset
                         HitArea      = hitArea
                         Size         = size
-                        Technique    = asset.TechniqueHint |> Option.defaultValue DesignTechnique.DTG
+                        Technique    = asset.TechniqueHint |> Option.defaultValue DTG
                         Position     = None
+                        VerticalAlign= None
                         LayerOptions = []
                     }
 
@@ -1127,6 +1174,8 @@ module Store =
                         ImageUrl     = "./../img/artwork/bowing-bubbles.jpg"
                         Tagline      = Some "Sweet as chewed gum."
                         TechniqueHint = None
+                        WidthPx  = None
+                        HeightPx = None
                     }
                     {
                         Id           = Guid.NewGuid()
@@ -1134,6 +1183,8 @@ module Store =
                         ImageUrl     = "./../img/artwork/caution-very-hot.jpg"
                         Tagline      = Some "Handle with xero effort."
                         TechniqueHint = None
+                        WidthPx  = None
+                        HeightPx = None
                     }
                     {
                         Id           = Guid.NewGuid()
@@ -1141,6 +1192,8 @@ module Store =
                         ImageUrl     = "./../img/artwork/misfortune.png"
                         Tagline      = Some "It was always somewhere in the cards."
                         TechniqueHint = None
+                        WidthPx  = None
+                        HeightPx = None
                     }
                     {
                         Id           = Guid.NewGuid()
@@ -1148,6 +1201,8 @@ module Store =
                         ImageUrl     = "./../img/artwork/out-for-blood.png"
                         Tagline      = Some "Always thirsty."
                         TechniqueHint = None
+                        WidthPx  = None
+                        HeightPx = None
                     }
                 ]
 
@@ -1156,9 +1211,9 @@ module Store =
 
                 let private sizeToRelativeBox = function
                     // these are “relative” sizes (0.0–1.0 of print area); you can refine later
-                    | DesignSize.Small  -> 0.4
-                    | DesignSize.Medium -> 0.7
-                    | DesignSize.Large  -> 1.0
+                    | Small  -> 0.4
+                    | Medium -> 0.7
+                    | Large  -> 1.0
 
                 /// Given a product’s print-area dimensions (inches), derive a rough position box
                 let autoCenterPosition (areaWidth: float) (areaHeight: float) (size: DesignSize) : PrintfulPosition =
@@ -1172,11 +1227,11 @@ module Store =
                         Top    = (areaHeight - height) / 2.0
                     }
 
-                /// Convert a single PlacedDesign into a PrintfulPlacement
+                /// Convert a single DesignOptions into a PrintfulPlacement
                 let toPlacementAndLayer
                     (printAreaWidth : float)
                     (printAreaHeight: float)
-                    (pd: PlacedDesign)
+                    (pd: DesignOptions)
                     : PrintfulPlacement =
 
                     let position =
@@ -1198,11 +1253,27 @@ module Store =
 
         open Designs
 
+        type Transform = {
+            Pos      : PrintfulPosition
+            Rotation : float
+        }
+
+        type DesignLayer = {
+            Id        : string
+            Name      : string
+            Technique : ProductOptions.DesignTechnique
+            ActivePlacement : Placement
+            // store transforms per placement so switching tabs doesn’t destroy work
+            ByPlacement : Map<Placement, Transform>
+        }
+
+        type NormRect = { X: float; Y: float; W: float; H: float } // 0..1 in preview space
+
         type Msg =
             
             | BackToDropLanding
             | LoadProducts
-            | ProductsLoaded of CatalogProductsResponse
+            | ProductsLoaded of Shared.PrintfulStoreDomain.CatalogProductResponse.CatalogProductsResponse
             | LoadFailed of string
             | ViewProduct of CatalogProduct
             
@@ -1220,125 +1291,163 @@ module Store =
             | DesignerFiltersChanged of Filters
             | DesignerPageChanged of PagingInfoDTO
 
+            | SelectActiveLayer of int
+            | SetPlacement of layerIdx:int * placement:Placement
+
             // placement-level edits
             | SetActivePlaced of int
             | UpdatePlacedPlacement of index:int * DesignHitArea
             | UpdatePlacedSize      of index:int * DesignSize
             | UpdatePlacedTechnique  of index:int * DesignTechnique
-            | UpdatePlacedPositionTag of index:int * string
-            
+            | UpdatePlacedPosition  of index:int * PrintfulPosition option
+            | UpdatePlacedVerticalAlign of index:int * VerticalAlign
+            | SetTransformMode of TransformMode
+
             | AddToCart of quantity:int
             
 
         type Model = {
-            products             : CatalogProduct list
-            paging               : PagingInfoDTO
-            query                : Filters
-            searchTerm           : string
+            Products             : Deferred<CatalogProduct list>
+            Paging               : PagingInfoDTO
+            Query                : Filters
+            SearchTerm           : string
 
-            currentStep          : StepDesigner
-            selectedProduct      : CatalogProduct option
-            selectedVariantSize  : string option
-            selectedVariantColor : string option
+            CurrentStep          : StepDesigner
+            SelectedProduct      : CatalogProduct option
+            SelectedVariantSize  : string option
+            SelectedVariantColor : string option
 
             // NEW
-            selectedVariantId   : int option
-            availableAssets      : ImageAsset list  // library/mock list
-            selectedAssets       : ImageAsset list  // “added designs” in the Add Designs step
-            placedDesigns        : PlacedDesign list
-            activePlacedIndex    : int option
-            placements           : PlacementOption list
+            SelectedVariantId   : int option
+            AvailableAssets      : ImageAsset list  // library/mock list
+            SelectedAssets       : ImageAsset list  // “added designs” in the Add Designs step
+            DesignOptions        : DesignOptions list
+            ActivePlacedIndex    : int option
+            TransformMode     : TransformMode
+            Placements           : PlacementOption list
         }
  
         // ADD DEFERRED!!!!
         let initialModel () = {
-            products = []
-            paging = emptyPaging
-            query = defaultFilters
-            searchTerm = ""
-            currentStep = SelectBaseProduct
-            selectedVariantId = None
-            selectedProduct = None
-            selectedVariantSize = None
-            selectedVariantColor = None
-            availableAssets = Defaults.all
-            selectedAssets = []
-            placedDesigns = []
-            activePlacedIndex = None
-            placements = [
+            Products = Deferred.HasNotStartedYet
+            Paging = emptyPaging
+            Query = defaultFilters
+            SearchTerm = ""
+            CurrentStep = SelectBaseProduct
+            SelectedProduct = None
+            SelectedVariantSize = None
+            SelectedVariantColor = None
+            SelectedVariantId = None
+            AvailableAssets = Defaults.all
+            SelectedAssets = []
+            DesignOptions = []
+            ActivePlacedIndex = None
+            TransformMode = ModePosition
+            Placements = [
                 {
                     Label   = "Front"
-                    HitArea = Front
+                    HitArea = DesignHitArea.Front
                 }
                 {
                     Label   = "Back"
-                    HitArea = Back
+                    HitArea = DesignHitArea.Back
                 }
                 {
                     Label   = "Pocket"
-                    HitArea = Pocket
+                    HitArea = DesignHitArea.Pocket
                 }
                 {
                     Label   = "Left Sleeve"
-                    HitArea = LeftSleeve
+                    HitArea = DesignHitArea.LeftSleeve
                 }
                 {
                     Label   = "Right Sleeve"
-                    HitArea = RightSleeve
+                    HitArea = DesignHitArea.RightSleeve
                 }
                 {
                     Label   = "Left Leg"
-                    HitArea = LeftLeg
+                    HitArea = DesignHitArea.LeftLeg
                 }
                 {
                     Label   = "Right Leg"
-                    HitArea = RightLeg
+                    HitArea = DesignHitArea.RightLeg
                 }
                 {
                     Label   = "Left Half"
-                    HitArea = LeftHalf
+                    HitArea = DesignHitArea.LeftHalf
                 }
                 {
                     Label   = "Right Half"
-                    HitArea = RightHalf
+                    HitArea = DesignHitArea.RightHalf
                 }
                 {
                     Label   = "Center"
-                    HitArea = Center
+                    HitArea = DesignHitArea.Center
                 }
             ]
         }
+    
+    
+    module ProductViewer =
+
+        open Shared.StoreProductViewer
+
+        type Model =
+            { 
+                Key                 : ProductKey
+                Seed                : ProductSeed option
+                ReturnTo            : ReturnTo
+                Details             : Deferred<GetDetailsResponse>
+                SelectedColor       : string option
+                SelectedSize        : string option
+                SelectedVariantId   : int option
+            }
+
+        type Msg =
+            | InitWith of key:ProductKey * seed:ProductSeed option * returnTo:ReturnTo
+            | LoadDetails
+            | GotDetails of GetDetailsResponse
+            | FailedDetails of exn
+
+            | SelectColor of string
+            | SelectSize  of string
+            | SelectVariant of int
+
+            // “primary CTA”
+            | PrimaryAction
+
+            // navigation hooks
+            | GoBack
+
+        let keyFromSeed = function
+            | SeedCatalog p  -> Catalog p.id
+            | SeedTemplate t -> Template t.id
+
+        let initModel (key: ProductKey) (seed: ProductSeed option) (returnTo: ReturnTo) : Model =
+            { 
+                Key               = key
+                Seed              = seed
+                ReturnTo          = returnTo
+                Details           = Deferred.HasNotStartedYet
+                SelectedColor     = None
+                SelectedSize      = None
+                SelectedVariantId = None }
+
+        let detailsReq (m: Model) : GetDetailsRequest =
+            { 
+                Key               = m.Key
+                SelectedColorOpt  = m.SelectedColor
+                SelectedSizeOpt   = m.SelectedSize
+                SelectedVariantId = m.SelectedVariantId }
+
+    
     open ProductDesigner.Designs
-    open ProductDesigner.Designs.ToPrintful
-    open Shared.SharedShopV2Domain
-    open Shared.SharedShopV2.Cart
-
-    module ProductTemplate =
-
-        module ProductTemplateBrowser =
-
-            type Model = {
-                Filters: Filters
-                Paging: PagingInfoDTO
-                Templates: ProductTemplate list
-                SelectedTemplate: ProductTemplate option
-                IsLoading: bool
-                Error: string option
-            }
-
-            let initialModel () = {
-                Filters = defaultFilters
-                Paging = emptyPaging
-                Templates = []
-                SelectedTemplate = None
-                IsLoading = false
-                Error = None
-            }
+    open Shared.StoreProductViewer
 
     module PrintfulMapping =
-        open Shared.SharedShopV2Domain
+        open Shared.Store.Cart
 
-        let mapDesignToPlacement (d: ProductDesigner.Designs.PlacedDesign) : PrintfulPlacement =
+        let mapDesignToPlacement (d: ProductDesigner.Designs.DesignOptions) : PrintfulPlacement =
             {
                 Placement = d.HitArea.ToPrintfulPlacement()
                 Technique = d.Technique.ToPrintfulTechnique()
@@ -1352,86 +1461,40 @@ module Store =
                 ]
             }
 
-        /// For now, we hard-code a reasonable print area size.
-        /// Later you can derive this from the product/template metadata.
-        let private defaultPrintAreaWidthInches  = 12.0
-        let private defaultPrintAreaHeightInches = 16.0
+        let sizeToDefaultPosition =
+            function
+            | Small  -> { Width = 3.0; Height = 3.0; Left = 0.0; Top = 0.0 }
+            | Medium -> { Width = 6.0; Height = 6.0; Left = 0.0; Top = 0.0 }
+            | Large  -> { Width = 10.0; Height = 10.0; Left = 0.0; Top = 0.0 }
 
-        /// Convert all placed designs in the designer model into Printful placements.
-        let private toPrintfulPlacements
-            (placed : PlacedDesign list)
-            : PrintfulPlacement list =
+        let toPrintfulPlacements (placed: DesignOptions list) : PrintfulPlacement list =
             placed
-            |> List.map (ToPrintful.toPlacementAndLayer 12.0 16.0) // TODO: real print-area dimensions
+            |> List.groupBy (fun d -> d.HitArea, d.Technique)
+            |> List.map (fun ((hitArea, tech), ds) ->
+                {
+                    Placement = hitArea.ToPrintfulPlacement()
+                    Technique = tech.ToPrintfulTechnique()
+                    Layers =
+                        ds
+                        |> List.map (fun d ->
+                            {
+                                Type = "file"
+                                Url = d.Asset.ImageUrl
+                                LayerOptions = d.LayerOptions
+                                Position = d.Position |> Option.orElse (Some (sizeToDefaultPosition d.Size))
+                            }
+                        )
+                }
+            )
 
-        /// Build a *domain* CartItem (DU) from the designer model + qty
-        // let toCustomCartDU
-        //     (qty     : int)
-        //     (model   : ProductDesigner.Model)
-        //     : CartLineItem option =
-
-        //     match model.selectedVariantId, model.placedDesigns with
-        //     | None, _ -> None
-        //     | _, []   -> None
-        //     | Some variantId, placed ->
-
-        //         let placements = toPrintfulPlacements placed
-
-        //         let preview =
-        //             model.selectedProduct
-        //             |> Option.map (fun p -> p.thumbnailURL)
-
-        //         let baseItem : CartItem =
-        //             {
-        //                 VariantId    = variantId
-        //                 Quantity     = qty
-        //                 Placements   = placements
-        //                 PreviewImage = preview
-        //                 UnitPrice = 
-        //                     model.selectedProduct
-        //                     |> function
-        //                         | None -> 0.0m
-        //                         | Some cp -> 100.0m
-        //                 CatalogProductId =
-        //                     model.selectedProduct
-        //                     |> function
-        //                         | None -> ""
-        //                         | Some cp -> cp.id
-        //                 Name =
-        //                 CatalogVariantId =
-        //                 // type CartItem = {
-        //                 //             VariantId : int                      // catalog_variant_id
-        //                 //             Placements : PrintfulPlacement list  // normalized placements/layers
-        //                 //             PreviewImage : string option         // for UI purposes
-        //                 //             /// Printful catalog product id (v2 /catalog-products)
-        //                 //             CatalogProductId   : int
-        //                 //             /// Printful catalog variant id (from /catalog-products/{id}/catalog-variants)
-        //                 //             CatalogVariantId   : int
-        //                 //             Name               : string
-        //                 //             ThumbnailUrl       : string
-        //                 //             /// e.g. "M", "L", "XL"
-        //                 //             Size               : string
-        //                 //             /// e.g. "Black"
-        //                 //             ColorName          : string
-        //                 //             /// e.g. "#000000"
-        //                 //             ColorCodeOpt       : string option
-        //                 //             Quantity           : int
-        //                 //             /// Store price you charge the customer (retail)
-        //                 //             UnitPrice          : decimal
-        //                 //             /// Optional flag for your custom-design flow
-        //                 //             IsCustomDesign     : bool
-        //                 //         }
-        //             }
-
-        //         Some (Custom baseItem)
         let toCustomCartDU
             (qty   : int)
             (model : ProductDesigner.Model)
             : CartLineItem option =
 
-            match model.selectedVariantId,
-                model.selectedProduct,
-                model.placedDesigns with
+            match model.SelectedVariantId,
+                model.SelectedProduct,
+                model.DesignOptions with
 
             // must have a variant, a base product, and at least one placed design
             | None, _, _ -> None
@@ -1453,13 +1516,13 @@ module Store =
 
                 // 3. Size + color from the designer selections
                 let size =
-                    model.selectedVariantSize
+                    model.SelectedVariantSize
                     |> Option.defaultValue ""
 
                 // For now we’ll treat the selected color string as the "name",
                 // and assume we *might* also use it as a hex code.
                 let colorName, colorCodeOpt =
-                    match model.selectedVariantColor with
+                    match model.SelectedVariantColor with
                     | None
                     | Some "" ->
                         "Default", None
@@ -1495,20 +1558,26 @@ module Store =
                     }
 
                 // 6. Wrap it in the DU
-                Some (CartLineItem.Custom baseItem)
+                Some (Custom baseItem)
+
 
     type ShopSection =
+
         | ShopLanding // this is is a welcome page
-        // | ProductTemplateBrowser of ProductTemplate.ProductTemplateBrowser.Model // product template browser, not yet created
-        // | BuildYourOwnWizard of BuildYourOwnProductWizard.Model // build your own, should be able to control whether or not we allow the user to upload their own images.
+
         | ProductDesigner of ProductDesigner.Model // build your own, should be able to control whether or not we allow the user to upload their own images.
+        
         | CollectionBrowser of Collection.Model
+        
+        | ProductViewer of ProductViewer.Model
+        
         | ShoppingBag
         | Checkout
         | Payment
+        | NotFound
+
         // | Social
         // | Contact
-        | NotFound
         
     type ShopLandingMsg =
         | SwitchSection of ShopSection
@@ -1522,7 +1591,7 @@ module Store =
         | ChooseVariantSize of string
         | ChooseVariantColor of string
         | GetProductTemplates
-        | GotProductTemplates of ProductTemplatesResponse
+        | GotProductTemplates of Shared.PrintfulStoreDomain.ProductTemplateResponse.ProductTemplatesResponse
         | FailedProductTemplates of exn
         | AddProductToBag of ProductTemplate
 
@@ -1535,11 +1604,22 @@ module Store =
         | Cart
         | Checkout
 
+    open Shared.Store.Cart
+
     type ShopMsg =
+    
         | NavigateTo of ShopSection
+
         | ShopLanding of ShopLandingMsg
+        
         | ShopCollectionMsg of Collection.Msg
+        
         | ShopDesignerMsg of ProductDesigner.Msg
+        
+        | ViewProduct of ProductKey * ProductSeed option * ReturnTo
+        
+        | ShopProduct of ProductViewer.Msg
+        
         | AddCartItem      of CartLineItem
         | RemoveCartItem   of CartLineItem
         | UpdateCartQty    of CartLineItem * int
@@ -1559,6 +1639,13 @@ module Store =
         CheckoutTax = None
         CheckoutShipping = None
     }
+
+
+
+
+
+
+
 
 module SharedPage =
     

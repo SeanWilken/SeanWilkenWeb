@@ -2,23 +2,18 @@ namespace Client.Components.Shop.Cart
 
 open Feliz
 open Shared
-open Client.Components.Shop.Common
-open Client.Components.Shop.Common.Types
+open Store.Cart
+open Bindings.LucideIcon
 
 module Cart =
 
+    // move out
     type Msg =
         | IncrementQty of itemId:int
         | DecrementQty of itemId:int
         | RemoveItem   of itemId:int
         | GoToCollection
         | GoToCheckout
-
-    open System
-    open Feliz
-    open SharedShopV2
-    open SharedShopV2.Cart
-    open Bindings.LucideIcon
 
     type Props = {
         Cart : CartState
