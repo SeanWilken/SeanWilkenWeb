@@ -42,6 +42,8 @@ jobs:
         run: pnpm --version
 
       - name: Run Bundle target
+        env:
+          VITE_STRIPE_API_PK_TEST: ${{ secrets.VITE_STRIPE_API_PK_TEST }}
         run: dotnet run bundle
 
       - name: Upload artifact
