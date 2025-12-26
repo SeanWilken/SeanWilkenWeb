@@ -13,8 +13,10 @@ output/
 packages/
 paket-files/
 node_modules/
+.env
 release.cmd
 release.sh
 *.orig
 *.fsproj.user
 *.DotSettings.user
+src/Client/.pnpm-store/

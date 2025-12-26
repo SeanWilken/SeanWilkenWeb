@@ -2,17 +2,6 @@ namespace Client.Components.Shop.Common
 
 open Feliz
 
-
-module Types =
-    type MockProduct = {
-        Id       : int
-        Name     : string
-        Price    : decimal
-        Category : string
-        Colors   : int
-        Tag      : string option
-    }
-
 module Ui =
     /// Simple helper to concatenate tailwind classes cleanly
     let inline tw (classes: string list) =
@@ -90,6 +79,7 @@ module Ui =
             Filters       : Filters
             Paging        : PagingInfoDTO
             SearchTerm    : string option
+            DisableControls : bool
 
             // callbacks
             OnSearchChanged : string -> unit
@@ -311,9 +301,191 @@ module Ui =
                             ]
 
                             // Right side: search + sort + new-only
-                            headerRight props
+                            if not props.DisableControls
+                            then headerRight props
                         ]
                     ]
                 ]
             ]
+
+
+
+module Checkout =
+    open Shared.Store
+    open Shared.Api.Checkout
+
+    /// Map a CartLineItem (UI / domain) -> CheckoutCartItem (API DTO)
+    let toCheckoutItem (item: CartLineItem) : CheckoutCartItem =
+        match item with
+        | CartLineItem.Template t ->
+            {
+                Kind             = CartItemKind.Template
+                Quantity         = t.Quantity
+                ExternalProductId = None
+                SyncProductId    = None
+                SyncVariantId    = None
+                CatalogProductId = Some t.CatalogProductId
+                CatalogVariantId = Some t.VariantId
+                TemplateId       = Some t.TemplateId
+            }
+
+        | CartLineItem.Sync s ->
+            {
+                Kind             = CartItemKind.Sync
+                Quantity         = s.Quantity
+                ExternalProductId = s.ExternalId
+                SyncProductId    = Some s.SyncProductId
+                SyncVariantId    = Some s.SyncVariantId
+                CatalogProductId = None
+                CatalogVariantId = s.CatalogVariantId
+                TemplateId       = None
+            }
+
+        | CartLineItem.Custom c ->
+            {
+                Kind             = CartItemKind.Custom
+                Quantity         = c.Quantity
+                ExternalProductId = None
+                SyncProductId    = None
+                SyncVariantId    = None
+                CatalogProductId = Some c.CatalogProductId
+                CatalogVariantId = Some c.CatalogVariantId
+                TemplateId       = None
+            }
+
+    let toLineItem (item: CartLineItem) : LineItem =
+        match item with
+        | CartLineItem.Template t ->
+            {
+                externalId = ""
+                productId = t.CatalogProductId
+                variantId = t.VariantId
+                quantity = t.Quantity
+            }
+
+        | CartLineItem.Sync s ->
+            printfn $"SYNC PRODUCT ID: {s.SyncProductId}"
+            {
+                externalId = "" // s.ExternalId |> Option.defaultValue ""
+                productId = s.SyncProductId
+                variantId = s.CatalogVariantId |> Option.defaultValue 0
+                quantity = s.Quantity
+            }
+            
+        | CartLineItem.Custom c ->
+            {
+                externalId = ""
+                productId = c.CatalogProductId
+                variantId = c.CatalogVariantId
+                quantity = c.Quantity
+            }
+                
+    /// Map a whole cart to the DTO list used in Checkout requests.
+    let toCheckoutItems (items: CartLineItem list) : CheckoutCartItem list =
+        items |> List.map toCheckoutItem
+    let toLineItems (items: CartLineItem list) : LineItem list =
+        items |> List.map toLineItem
+
+    // ----------------------------------------------------------------
+    // Optional: reverse mapping (only if you ever want to rebuild the
+    // CartLineItem from a CheckoutCartItem + some extra lookup data).
+    // Typically you *don't* need this because you already keep the
+    // original CartLineItem list on the client and just send a pared-
+    // down DTO to the server.
+    // ----------------------------------------------------------------
+
+    type SyncVariantLookup = int64 * int64 -> SyncCartItem option
+    type TemplateLookup    = int * int * int option -> TemplateCartItem option
+    type CustomLookup      = int * int -> CartItem option
+
+    let tryFromCheckoutItem
+        (syncLookup    : SyncVariantLookup)
+        (templateLookup: TemplateLookup)
+        (customLookup  : CustomLookup)
+        (dto           : CheckoutCartItem)
+        : CartLineItem option =
+
+        match dto.Kind with
+        | CartItemKind.Sync ->
+            match dto.SyncProductId, dto.SyncVariantId with
+            | Some spid, Some svid ->
+                syncLookup (spid, svid)
+                |> Option.map CartLineItem.Sync
+            | _ -> None
+
+        | CartItemKind.Template ->
+            match dto.CatalogProductId, dto.CatalogVariantId, dto.TemplateId with
+            | Some cpid, Some cvid, tid ->
+                templateLookup (cpid, cvid, tid)
+                |> Option.map CartLineItem.Template
+            | _ -> None
+
+        | CartItemKind.Custom ->
+            match dto.CatalogProductId, dto.CatalogVariantId with
+            | Some cpid, Some cvid ->
+                customLookup (cpid, cvid)
+                |> Option.map CartLineItem.Custom
+            | _ -> None
+
+
+    let tryFindSyncItemInCart syncProductId syncVariantId cartItems =
+        cartItems
+        |> List.filter ( fun it ->
+                match it with
+                | CartLineItem.Sync _ -> true
+                |  _ -> false
+        )
+        |> List.tryFind ( fun it ->
+                match it with
+                | CartLineItem.Sync ti ->
+                    ti.SyncProductId = syncProductId
+                    && ti.SyncVariantId = syncVariantId
+                |  _ -> false
+        )
+
+    let tryFindCustomItemInCart catalogProductId catalogVariantId cartItems =
+        cartItems
+        |> List.filter ( fun it ->
+                match it with
+                | CartLineItem.Custom _ -> true
+                |  _ -> false
+        )
+        |> List.tryFind ( fun it ->
+                match it with
+                | CartLineItem.Custom ti ->
+                    ti.CatalogProductId = catalogProductId
+                    && ti.CatalogVariantId = catalogVariantId
+                |  _ -> false
+        )
+
+    let tryFindTemplateItemInCart templateId cartItems =
+        cartItems
+        |> List.filter ( fun it ->
+                match it with
+                | CartLineItem.Template _ -> true
+                |  _ -> false
+        )
+        |> List.tryFind ( fun it ->
+                match it with
+                | CartLineItem.Template ti ->
+                    ti.TemplateId = templateId
+                |  _ -> false
+        )
+
+    let tryFindProductByKindInCart itemKind (item: CheckoutCartItem) cartItems =
+        match itemKind with
+        | CartItemKind.Template -> 
+            tryFindTemplateItemInCart
+                (item.TemplateId |> Option.defaultValue 0) 
+                cartItems
+        | CartItemKind.Sync -> 
+            tryFindSyncItemInCart
+                (item.SyncProductId |> Option.defaultValue 0)
+                (item.SyncVariantId |> Option.defaultValue 0)
+                cartItems
+        | CartItemKind.Custom -> 
+            tryFindCustomItemInCart 
+                (item.CatalogProductId |> Option.defaultValue 0)
+                (item.CatalogVariantId |> Option.defaultValue 0)
+                cartItems
 

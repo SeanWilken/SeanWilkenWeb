@@ -9,6 +9,7 @@ open Elmish.Navigation
 open Client.Domain
 open Client.Domain.SharedPage
 open Client.Domain.Store
+open Shared.StoreProductViewer
 
 
 let toPath =
@@ -32,10 +33,10 @@ let toPath =
     | Some (Shop Store.ShopSection.ShopLanding) -> "/shop/drop"
     | Some (Shop (Store.ShopSection.CollectionBrowser _)) -> "/shop/collection"
     | Some (Shop (Store.ShopSection.ProductDesigner _)) -> "/shop/designer"
-    | Some (Shop (Store.ShopSection.ProductViewer _)) -> "/shop/product"
-    | Some (Shop Store.ShopSection.ShoppingBag) -> "/shop/shoppingBag"
+    | Some (Shop (Store.ShopSection.ProductViewer { Key = ProductKey.Template _ })) -> "/shop/template" // $"/shop/product/template/{id}"
+    | Some (Shop (Store.ShopSection.ProductViewer { Key = ProductKey.Catalog _ })) -> $"/shop/catalog" // $"/shop/product/catalog/{id}"
+    | Some (Shop Store.ShopSection.Cart) -> "/shop/cart"
     | Some (Shop Store.ShopSection.Checkout) -> "/shop/checkout"
-    | Some (Shop Store.ShopSection.Payment) -> "/shop/payment"
     // | Some (Shop Store.ShopSection.Contact) -> "/shop/contact"
     // | Some (Shop Store.ShopSection.Social) -> "/shop/social"
     | Some (Shop Store.ShopSection.NotFound) -> "/notFound"
@@ -44,28 +45,39 @@ let toPath =
 let shopParser : Parser<Store.ShopSection->Page,_> =
     oneOf [
         map Store.ShopSection.ShopLanding (s "drop")
-        // map Store.ShopSection.ShopTypeSelector (s "select")
-        // map (Store.ShopSection.ProductViewer (
-        //         ProductViewer.initModel
-        //             (Shared.StoreProductViewer.ProductKey.Template 0)
-        //             None
-        //             Shared.StoreProductViewer.ReturnTo.BackToCollection 
-        //     )) (s "product")
+
         map
-            (fun templateId ->
-                Store.ShopSection.ProductViewer (
-                    ProductViewer.initModel
-                        (Shared.StoreProductViewer.ProductKey.Template templateId)
-                        None
-                        Shared.StoreProductViewer.ReturnTo.BackToCollection
-                )
-            )
-            (s "product" </> s "template" </> i32)
+            (Store.ShopSection.ProductViewer (
+                ProductViewer.initModel
+                    (Shared.StoreProductViewer.ProductKey.Catalog 0)
+                    None
+                    Shared.StoreProductViewer.ReturnTo.BackToDesignerBaseSelect
+            ))
+            // (fun catalogId ->
+            //     Store.ShopSection.ProductViewer (
+            //         ProductViewer.initModel
+            //             (Shared.StoreProductViewer.ProductKey.Catalog catalogId)
+            //             None
+            //             Shared.StoreProductViewer.ReturnTo.BackToDesignerBaseSelect
+            //     )
+            // )
+            // (s "product" </> s "catalog") // </> i32)
+            (s "catalog") // </> i32)
+        map
+            (Store.ShopSection.ProductViewer (
+                ProductViewer.initModel
+                    (Shared.StoreProductViewer.ProductKey.Template 0)
+                    None
+                    Shared.StoreProductViewer.ReturnTo.BackToCollection
+            ))
+            // (fun templateId ->
+            // )
+            // (s "product" </> s "template") // </> i32)
+            ( s "template") // </> i32)
         map (Store.ShopSection.CollectionBrowser  (Collection.initModel ()) ) (s "collection")
         map (Store.ShopSection.ProductDesigner  (ProductDesigner.initialModel ()) ) (s "designer")
-        map Store.ShopSection.ShoppingBag (s "shoppingBag")
+        map Store.ShopSection.Cart (s "cart")
         map Store.ShopSection.Checkout (s "checkout")
-        map Store.ShopSection.Payment (s "payment")
     ]
 
 // let codeGalleryParser : Parser<PortfolioSection->Page,_> =

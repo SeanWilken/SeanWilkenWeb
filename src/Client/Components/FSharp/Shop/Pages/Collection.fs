@@ -11,12 +11,12 @@ open Client.Domain.Store.Collection
 module State =
     open Feliz.UseDeferred
 
-    let getAllProductTemplates (request: Api.Printful.CatalogProductRequest.CatalogProductsQuery) : Cmd<Msg> =
+    let getAllSyncProducts (request: Api.Printful.SyncProduct.GetSyncProductsRequest) : Cmd<Msg> =
         Cmd.OfAsync.either
-            ( fun x -> Client.Api.productsApi.getProductTemplates x )
+            ( fun x -> Client.Api.productsApi.getSyncProducts x )
             request
-            GotProducts
-            FailedProducts
+            GotSyncProducts
+            FailedSyncProducts
 
     let initModel : Model = {
         Filters    = defaultFilters
@@ -83,12 +83,6 @@ module State =
                 SearchTerm = searchTerm
         }
 
-    let getProductsForModel (model: Model) : Cmd<Msg> =
-        Api.Printful.CatalogProductRequest.toApiQuery
-            model.Paging
-            model.Filters
-        |> getAllProductTemplates
-
     let productsOrEmpty products =
         match products with
         | Deferred.HasNotStartedYet
@@ -104,6 +98,13 @@ module State =
         else
             model.Paging.offset + model.Paging.limit < model.TotalCount
 
+    let syncProductRequestFromModel model : Api.Printful.SyncProduct.GetSyncProductsRequest =
+        {
+            limit  = None
+            offset = None
+        }
+    
+
     let init (rawQuery: string option) : Model * Cmd<Msg> =
         let m0 =
             match rawQuery with
@@ -113,26 +114,26 @@ module State =
         let m1 = { m0 with IsLoading = true }
 
         m1,
-        Api.Printful.CatalogProductRequest.toApiQuery
-            m0.Paging
-            m0.Filters
-        |> getAllProductTemplates
+        getAllSyncProducts (syncProductRequestFromModel m1)
+            
 
     let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         match msg with
+        // ??
+        | ViewSyncProduct _ ->
+            model, Cmd.none
 
-        | GetProducts ->
+        | GetSyncProducts ->
+
             let m1 = { model with IsLoading = true; Error = None }
-            m1, getProductsForModel m1
+            m1, getAllSyncProducts (syncProductRequestFromModel m1)
 
-        | GotProducts response ->
-            let isAppend = model.Paging.offset > 0
+        | GotSyncProducts response ->
 
+            response.items
+            |> List.iter (fun p -> printfn $"Sync Product: {p.Id} - {p.Name}")
             let products' =
-                if isAppend then
-                    productsOrEmpty model.Products @ response.templateItems
-                else
-                    response.templateItems
+                productsOrEmpty model.Products @ response.items
                 |> Deferred.Resolved
 
             { model with
@@ -142,17 +143,13 @@ module State =
                 IsLoading  = false
                 Error      = None
             }, Cmd.none
+            
 
-        | FailedProducts ex ->
+        | FailedSyncProducts ex ->
             { model with
                 IsLoading = false
                 Error     = Some ex.Message
             }, Cmd.none
-
-        | InitFromQuery rawQuery ->
-            let m1 = applyQueryToModel rawQuery model
-            let m2 = { m1 with IsLoading = true }
-            m2, getProductsForModel m2
 
         | LoadMore ->
             // Only bump paging if we *can* load more
@@ -162,7 +159,8 @@ module State =
                         offset = model.Paging.offset + model.Paging.limit }
 
                 let m1 = { model with Paging = newPaging; IsLoading = true }
-                m1, Cmd.ofMsg GetProducts
+                m1,
+                Cmd.ofMsg GetSyncProducts
             else
                 model, Cmd.none
 
@@ -173,7 +171,7 @@ module State =
                     Paging    = { model.Paging with offset = 0 }
                     IsLoading = true
                 }
-            m1, getProductsForModel m1
+            m1, Cmd.ofMsg GetSyncProducts
 
         | SearchChanged term ->
             let m1 =
@@ -181,7 +179,7 @@ module State =
                     SearchTerm = Some term
                     Paging     = { model.Paging with offset = 0 }
                 }
-            m1, Cmd.ofMsg GetProducts
+            m1, Cmd.ofMsg GetSyncProducts
 
         | SortChanged (sortType, sortDir) ->
             let filters =
@@ -194,14 +192,7 @@ module State =
                     Filters = filters
                     Paging  = { model.Paging with offset = 0 }
                 }
-            m1, Cmd.ofMsg GetProducts
-
-        | ViewProduct _p ->
-            printfn $"View product: {_p.id}"
-            model, Cmd.none
-
-        | FeaturedClick _ ->
-            model, Cmd.none
+            m1, Cmd.ofMsg GetSyncProducts
 
         | ApplyFilterPreset _ ->
             model, Cmd.none
@@ -212,29 +203,22 @@ module State =
 module Collection =
     open Client.Components.Shop.Common.Ui
     open Feliz.UseDeferred
+    open Shared.StoreProductViewer.SyncProduct
 
     type Props = {
-        Products       : Deferred<ProductTemplate list>
+        Products       : Deferred<SyncProductSummary list>
         TotalCount     : int
         IsLoading      : bool
         CanLoadMore    : bool
         Paging: PrintfulCommon.PagingInfoDTO
         Filters: Filters
         SearchTerm: string option
-        OnViewProduct  : ProductTemplate -> unit
-        OnFeaturedClick: ProductTemplate option -> unit
+        OnViewProduct  : SyncProductSummary -> unit
         OnLoadMore     : unit -> unit
     }
 
-    let private tagClass tag =
-        match tag with
-        | "New"        -> "badge badge-neutral"
-        | "Bestseller" -> "badge badge-outline border-base-content bg-base-100 text-base-content"
-        | "Trending"   -> "badge badge-error text-error-content"
-        | _            -> "badge badge-secondary text-secondary-content"
-
     [<ReactComponent>]
-    let view (props: Props) dispatch =
+    let CollectionView (props: Props) dispatch =
         Section.container [
             Html.div [
                 prop.className "py-10 md:py-20 space-y-16"
@@ -246,9 +230,10 @@ module Collection =
                         Filters    = props.Filters
                         Paging     = props.Paging
                         SearchTerm = props.SearchTerm
+                        DisableControls = true
                         OnSearchChanged = (fun term -> dispatch (SearchChanged term))
                         OnFiltersChanged = (fun newFilters -> dispatch (FiltersChanged newFilters))
-                        OnPageChange = (fun _ -> dispatch LoadMore)
+                        OnPageChange = (fun _ -> () )
                     }
 
                     // Featured block
@@ -259,9 +244,10 @@ module Collection =
 
                     match featured with
                     | Some f ->
+                        
                         Html.div [
                             prop.className "group cursor-pointer"
-                            prop.onClick (fun _ -> props.OnFeaturedClick (Some f))
+                            prop.onClick (fun _ -> props.OnViewProduct f)
                             prop.children [
                                 Html.div [
                                     prop.className "grid grid-cols-1 lg:grid-cols-2 bg-base-200 overflow-hidden"
@@ -271,11 +257,18 @@ module Collection =
                                         Html.div [
                                             prop.className "relative aspect-square overflow-hidden"
                                             prop.children [
-                                                Html.img [
-                                                    prop.src f.mockup_file_url
-                                                    prop.alt f.title
-                                                    prop.className "absolute inset-0 w-full h-full object-cover"
-                                                ]
+                                                match f.ThumbnailUrl with
+                                                | None ->
+                                                    Html.div [
+                                                        prop.className "absolute inset-0 w-full h-full flex items-center justify-center bg-base-300 text-base-content/50"
+                                                        prop.text "No Image"
+                                                    ]
+                                                | Some tni ->
+                                                    Html.img [
+                                                        prop.src tni
+                                                        prop.alt f.Name
+                                                        prop.className "absolute inset-0 w-full h-full object-cover"
+                                                    ]
                                             ]
                                         ]
 
@@ -289,7 +282,7 @@ module Collection =
                                                 ]
                                                 Html.h3 [
                                                     prop.className "text-3xl md:text-4xl font-light tracking-tight text-base-content"
-                                                    prop.text f.title
+                                                    prop.text f.Name
                                                 ]
                                                 Html.p [
                                                     prop.className "text-base md:text-lg text-base-content/70 leading-relaxed"
@@ -303,7 +296,7 @@ module Collection =
                                                             prop.children [
                                                                 Html.p [
                                                                     prop.className "text-2xl md:text-3xl font-light"
-                                                                    prop.text $"{f.available_variant_ids.Length} "
+                                                                    prop.text $"{f.VariantCount} "
                                                                 ]
                                                                 Html.p [
                                                                     prop.className "text-md text-base-content/60"
@@ -316,7 +309,6 @@ module Collection =
                                                             prop.children [
                                                                 Html.button [
                                                                     prop.className (Btn.primary [ "rounded-none px-10 py-3 shadow-lg" ])
-                                                                    prop.onClick (fun e -> props.OnViewProduct f)
                                                                     prop.text "Shop now"
                                                                 ]
                                                             ]
@@ -338,7 +330,7 @@ module Collection =
                         prop.children [
                             for p in State.productsOrEmpty props.Products do
                                 Html.div [
-                                    prop.key p.id
+                                    prop.key (string p.Id)
                                     prop.className "group cursor-pointer space-y-3"
                                     prop.onClick (fun _ -> props.OnViewProduct p)
                                     prop.children [
@@ -347,13 +339,18 @@ module Collection =
                                         Html.div [
                                             prop.className "relative aspect-[3/4] bg-base-200 overflow-hidden rounded-lg"
                                             prop.children [
-                                                Html.img [
-                                                    prop.src p.mockup_file_url
-                                                    prop.alt p.title
-                                                    prop.className "absolute inset-0 w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110 group-hover:opacity-80"
-                                                ]
-
-                                            
+                                                match p.ThumbnailUrl with
+                                                | None ->
+                                                    Html.div [
+                                                        prop.className "absolute inset-0 w-full h-full flex items-center justify-center bg-base-300 text-base-content/50"
+                                                        prop.text "No Image"
+                                                    ]
+                                                | Some tni ->
+                                                    Html.img [
+                                                        prop.src tni
+                                                        prop.alt p.Name
+                                                        prop.className "absolute inset-0 w-full h-full object-cover transform transition-all duration-700 group-hover:scale-110 group-hover:opacity-80"
+                                                    ]
                                             ]
                                         ]
 
@@ -373,7 +370,7 @@ module Collection =
                                                                 ]
                                                                 Html.h3 [
                                                                     prop.className "font-medium text-base md:text-lg leading-tight truncate"
-                                                                    prop.text p.title
+                                                                    prop.text p.Name
                                                                 ]
                                                             ]
                                                         ]
@@ -381,13 +378,12 @@ module Collection =
                                                             prop.className
                                                                 "btn btn-primary btn-md rounded-none shadow-lg" 
                                                             prop.text "Shop now"
-                                                            prop.onClick (fun e -> props.OnViewProduct p)
                                                         ]
                                                     ]
                                                 ]
                                                 Html.p [
                                                     prop.className "text-xs text-base-content/60"
-                                                    prop.text $"{p.colors.Length} colors"
+                                                    prop.text $"{p.VariantCount} options"
                                                 ]
                                             ]
                                         ]
@@ -406,7 +402,7 @@ module Collection =
         ]
 
     [<ReactComponent>]
-    let collectionView (model: Model) (dispatch: Client.Domain.Store.Collection.Msg -> unit) : ReactElement =
+    let View (model: Model) (dispatch: Client.Domain.Store.Collection.Msg -> unit) : ReactElement =
         React.useEffect(
             fun _ ->
                 match model.Products with
@@ -414,7 +410,7 @@ module Collection =
                 | _ -> ()
             , [| box model.Products |]
         ) 
-        view 
+        CollectionView 
             {
                 Products       = model.Products
                 TotalCount     = model.TotalCount
@@ -423,10 +419,7 @@ module Collection =
                 Paging = model.Paging
                 SearchTerm = model.SearchTerm
                 CanLoadMore    = State.canLoadMore model
-                OnViewProduct  = (fun p -> dispatch (ViewProduct p))
-                OnFeaturedClick = (fun pOpt ->
-                    FeaturedClick pOpt |> dispatch
-                )
-                OnLoadMore     = (fun _ -> LoadMore |> dispatch)
+                OnViewProduct  = fun p -> dispatch (ViewSyncProduct p)
+                OnLoadMore     = fun _ -> LoadMore |> dispatch
             }
             dispatch

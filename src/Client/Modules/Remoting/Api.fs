@@ -3,10 +3,17 @@ module Client.Api
 open Fable.Remoting.Client
 open Shared
 
-let paypalApi =
+// let paypalApi =
+//     Remoting.createApi()
+//     |> Remoting.withRouteBuilder (fun typeName methodName -> sprintf "/api/%s/%s" typeName methodName)
+//     |> Remoting.buildProxy<Api.PaymentApi>
+
+let checkoutApi =
     Remoting.createApi()
     |> Remoting.withRouteBuilder (fun typeName methodName -> sprintf "/api/%s/%s" typeName methodName)
-    |> Remoting.buildProxy<Api.PaymentApi>
+    |> Remoting.buildProxy<Api.CheckoutApi>
+
+
 
 let productsApi =
     Remoting.createApi()

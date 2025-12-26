@@ -1159,7 +1159,7 @@ module Designer =
         ]
 
     [<ReactComponent>]
-    let view model dispatch =
+    let View model dispatch =
         React.useEffect(
             fun _ ->
                 match model.Products with
@@ -1184,6 +1184,7 @@ module Designer =
                             Paging     = model.Paging
                             SearchTerm = if System.String.IsNullOrWhiteSpace model.SearchTerm then None else Some model.SearchTerm                     // or Some model.searchTerm if you have it
                             OnSearchChanged = (fun term -> dispatch (DesignerSearchChanged term) )
+                            DisableControls = false
                             // OnSortChanged = (fun sortDetails -> dispatch (DesignerSortChanged sortDetails) )
                             OnFiltersChanged = fun filters -> dispatch (DesignerFiltersChanged filters)
                             OnPageChange = fun newOffset -> dispatch (DesignerPageChanged { model.Paging with offset = newOffset })

@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-app
+  template:
+    metadata:
+      labels:
+        app: my-app
+    spec:
+      containers:
+        - name: client
+          image: my-app-client:latest
+          ports:
+            - containerPort: 80
+        - name: server
+          image: my-app-server:latest
+          ports:
+            - containerPort: 5000
+        - name: mongodb
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+        - name: elasticsearch
+          image: docker.elastic.co/elasticsearch/elasticsearch:7.9.3
+          ports:
+            - containerPort: 9200

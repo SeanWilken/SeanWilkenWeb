@@ -3,6 +3,19 @@ namespace Client.Domain
 open System
 open Feliz.UseDeferred
 
+module Env =
+    open Fable.Core
+    /// Read Vite env var: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+    [<Emit("import.meta.env.VITE_STRIPE_API_PK_TEST")>]
+    let private stripePkInternal : string = jsNative
+
+    /// Safe F# wrapper with a fallback or explicit failure
+    let stripePublishableKey : string =
+        if System.String.IsNullOrWhiteSpace stripePkInternal then
+            failwith "VITE_STRIPE_API_PK_TEST is not set in Vite env"
+        else
+            stripePkInternal
+
 // GRID GAMES THAT USE LIST OF LANE OBJECTS TO DEFINE THEIR GRID BOARD AND CONTENTS
 module GridGame =
     
@@ -1001,57 +1014,35 @@ module SharedWelcome =
     type Msg =
         | SwitchSection of SharedWebAppViewSections.AppView
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 module Store =
 
     open Shared.PrintfulCommon
-    open Shared.PrintfulStoreDomain.ProductTemplateResponse
 
     module Collection =
+        open Shared.Api.Printful.SyncProduct
+        open Shared.StoreProductViewer.SyncProduct
 
         type Model = {
             Filters    : Filters
             Paging     : PagingInfoDTO
             SearchTerm : string option
-            Products   : Deferred<ProductTemplate list>
+            Products   : Deferred<SyncProductSummary list>
             TotalCount : int
             IsLoading  : bool
             Error      : string option
         }
 
         type Msg =
-            | InitFromQuery of string   // raw query string
             | LoadMore
             | FiltersChanged of Filters
             | SearchChanged of string
             | SortChanged of sortType: string * sortDir: string
             | ApplyFilterPreset of string
             | SaveFilterPreset of string
-            // Printful STORE Products
-            | GetProducts
-            | GotProducts of ProductTemplatesResponse
-            | FailedProducts of exn
-            | ViewProduct of ProductTemplate
-            | FeaturedClick of ProductTemplate option
+            | GetSyncProducts
+            | GotSyncProducts of SyncProductsResponse
+            | FailedSyncProducts of exn
+            | ViewSyncProduct of SyncProductSummary
 
         let initModel () : Model = { 
                 Filters    = defaultFilters
@@ -1399,21 +1390,22 @@ module Store =
                 Key                 : ProductKey
                 Seed                : ProductSeed option
                 ReturnTo            : ReturnTo
-                Details             : Deferred<GetDetailsResponse>
+                // Details             : Deferred<GetDetailsResponse>
+                Details             : Deferred<SyncProduct.SyncProductDetailsResponse>
                 SelectedColor       : string option
                 SelectedSize        : string option
-                SelectedVariantId   : int option
+                SelectedVariantId   : int64 option
             }
 
         type Msg =
             | InitWith of key:ProductKey * seed:ProductSeed option * returnTo:ReturnTo
             | LoadDetails
-            | GotDetails of GetDetailsResponse
+            | GotDetails of SyncProduct.SyncProductDetailsResponse
             | FailedDetails of exn
 
             | SelectColor of string
             | SelectSize  of string
-            | SelectVariant of int
+            | SelectVariant of int64
 
             // “primary CTA”
             | PrimaryAction
@@ -1423,6 +1415,7 @@ module Store =
 
         let keyFromSeed = function
             | SeedCatalog p  -> Catalog p.id
+            | SeedSync p  -> Sync p.Id
             | SeedTemplate t -> Template t.id
 
         let initModel (key: ProductKey) (seed: ProductSeed option) (returnTo: ReturnTo) : Model =
@@ -1435,13 +1428,96 @@ module Store =
                 SelectedSize      = None
                 SelectedVariantId = None }
 
-        let detailsReq (m: Model) : GetDetailsRequest =
+        let detailsReq (m: Model) : Shared.Api.Printful.SyncProduct.GetSyncProductDetailsRequest =
             { 
-                Key               = m.Key
-                SelectedColorOpt  = m.SelectedColor
-                SelectedSizeOpt   = m.SelectedSize
-                SelectedVariantId = m.SelectedVariantId }
+                selectedColor  = m.SelectedColor
+                selectedSize   = m.SelectedSize
+                syncProductId = 
+                    match m.Key with
+                    | Catalog id -> id
+                    | Sync id -> int id
+                    | Template id -> id
+            }
 
+    module Checkout =
+
+        open Shared.Store
+        open Shared.Api.Checkout
+        open Bindings.Stripe.StripePayment
+
+        type CheckoutStep =
+            | Shipping
+            | Payment
+            | Review
+
+        type ShippingInfo = {
+            Email     : string
+            FirstName : string
+            LastName  : string
+            Address   : string
+            Apartment : string
+            City      : string
+            State     : string
+            ZipCode   : string
+            Country   : string
+            Phone     : string
+        }
+        // we need shipping validation here....
+
+        // 
+        type PaymentMethod =
+            | Stripe
+            // | ApplePay
+            // | GooglePay
+
+        type Field =
+            | Email
+            | FirstName
+            | LastName
+            | Address
+            | Apartment
+            | City
+            | State
+            | ZipCode
+            | Phone
+
+        type Model = {
+            Step            : CheckoutStep
+
+            CustomerShippingInfo    : ShippingInfo
+            
+            // SelectedShippingMethod  : ShippingOption option   // still used locally for UI
+            // ShippingOptions : Shared.Api.Checkout.ShippingOption list
+            
+            // From server preview:
+            PreviewTotals   : PreviewTotals option
+            CheckoutPreviewLines : CheckoutPreviewLine list
+            // QuoteTotals: QuoteTotals list option
+            
+            PaymentMethod   : PaymentMethod
+            
+            Cart : CartState
+
+            // From server payment session:
+            Stripe : IStripe option
+            StripeSessionId    : string option
+            StripeClientSecret : string option
+            PrintfulDraftId    : string option
+
+            IsBusy         : bool
+            Error          : string option
+        }
+
+        type Msg =
+            | UpdateShippingField of Field * string
+            | SelectPaymentMethod of PaymentMethod
+            | SubmitShipping
+            | SubmitPayment of IStripeElement
+            | PaymentSucceeded of string * string
+            | PaymentFailed of string
+            | PaymentSetupFailed of string
+            | SetStep of CheckoutStep
+            | BackToCart
     
     open ProductDesigner.Designs
     open Shared.StoreProductViewer
@@ -1490,6 +1566,79 @@ module Store =
             )
 
         let toCustomCartDU
+            (qty   : int)
+            (model : ProductDesigner.Model)
+            : CartLineItem option =
+
+            match model.SelectedVariantId,
+                model.SelectedProduct,
+                model.DesignOptions with
+
+            // must have a variant, a base product, and at least one placed design
+            | None, _, _ -> None
+            | _, None, _ -> None
+            | _, _, []   -> None
+
+            | Some variantId, Some product, placedDesigns ->
+
+                // 1. Build Printful placements from the placed designs
+                let placements : PrintfulPlacement list =
+                    placedDesigns |> toPrintfulPlacements
+
+                // 2. Preview image from the selected product
+                let previewImage =
+                    
+                    product.thumbnailURL
+                    |> function
+                        | null | "" -> None
+                        | url       -> Some url
+
+                // 3. Size + color from the designer selections
+                let size =
+                    model.SelectedVariantSize
+                    |> Option.defaultValue ""
+
+                // For now we’ll treat the selected color string as the "name",
+                // and assume we *might* also use it as a hex code.
+                let colorName, colorCodeOpt =
+                    match model.SelectedVariantColor with
+                    | None
+                    | Some "" ->
+                        "Default", None
+                    | Some c ->
+                        // naive heuristic: if it looks like a hex code, use it as both
+                        if c.StartsWith("#") then c, Some c
+                        else c, None
+
+                // 4. Price — placeholder for now until you wire real pricing
+                let unitPrice : decimal =
+                    // TODO: plug in a real price, from product/variant pricing
+                    45.0m
+
+                // 5. Build the rich CartItem record (your commented-out type)
+                let baseItem : CartItem =
+                    {
+                        VariantId         = variantId
+                        Placements        = placements
+                        PreviewImage      = previewImage
+
+                        CatalogProductId  = product.id
+                        CatalogVariantId  = variantId
+                        Name              = product.name
+                        ThumbnailUrl      = product.thumbnailURL
+
+                        Size              = size
+                        ColorName         = colorName
+                        ColorCodeOpt      = colorCodeOpt
+
+                        Quantity          = qty
+                        UnitPrice         = unitPrice
+                        IsCustomDesign    = true
+                    }
+
+                // 6. Wrap it in the DU
+                Some (Custom baseItem)
+        let toTemplateCartDU
             (qty   : int)
             (model : ProductDesigner.Model)
             : CartLineItem option =
@@ -1563,19 +1712,47 @@ module Store =
                 Some (Custom baseItem)
 
 
+        let tryMakeSyncCartItem (qty:int) (details: SyncProduct.SyncProduct) (selectedVariantId:int64) : SyncCartItem option =
+            details.Variants
+            |> List.tryFind (fun v -> v.Id = selectedVariantId)
+            |> Option.map (fun v ->
+                {
+                    SyncProductId = v.Id
+                    SyncVariantId = v.VariantId
+                    ExternalId = Some v.ExternalId
+                    CatalogVariantId = Some v.VariantProductVariantId
+                    Quantity      = qty
+                    Name          = v.Name |> Option.defaultValue details.Name
+                    ThumbnailUrl  = v.PreviewUrl |> Option.orElse v.ImageUrl |> Option.defaultValue ""
+                    // details.ThumbnailUrl
+                    Size          = v.Size |> Option.defaultValue ""
+                    ColorName     = v.Color |> Option.defaultValue ""
+                    ColorCodeOpt  = None // v.ColorCode
+                    UnitPrice     = v.RetailPrice |> Option.defaultValue 0m
+                    Currency      = v.Currency |> Option.defaultValue "USD"
+                }
+            )
+
+        
+        let toSyncCartDU
+            (qty   : int)
+            (model : ProductViewer.Model)
+            : CartLineItem option =
+                match model.Details with
+                | Deferred.Resolved details ->
+                    tryMakeSyncCartItem qty details.product (model.SelectedVariantId |> Option.defaultValue 0)
+                    |> Option.map (fun syncItem -> Sync syncItem)
+                | _ -> None
+
+
     type ShopSection =
 
         | ShopLanding // this is is a welcome page
-
         | ProductDesigner of ProductDesigner.Model // build your own, should be able to control whether or not we allow the user to upload their own images.
-        
         | CollectionBrowser of Collection.Model
-        
         | ProductViewer of ProductViewer.Model
-        
-        | ShoppingBag
+        | Cart
         | Checkout
-        | Payment
         | NotFound
 
         // | Social
@@ -1583,20 +1760,6 @@ module Store =
         
     type ShopLandingMsg =
         | SwitchSection of ShopSection
-
-    // extend to have invalid state impossible
-    type ShopProductTemplatesMsg =
-        | SwitchSection of ShopSection
-        | Next
-        | Back
-        | ViewProductTemplate of ProductTemplate
-        | ChooseVariantSize of string
-        | ChooseVariantColor of string
-        | GetProductTemplates
-        | GotProductTemplates of Shared.PrintfulStoreDomain.ProductTemplateResponse.ProductTemplatesResponse
-        | FailedProductTemplates of exn
-        | AddProductToBag of ProductTemplate
-
 
     type Tab =
         | Hero
@@ -1607,47 +1770,81 @@ module Store =
         | Checkout
 
     open Shared.Store.Cart
+    open Bindings.Stripe.StripePayment
 
     type ShopMsg =
     
         | NavigateTo of ShopSection
-
+        // Landing / Drop Hero
         | ShopLanding of ShopLandingMsg
-        
+        // Product Collection
         | ShopCollectionMsg of Collection.Msg
-        
+        // Product Designer
         | ShopDesignerMsg of ProductDesigner.Msg
-        
-        | ViewProduct of ProductKey * ProductSeed option * ReturnTo
-        
+        // Product Browser
         | ShopProduct of ProductViewer.Msg
         
+        // Cart
         | AddCartItem      of CartLineItem
         | RemoveCartItem   of CartLineItem
         | UpdateCartQty    of CartLineItem * int
+        
+        // Checkout
+        | CheckoutMsg of Checkout.Msg
+        // Checkout → Checkout Preview (Step 1)
+        | BeginCheckoutFromCart
+        | CreatedDraftOrder  of Shared.Api.Checkout.CreateDraftOrderResponse
+        | CheckoutDraftFailed  of string
+
+        // Payment Session (Step 3)
+        | LoadStripe
+        | StripeLoaded of IStripe
+        | StripeFailed of exn
+
+        // | PaymentSuccess of string * string
+        // | PaymentFailure of string
+
+    type StripeState = {
+        Stripe: IStripe option
+        Elements: IElements option
+        CardElement: IStripeElement option
+        PaymentClientSecret: string option
+        PaymentIntentId: string option
+        PaymentStatus: string
+        IsLoadingPayment: bool
+        PaymentError: string option
+    }
+
+    let initStripe clientSecret intentId =
+        {
+            Stripe = None
+            Elements = None
+            CardElement = None
+            PaymentClientSecret = Some clientSecret
+            PaymentIntentId = Some intentId
+            PaymentStatus = "Not started"
+            IsLoadingPayment = false
+            PaymentError = None
+        }
+
+
 
     type Model = {
         Section: ShopSection
         Cart: CartState
         // PayPalOrderReference: string option
-        CheckoutTax: float option
-        CheckoutShipping: float option
+        Checkout: Checkout.Model option
+        Stripe: StripeState option
+        Error: string option
     }
 
     let getInitialModel shopSection = {
         Section = shopSection
         Cart = emptyCart
-        // PayPalOrderReference = None
-        CheckoutTax = None
-        CheckoutShipping = None
+        Stripe = None
+        Checkout = None
+        Error = None
     }
-
-
-
-
-
-
-
 
 module SharedPage =
     

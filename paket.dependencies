@@ -5,9 +5,11 @@ storage: none
 nuget Expecto ~> 9
 nuget Feliz.DaisyUI
 nuget Feliz.UseDeferred 2.0.0
+nuget MongoDB.Driver 3.5.2
 nuget SAFE.Server ~> 5
 nuget SAFE.Client ~> 5
 
 nuget Fake.Core.Target ~> 5
 nuget Fake.IO.FileSystem ~> 5
 nuget Farmer ~> 1
+nuget Stripe.net 50.1.0

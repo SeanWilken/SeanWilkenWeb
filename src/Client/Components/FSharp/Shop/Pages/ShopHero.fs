@@ -10,7 +10,7 @@ module Hero =
         OnExploreMore    : unit -> unit
     }
 
-    let view (props: Props) =
+    let View (props: Props) =
         Html.section [
             prop.className "relative min-h-[calc(100vh-4rem)] bg-base-100"
             prop.children [

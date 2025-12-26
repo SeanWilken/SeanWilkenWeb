@@ -1,0 +1,24 @@
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS client-dev
+
+# Install Node + pnpm for Fable/Vite
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get update && \
+    apt-get install -y nodejs && \
+    npm install -g pnpm && \
+    rm -rf /var/lib/apt/lists/*
+
+# Root where code will be mounted
+WORKDIR /workspace
+
+# Copy dotnet tools manifest so Fable is available
+COPY .config/dotnet-tools.json .config/
+
+RUN dotnet tool restore
+
+# Default to client dir once volumes are mounted
+WORKDIR /workspace/Client
+
+EXPOSE 8080
+
+# IMPORTANT: name your actual fsproj here (Client.fsproj is a placeholder)
+CMD ["sh", "-c", "pnpm install && dotnet fable watch Client.fsproj -o output -s --run pnpm exec vite"]

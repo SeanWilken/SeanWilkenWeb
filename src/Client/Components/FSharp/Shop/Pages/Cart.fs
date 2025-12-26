@@ -7,17 +7,8 @@ open Bindings.LucideIcon
 
 module Cart =
 
-    // move out
-    type Msg =
-        | IncrementQty of itemId:int
-        | DecrementQty of itemId:int
-        | RemoveItem   of itemId:int
-        | GoToCollection
-        | GoToCheckout
-
     type Props = {
         Cart : CartState
-
         OnRemove          : CartLineItem -> unit
         OnUpdateQuantity  : CartLineItem * int -> unit
         OnContinueShopping: unit -> unit
@@ -28,7 +19,7 @@ module Cart =
         v.ToString("0.00")
 
     [<ReactComponent>]
-    let view (props: Props) =
+    let View (props: Props) =
         let items  = props.Cart.Items
         let totals = props.Cart.Totals
 
@@ -60,7 +51,7 @@ module Cart =
                                     "btn btn-sm sm:btn-md rounded-none bg-base-content text-base-100 px-10 py-4 \
                                     text-sm font-medium uppercase tracking-[0.2em] hover:bg-base-content/90 transition-colors"
                                 prop.onClick (fun _ -> props.OnContinueShopping())
-                                prop.text "Continue shopping"
+                                prop.text "Start shopping"
                             ]
                         ]
                     ]
@@ -73,6 +64,18 @@ module Cart =
                             Html.div [
                                 prop.className "lg:col-span-2 space-y-8"
                                 prop.children [
+
+                                    Html.button [
+                                        prop.className
+                                            "flex items-center gap-2 text-sm font-medium uppercase tracking-[0.2em] \
+                                            hover:gap-3 transition-all"
+                                        prop.onClick (fun _ -> props.OnContinueShopping())
+                                        prop.children [
+                                            LucideIcon.ChevronRight "w-4 h-4 rotate-180"
+                                            Html.span [ prop.text "Continue shopping" ]
+                                        ]
+                                    ]
+
                                     Html.div [
                                         prop.className "flex items-center justify-between border-b border-base-300 pb-6"
                                         prop.children [
@@ -98,10 +101,13 @@ module Cart =
                                                 let itemId =
                                                     match item with
                                                     | CartLineItem.Custom c -> 
-                                                        c.CatalogProductId, c.CatalogVariantId
+                                                        // c.CatalogProductId, c.CatalogVariantId
+                                                        $"{c.CatalogProductId}-{c.CatalogVariantId}" 
                                                     | CartLineItem.Template t -> 
-                                                        t.CatalogProductId, t.VariantId
-                                                    |> fun (cpid, cvid) -> sprintf "%d-%d" cpid cvid
+                                                        // t.CatalogProductId, t.VariantId
+                                                        $"{t.CatalogProductId}-{t.VariantId}" 
+                                                    | CartLineItem.Sync s -> 
+                                                        $"{s.SyncProductId}-{s.SyncVariantId}" 
                                                 let itemDetails =
                                                     match item with
                                                     | CartLineItem.Custom c -> 
@@ -123,6 +129,16 @@ module Cart =
                                                             size = t.Size
                                                             unitPrice = t.UnitPrice
                                                             quantity = t.Quantity
+                                                        |}
+                                                    | CartLineItem.Sync s -> 
+                                                        {|
+                                                            thumbnail = Some s.ThumbnailUrl
+                                                            name = s.Name.Split("/") |> Array.tryHead |> Option.defaultValue ""
+                                                            isCustom = false // ??
+                                                            color = s.ColorName
+                                                            size = s.Size
+                                                            unitPrice = s.UnitPrice
+                                                            quantity = s.Quantity
                                                         |}
 
                                                     
@@ -257,16 +273,6 @@ module Cart =
                                         ]
                                     ]
 
-                                    Html.button [
-                                        prop.className
-                                            "flex items-center gap-2 text-sm font-medium uppercase tracking-[0.2em] \
-                                            hover:gap-3 transition-all"
-                                        prop.onClick (fun _ -> props.OnContinueShopping())
-                                        prop.children [
-                                            LucideIcon.ChevronRight "w-4 h-4 rotate-180"
-                                            Html.span [ prop.text "Continue shopping" ]
-                                        ]
-                                    ]
                                 ]
                             ]
 
@@ -277,6 +283,34 @@ module Cart =
                                     Html.div [
                                         prop.className "sticky top-32 space-y-8"
                                         prop.children [
+
+                                            // Promo code
+                                            // Html.div [
+                                            //     prop.className "border border-base-300 p-6 bg-base-100"
+                                            //     prop.children [
+                                            //         Html.h3 [
+                                            //             prop.className "text-sm font-medium uppercase tracking-[0.2em] mb-4"
+                                            //             prop.text "Have a promo code?"
+                                            //         ]
+                                            //         Html.div [
+                                            //             prop.className "flex gap-2"
+                                            //             prop.children [
+                                            //                 Html.input [
+                                            //                     prop.className
+                                            //                         "flex-1 px-4 py-3 border border-base-300 text-sm \
+                                            //                         focus:outline-none focus:border-base-content transition-colors"
+                                            //                     prop.placeholder "Enter code"
+                                            //                 ]
+                                            //                 Html.button [
+                                            //                     prop.className
+                                            //                         "px-6 py-3 bg-base-200 text-sm font-medium uppercase \
+                                            //                         tracking-[0.2em] hover:bg-base-300 transition-colors"
+                                            //                     prop.text "Apply"
+                                            //                 ]
+                                            //             ]
+                                            //         ]
+                                            //     ]
+                                            // ]
 
                                             // Order summary card
                                             Html.div [
@@ -294,49 +328,16 @@ module Cart =
                                                                 prop.className "flex items-center justify-between text-base-content/70"
                                                                 prop.children [
                                                                     Html.span [ prop.text "Subtotal" ]
-                                                                    Html.span [ prop.text ("$" + money totals.Subtotal) ]
+                                                                    Html.span [ prop.text ("$ " + money totals.Subtotal) ]
                                                                 ]
                                                             ]
-                                                            Html.div [
-                                                                prop.className "flex items-center justify-between text-base-content/70"
-                                                                prop.children [
-                                                                    Html.span [ prop.text "Shipping" ]
-                                                                    Html.span [
-                                                                        if totals.Shipping = 0m && totals.Subtotal > 0m then
-                                                                            prop.text "FREE"
-                                                                        else
-                                                                            prop.text ("$" + money totals.Shipping)
-                                                                    ]
-                                                                ]
-                                                            ]
-
-                                                            if totals.Shipping = standardShippingFlat
-                                                            && totals.Subtotal < freeShippingThreshold
-                                                            && totals.Subtotal > 0m then
-                                                                let remaining = freeShippingThreshold - totals.Subtotal
-                                                                Html.div [
-                                                                    prop.className "text-[11px] text-base-content/60 bg-base-200/60 p-3 rounded"
-                                                                    prop.text (
-                                                                        sprintf "Add $%s more for free shipping"
-                                                                            (money remaining)
-                                                                    )
-                                                                ]
-
-                                                            Html.div [
-                                                                prop.className "flex items-center justify-between text-base-content/70"
-                                                                prop.children [
-                                                                    Html.span [ prop.text "Tax (est.)" ]
-                                                                    Html.span [ prop.text ("$" + money totals.Tax) ]
-                                                                ]
-                                                            ]
-
                                                             Html.div [
                                                                 prop.className "pt-4 border-t border-base-200 flex items-center justify-between text-xl"
                                                                 prop.children [
-                                                                    Html.span [ prop.className "font-medium"; prop.text "Total" ]
+                                                                    Html.span [ prop.className "font-medium"; prop.text "Cart Total" ]
                                                                     Html.span [
                                                                         prop.className "font-light"
-                                                                        prop.text ("$" + money totals.Total)
+                                                                        prop.text ("$ " + money totals.Total)
                                                                     ]
                                                                 ]
                                                             ]
@@ -348,7 +349,7 @@ module Cart =
                                                             "w-full bg-base-content text-base-100 py-5 text-sm font-medium \
                                                             uppercase tracking-[0.2em] hover:bg-base-content/90 transition-colors"
                                                         prop.onClick (fun _ -> props.OnCheckout())
-                                                        prop.text "Proceed to checkout"
+                                                        prop.text "Proceed to shipping"
                                                     ]
 
                                                     Html.div [
@@ -380,33 +381,6 @@ module Cart =
                                                 ]
                                             ]
 
-                                            // Promo code
-                                            Html.div [
-                                                prop.className "border border-base-300 p-6 bg-base-100"
-                                                prop.children [
-                                                    Html.h3 [
-                                                        prop.className "text-sm font-medium uppercase tracking-[0.2em] mb-4"
-                                                        prop.text "Have a promo code?"
-                                                    ]
-                                                    Html.div [
-                                                        prop.className "flex gap-2"
-                                                        prop.children [
-                                                            Html.input [
-                                                                prop.className
-                                                                    "flex-1 px-4 py-3 border border-base-300 text-sm \
-                                                                    focus:outline-none focus:border-base-content transition-colors"
-                                                                prop.placeholder "Enter code"
-                                                            ]
-                                                            Html.button [
-                                                                prop.className
-                                                                    "px-6 py-3 bg-base-200 text-sm font-medium uppercase \
-                                                                    tracking-[0.2em] hover:bg-base-300 transition-colors"
-                                                                prop.text "Apply"
-                                                            ]
-                                                        ]
-                                                    ]
-                                                ]
-                                            ]
 
                                             // Tiny footer
                                             Html.div [

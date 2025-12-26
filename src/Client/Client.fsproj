@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -16,6 +16,7 @@
         <Compile Include="Components\Typescript\Bindings\LucideIcons.fs" />
         <Compile Include="Components\Typescript\Bindings\ParallaxComponentPortfolio.fs" />
         <Compile Include="Components\Typescript\Bindings\PhysicsSimulation.fs" />
+        <Compile Include="Components\Typescript\Bindings\Stripe.fs" />
         <Compile Include="Components\Typescript\Bindings\Resume.fs" />
         <Compile Include="Components\Typescript\Bindings\ThemePicker.fs" />
 

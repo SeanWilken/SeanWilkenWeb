@@ -79,3 +79,6 @@ type LucideIcon =
     static member inline Plus     (classes: string) = icon "Plus" classes
     static member inline Minus     (classes: string) = icon "Minus" classes
     static member inline Check     (classes: string) = icon "Check" classes
+    static member inline Truck     (classes: string) = icon "Truck" classes
+    static member inline CircleDollarSign     (classes: string) = icon "CircleDollarSign" classes
+    static member inline PackageCheck     (classes: string) = icon "PackageCheck" classes

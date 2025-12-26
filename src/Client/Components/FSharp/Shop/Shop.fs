@@ -1,33 +1,191 @@
-module Components.FSharp.ShopV2
+module Components.FSharp.Shop
 
 open Elmish
 open Feliz
 open Client.Domain.Store
 open Client.Domain
+open Client.Domain.Store.Checkout
 open Client.Components.Shop
 open Client.Components.Shop.Common
+open Client.Components.Shop.Common.Checkout
 open Client.Components.Shop.Collection
 open Client.Components.Shop.ShopHero
 open Client.Domain.Store.PrintfulMapping
 open Shared.Store.Cart
+open Shared
+open Shared.Store
+open Shared.Api.Checkout
+open Bindings.Stripe.StripePayment
 
+let updateCheckoutModelWithCheckoutPreviewResponse model (draftResponse: CreateDraftOrderResponse) : Model =
+    match draftResponse with
+    | CreatedTemp tempDraft ->
+        { model with
+            Cart = {
+                model.Cart with
+                    Items =
+                        tempDraft.PreviewLines
+                        |> List.map (fun previewLine ->
+                            tryFindProductByKindInCart
+                                previewLine.Item.Kind
+                                previewLine.Item
+                                model.Cart.Items
+                        )
+                        |> List.choose id
+            } 
+            PreviewTotals   =
+                Some {
+                    Currency = "usd"
+                    ShippingName = tempDraft.DraftOrderTotals.ShippingName
+                    Subtotal = tempDraft.DraftOrderTotals.Subtotal
+                    Tax      = tempDraft.DraftOrderTotals.Tax
+                    Shipping = tempDraft.DraftOrderTotals.Shipping
+                    Total    = tempDraft.DraftOrderTotals.Total
+                }
+            IsBusy         = false
+            Error          = None
+        }
+    | CreatedFinal finalDraft ->
+        { model with
+            Cart = {
+                model.Cart with
+                    Items =
+                        finalDraft.OrderLines
+                        |> List.map (fun previewLine ->
+                            tryFindProductByKindInCart
+                                previewLine.Item.Kind
+                                previewLine.Item
+                                model.Cart.Items
+                        )
+                        |> List.choose id
+            } 
+            PreviewTotals   =
+                Some {
+                    Currency = "usd"
+                    ShippingName = finalDraft.OrderTotals.ShippingName
+                    Subtotal = finalDraft.OrderTotals.Subtotal
+                    Tax      = finalDraft.OrderTotals.Tax
+                    Shipping = finalDraft.OrderTotals.Shipping
+                    Total    = finalDraft.OrderTotals.Total
+                }
+            StripeClientSecret = Some finalDraft.StripeSecret
+            StripeSessionId = Some finalDraft.StripePaymentIntentId
+            IsBusy         = false
+            Error          = None
+        }
 
-
-let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
+let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
+    printfn $"SHOP UPDATE MSG: {msg}"
     match msg with
+
     | RemoveCartItem cartItem ->
         // persist to local storage for recently removed?
         let updatedCartState = withRemovedItem cartItem model.Cart
-        printfn $"REMOVING!!!"
         { model with Cart = updatedCartState }, Cmd.none
+    
     | AddCartItem cartItem ->
         let updatedCartState = model.Cart.Items @ [ cartItem ] |> withItems
-        printfn $"ADDING!!!"
         { model with Cart = updatedCartState }, Cmd.none
+
     | UpdateCartQty (cartItem, qty) ->
         let updatedCartState = withUpdatedItemQuantity cartItem qty model.Cart
-        printfn $"UPDATING!!!"
         { model with Cart = updatedCartState }, Cmd.none
+
+    | BeginCheckoutFromCart ->
+        match model.Checkout with
+        | None -> Checkout.Iniitializers.initCheckoutModel model.Cart
+        | Some checkoutModel -> checkoutModel
+        |> fun mdl ->
+                { model with Section = ShopSection.Checkout; Checkout = Some mdl }, Cmd.none
+
+    | CreatedDraftOrder response ->
+        let chkoutModel =
+            match model.Checkout with
+            | None -> None
+            | Some chkt ->
+                updateCheckoutModelWithCheckoutPreviewResponse chkt response
+                |> Some
+        match response with
+        | CreatedTemp _ ->
+            { model with Checkout = chkoutModel },
+            Cmd.ofMsg LoadStripe
+        | CreatedFinal final ->
+            { model with
+                Stripe = Some (initStripe final.StripeSecret final.StripePaymentIntentId)
+                Checkout = chkoutModel
+            },
+            Cmd.ofMsg LoadStripe
+    
+    | CheckoutDraftFailed response ->
+        { model with Error = Some response },
+        Cmd.none
+
+    | LoadStripe -> 
+        model,
+        Cmd.OfPromise.either
+            loadStripe
+            Env.stripePublishableKey
+            StripeLoaded
+            StripeFailed
+    
+    | StripeFailed ex ->
+        { model with Error = Some ex.Message }, Cmd.none
+    | StripeLoaded stripe ->
+        match model.Stripe with
+        | Some stripeMdl ->
+            match model.Checkout with
+            | None ->
+                { model with Stripe = Some stripeMdl },
+                Cmd.none
+            | Some chkout ->
+                { model with
+                    Checkout = Some { chkout with Stripe = Some stripe  } 
+                    Stripe = Some stripeMdl
+                },
+                Cmd.ofMsg (CheckoutMsg (SetStep Payment))
+        | None -> model, Cmd.none
+
+    | CheckoutMsg subMsg ->
+        let additionalCmd =
+            match subMsg with
+            | SubmitShipping ->
+                match model.Checkout with
+                | None -> Cmd.none
+                | Some mdl ->          
+                    Cmd.OfAsync.either
+                        Client.Api.checkoutApi.CreateDraftOrder
+                        {
+                            items =  toLineItems model.Cart.Items
+                            shippingOptionId = "STANDARD"
+                            totalsCents = 
+                                match mdl.PreviewTotals with
+                                | None -> 0
+                                | Some pt -> int (pt.Total * 100m)
+                            address = {
+                                name = (mdl.CustomerShippingInfo.FirstName + " " + mdl.CustomerShippingInfo.LastName)
+                                address1     = mdl.CustomerShippingInfo.Address
+                                city      = mdl.CustomerShippingInfo.City
+                                state     = mdl.CustomerShippingInfo.State
+                                postalCode       = mdl.CustomerShippingInfo.ZipCode
+                                countryCode   = mdl.CustomerShippingInfo.Country
+                            }
+                            isTemp = false
+                        }
+                        CreatedDraftOrder
+                        (fun ex -> CheckoutDraftFailed ex.Message)
+            | _ -> Cmd.none
+
+        match model.Checkout with
+        | None -> Checkout.Iniitializers.initCheckoutModel model.Cart
+        | Some checkoutModel -> checkoutModel
+        |> Checkout.Checkout.update subMsg
+        |> fun (mdl, cmd) ->    
+            { model with Section = ShopSection.Checkout; Checkout = Some mdl },
+            Cmd.batch [
+                additionalCmd
+                Cmd.map CheckoutMsg cmd
+            ]
+
     | ShopDesignerMsg subMsg ->
         match model.Section with
         | ProductDesigner pd ->
@@ -54,54 +212,48 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
         | CollectionBrowser cb ->
             let updatedModel, cmd' =
                 match subMsg with
-                | Collection.ViewProduct pt ->
-                    // navigate to product viewer
-                    let seed =  Shared.StoreProductViewer.ProductSeed.SeedTemplate pt
-                    // let pvModel, pvCmd = 
-                    Client.Components.Shop.Product.initFromSeed seed Shared.StoreProductViewer.ReturnTo.BackToCollection
-                    |> fun (m, cmd) -> 
-                        { model with Section = ProductViewer m }, 
-                        Cmd.batch [
-                            // cmd |> Cmd.map (fun m -> ViewProduct (Shared.StoreProductViewer.ProductKey.Template pt.product_id, Some seed, Shared.StoreProductViewer.ReturnTo.BackToCollection) )
-                            // Cmd.ofMsg (NavigateTo (ShopSection.ProductViewer m))
-                            // Navigation.newUrl $"/shop/product/template/{pt.product_id}"   
-                        ]
-                | _ -> 
+                | Collection.ViewSyncProduct sp ->
+                    let seed = Shared.StoreProductViewer.ProductSeed.SeedSync sp
+                    let pvModel, _ =
+                        Product.initFromSeed
+                            seed
+                            Shared.StoreProductViewer.ReturnTo.BackToCollection
+                    { model with Section = ProductViewer pvModel }, Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
+                | _ ->
                     State.update subMsg cb
                     |> fun (m, cmd) -> 
                         { model with Section = CollectionBrowser m }, 
                         cmd |> Cmd.map ShopCollectionMsg
-            updatedModel,
-            cmd' 
+            updatedModel, cmd' 
 
+        | ProductViewer _ -> model, Cmd.none
         | _ ->
             let landingModel, msg = State.init None            
             { model with Section = CollectionBrowser landingModel },
             Cmd.map ShopCollectionMsg msg
-    
-    | ViewProduct (productKey, productSeedOpt, returnTo) ->
-            // let collectionModel, cmd' = Produc.update subMsg cb
-            let productViewModel =
-                ProductViewer (
-                    ProductViewer.initModel
-                        productKey
-                        productSeedOpt
-                        returnTo
-                ) 
-            { model with Section = productViewModel },
-            // Cmd.none |> Cmd.map ShopCollectionMsg
-            // Cmd.batch [
-            //     // Cmd.ofMsg  (ViewProduct (productKey, productSeedOpt, returnTo) )
-            // ]
-            Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
-            // Cmd.ofMsg ( productViewModel)
-    
+
     | ShopProduct subMsg ->
         match model.Section with
         | ProductViewer pv ->
-            let productViewMdl, cmd' = Client.Components.Shop.Product.update subMsg pv
-            { model with Section = ProductViewer productViewMdl },
-            cmd' |> Cmd.map ShopProduct
+            let viewMdl, cmd' = 
+                match subMsg with
+                | ProductViewer.GoBack ->
+                    let initCB = Collection.initModel ()
+                    model, Cmd.ofMsg (NavigateTo (CollectionBrowser initCB))
+                | ProductViewer.PrimaryAction ->
+                    match pv.Details, pv.SelectedVariantId with
+                    | UseDeferred.Deferred.Resolved d, Some evid ->
+                        match tryMakeSyncCartItem 1 d.product evid with
+                        | Some item -> model, Cmd.ofMsg (ShopMsg.AddCartItem (CartLineItem.Sync item))
+                        | None      -> model, Cmd.none
+                    | _ ->
+                        model, Cmd.none
+                | _ ->
+                    Product.update subMsg pv
+                    |> fun (mdl', cmd') -> 
+                    { model with Section = ProductViewer mdl' }
+                    , cmd' |> Cmd.map ShopProduct
+            viewMdl, cmd'
         | _ ->
             let landingModel = 
                 ProductViewer.initModel 
@@ -109,46 +261,31 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
                     None
                     Shared.StoreProductViewer.ReturnTo.BackToCollection    
             { model with Section = ProductViewer landingModel },
-            // Cmd.map ShopProduct
             Cmd.ofMsg (NavigateTo (ProductViewer landingModel))
-            // Cmd.none
-
-    | NavigateTo section ->
-        // need to do url here?
-        match section with
-        | ShopSection.ProductDesigner pd ->
-            // fresh designer state
-
-            let model' = { model with Section = ShopSection.ProductDesigner pd }
-
-            // immediately ask the designer to load products
-            let cmd =
-                ProductDesigner.Msg.LoadProducts
-                |> ShopDesignerMsg
-                |> Cmd.ofMsg
-
-            model', cmd
-        | ShopSection.ProductViewer pv ->
-            let model' = { model with Section = ShopSection.ProductViewer pv }
-
-            // immediately ask the designer to load products
-            let cmd =
-                ProductViewer.Msg.LoadDetails |> ShopProduct |> Cmd.ofMsg
-
-            model', cmd
-
-        | _ ->
-            { model with Section = section }, Cmd.none
-
+            
     | ShopLanding msg ->
         match msg with
         | ShopLandingMsg.SwitchSection section ->
             model, Cmd.ofMsg (NavigateTo section)
 
-
-open Feliz
-open Shared
-open Bindings.LucideIcon
+    | NavigateTo section ->
+        // need to do url here?
+        match section with
+        | ShopSection.CollectionBrowser cb ->
+            // fresh designer state
+            let model' = { model with Section = ShopSection.CollectionBrowser cb }
+            // immediately ask the designer to load products
+            model', Cmd.ofMsg (ShopCollectionMsg Collection.LoadMore)
+        | ShopSection.ProductDesigner pd ->
+            // fresh designer state
+            let model' = { model with Section = ShopSection.ProductDesigner pd }
+            // immediately ask the designer to load products
+            model', Cmd.ofMsg (ShopDesignerMsg ProductDesigner.Msg.LoadProducts)
+        | ShopSection.ProductViewer pv ->
+            let model' = { model with Section = ShopSection.ProductViewer pv }
+            model', Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
+        | _ ->
+            { model with Section = section }, Cmd.none
 
 
 let tabToSection tab =
@@ -156,18 +293,17 @@ let tabToSection tab =
     | Hero -> ShopSection.ShopLanding
     | Collection -> ShopSection.CollectionBrowser (Collection.initModel())
     | Designer -> ShopSection.ProductDesigner (ProductDesigner.initialModel())
-    | Cart  -> ShopSection.ShoppingBag
-    | Checkout -> ShopSection.Payment
     | Product -> ShopSection.ProductViewer (ProductViewer.initModel (StoreProductViewer.ProductKey.Template 0) None StoreProductViewer.ReturnTo.BackToCollection )
+    | Cart  -> ShopSection.Cart
+    | Checkout -> ShopSection.Checkout
 
 let sectionToTab section =
     match section with
     | ShopSection.ShopLanding -> Hero
     | ShopSection.CollectionBrowser _ -> Collection
-    | ShopSection.ProductDesigner _ -> Designer
-    | ShopSection.ShoppingBag -> Cart
     | ShopSection.ProductViewer _ -> Product
-    | ShopSection.Payment
+    | ShopSection.ProductDesigner _ -> Designer
+    | ShopSection.Cart -> Cart
     | ShopSection.Checkout -> Checkout
     | ShopSection.NotFound -> Hero
 
@@ -175,7 +311,7 @@ module Shop =
     open Client.Domain.Store.ProductViewer
 
     [<ReactComponent>]
-    let view model (dispatch: Store.ShopMsg -> unit) =
+    let View model (dispatch: Store.ShopMsg -> unit) =
         let tab = sectionToTab model.Section
 
         Html.div [
@@ -206,8 +342,10 @@ module Shop =
 
                                     tabBtn Hero       "hero"
                                     tabBtn Collection "collection"
-                                    tabBtn Designer   "designer"
-                                    tabBtn Product    "product"
+                                    // tabBtn Designer   "designer"
+                                    match model.Section with
+                                    | ProductViewer _ -> tabBtn Product    "product"
+                                    | _ -> ()
                                     tabBtn Cart       "cart"
                                     tabBtn Checkout   "checkout"
                                 ]
@@ -217,80 +355,46 @@ module Shop =
                 ]
 
                 // Active body
-                match tab with
-                | Tab.Hero ->
-                    Hero.view {
+                match model.Section with
+                | ShopSection.ShopLanding ->
+                    Hero.View {
                         OnShopCollection = fun () -> dispatch (ShopMsg.NavigateTo (tabToSection Collection))
                         OnExploreMore    = fun () -> dispatch (ShopMsg.NavigateTo (tabToSection Designer))
                     }
 
-                | Tab.Collection ->
-                    Collection.collectionView
-                        (
-                            match model.Section with
-                            | CollectionBrowser cmodel -> cmodel
-                            | _ -> State.initModel
-                        )
-                        (ShopCollectionMsg >> dispatch)
+                | ShopSection.CollectionBrowser cb ->
+                    Collection.View cb (ShopCollectionMsg >> dispatch)
 
-                | Tab.Designer ->
-                    Designer.view
-                        (
-                            match model.Section with
-                            | ProductDesigner dmodel -> dmodel
-                            | _ -> ProductDesigner.initialModel ()
-                        )
-                        (ShopDesignerMsg >> dispatch)
+                | ShopSection.ProductDesigner pd ->
+                    Designer.View pd (ShopDesignerMsg >> dispatch)
                 
-                | Tab.Product ->
-                    printfn $"WE SHOULD HAVE LOADED PRODUCTS"
-                    Product.view 
-                        (
-                            match model.Section with
-                            | ProductViewer pmodel -> pmodel
-                            | _ -> initModel (StoreProductViewer.ProductKey.Template 0) None StoreProductViewer.ReturnTo.BackToCollection
-                        )
-                        (ShopProduct >> dispatch)
+                | ShopSection.ProductViewer pv ->
+                    Product.View pv (ShopProduct >> dispatch)
 
-                | Tab.Cart ->
-                    Cart.Cart.view 
+                | ShopSection.Cart ->
+                    Cart.Cart.View 
                         {
                             Cart = model.Cart
                             OnRemove = fun x -> dispatch (RemoveCartItem x) 
                             OnUpdateQuantity  = fun itemAndQty -> dispatch (UpdateCartQty itemAndQty) 
-                            OnContinueShopping = fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection Hero))
-                            OnCheckout         = fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection Checkout))
+                            OnContinueShopping = fun _ -> dispatch (ShopMsg.NavigateTo (tabToSection Collection))
+                            OnCheckout         = fun _ -> dispatch BeginCheckoutFromCart
                         }
 
-                | Tab.Checkout ->
-                    Checkout.Checkout.view 
-                        {
-                            Step           = Checkout.Checkout.CheckoutStep.Shipping
-                            ShippingInfo   =
-                                {
-                                    Email     = ""
-                                    FirstName = ""
-                                    LastName  = ""
-                                    Address   = ""
-                                    Apartment = ""
-                                    City      = ""
-                                    State     = ""
-                                    ZipCode   = ""
-                                    Country   = ""
-                                    Phone     = ""
-                                }
-                            ShippingMethod  = Checkout.Checkout.ShippingMethod.Standard
-                            PaymentMethod  = Checkout.Checkout.PaymentMethod.Card
-                            Items          = []
-                        } 
-                        (fun _ -> ())
+                | ShopSection.Checkout ->
+                    Checkout.View.Checkout 
+                        (match model.Checkout with
+                        | None -> Checkout.Iniitializers.initCheckoutModel model.Cart
+                        | Some cmdl -> cmdl)
+                        (CheckoutMsg >> dispatch)
+                | ShopSection.NotFound -> Html.div "Not found placeholder...."
             ]
         ]
 
 [<ReactComponent>]
-let view (model: Store.Model) (dispatch: Store.ShopMsg -> unit) =
-    Shop.view model dispatch
-       
+let ShopView (model: Store.Model) (dispatch: Store.ShopMsg -> unit) =
+    Shop.View model dispatch
+    
 
 
 

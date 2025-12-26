@@ -58,7 +58,7 @@ let PageLayout (props: PageLayoutProps) =
                 prop.children [
                     NavigationMenu {|
                         // "AI";
-                        items = [| "Home"; "About"; "Services"; "Projects"; "Shop"; "Resume"; "Contact"; |]
+                        items = [| "Home"; "About"; "Services"; "Projects"; "Resume"; "Contact"; "Shop"; |]
                         endItems = [| "Theme"; |] // "Settings"; "Help";
                         activeItem =
 

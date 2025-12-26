@@ -323,6 +323,7 @@ module Store =
             IsCustomDesign     : bool
         }
 
+        // These aren't for shopping really
         type TemplateCartItem = {
             VariantId : int
             Quantity  : int
@@ -336,8 +337,26 @@ module Store =
             PreviewImage     : string option
         }
 
+        type SyncCartItem = {
+            // ProductId : int
+            // VariantId : int
+            SyncProductId    : int64
+            SyncVariantId    : int64
+            ExternalId : string option
+            CatalogVariantId : int option
+            Quantity         : int
+            Name             : string
+            ThumbnailUrl     : string
+            Size             : string
+            ColorName        : string
+            ColorCodeOpt     : string option
+            UnitPrice        : decimal
+            Currency         : string
+        }
+
         type CartLineItem =
             | Template of TemplateCartItem
+            | Sync of SyncCartItem
             | Custom of CartItem
 
         let customCartItemToPrintfulOrderItem
@@ -406,26 +425,28 @@ module Store =
                 (c.UnitPrice + upcharge) * decimal c.Quantity
             | CartLineItem.Template t ->
                 t.UnitPrice * decimal t.Quantity
+            | CartLineItem.Sync s ->
+                s.UnitPrice * decimal s.Quantity
 
         let private recomputeTotals (items: CartLineItem list) : CartTotals =
             let subtotal =
                 items
                 |> List.sumBy lineTotal
 
-            let taxRate  = 0.08m
-            let tax      = System.Math.Round(subtotal * taxRate, 2)
-            let shipping =
-                if subtotal = 0m then 0m
-                elif subtotal >= 100m then 0m
-                else 12m
+            // let taxRate  = 0.08m
+            // let tax      = System.Math.Round(subtotal * taxRate, 2)
+            // let shipping =
+            //     if subtotal = 0m then 0m
+            //     elif subtotal >= 100m then 0m
+            //     else 12m
 
-            let total = subtotal + tax + shipping
+            // let total = subtotal + tax + shipping
 
             {
                 Subtotal = subtotal
-                Tax      = tax
-                Shipping = shipping
-                Total    = total
+                Tax      = 0m
+                Shipping = 0m
+                Total    = subtotal
                 Currency = "USD"
             }
 
@@ -450,6 +471,7 @@ module Store =
                     match x with
                     | CartLineItem.Custom cci -> { cci with Quantity = qty } |> CartLineItem.Custom
                     | CartLineItem.Template template -> { template with Quantity = qty } |> CartLineItem.Template
+                    | CartLineItem.Sync sync -> { sync with Quantity = qty } |> CartLineItem.Sync
                 )
                 |> function
                     | Some citem ->
@@ -468,61 +490,107 @@ module Store =
             Quantity         : int
         }
 
+
     [<AutoOpen>]
     module Checkout =
 
-        /// A richer recipient address than TaxAddress – matches Printful "recipient"
-        type RecipientAddress = {
-            Name         : string
-            Email        : string option
-            Phone        : string option
-            Address1     : string
-            Address2     : string option
-            City         : string
-            StateCode    : string
-            CountryCode  : string  // ISO 3166-1 alpha-2 (e.g. "US")
-            Zip          : string
+    //     type CheckoutPreviewRequest = {
+    //         Items : CartLineItem list
+    //     }
+
+    //     type LineValidationError = {
+    //         Index   : int
+    //         Message : string
+    //     }
+
+    //     /// This mirrors your CartTotals, but we return it explicitly so the UI
+    //     /// can trust the server's numbers.
+        type PreviewTotals = {
+            ShippingName: string
+            Subtotal : decimal
+            Tax      : decimal
+            Shipping : decimal
+            Total    : decimal
+            Currency : string
         }
 
-        /// Shipping option returned from Printful /v2/shipping-rates
-        type ShippingRate = {
-            Code               : string   // "STANDARD", "EXPRESS", etc. (shipping)
-            Name               : string   // shipping_method_name
-            Rate               : decimal  // numeric "rate"
-            Currency           : string
-            MinDeliveryDays    : int option
-            MaxDeliveryDays    : int option
-            CustomsFeesPossible: bool
+    //     type CheckoutPreviewResponse = {
+    //         Items   : CartLineItem list     // canonicalized (prices, names, etc)
+    //         Totals  : PreviewTotals
+    //         Errors  : LineValidationError list
+    //         IsValid : bool
+    //     }
+
+    //     /// Step 2: shipping/tax quote
+
+        type Address = {
+            FirstName : string
+            LastName  : string
+            Email     : string
+            Phone     : string option
+            Line1     : string
+            Line2     : string option
+            City      : string
+            State     : string
+            Zip       : string
+            Country   : string
         }
 
-        /// Request to get shipping options
-        type ShippingQuoteRequest = {
-            Recipient : RecipientAddress
-            Items     : Cart.ShippingLineItem list
-            Currency  : string
+        type CheckoutQuoteRequest = {
+            Items   : CartLineItem list
+            Address : Address
         }
-
-        type ShippingQuoteResponse = {
-            Options : ShippingRate list
-        }
-
-        /// What the client must send when it's ready to place an order (ignoring card payment for now)
-        type DraftOrderRequest = {
-            Recipient     : RecipientAddress
-            Items         : Cart.CartItem list
-            SelectedRate  : ShippingRate
-            /// Totals as calculated client-side for display / sanity check
-            ClientTotals  : Cart.CartTotals
-        }
-
 
 
 open Store
 
 module StoreProductViewer =
 
+    module SyncProduct =
+        /// A lightweight list item for Collection (fast)
+        type SyncProductSummary = {
+            Id : int64
+            ExternalId    : string option
+            Name          : string
+            ThumbnailUrl  : string option
+            VariantCount  : int
+        }
+
+        type SyncVariant = {
+            Id : int64
+            ExternalId    : string
+            SyncProductId : int64
+            VariantId     : int
+
+            VariantProductId     : int
+            VariantProductVariantId: int
+
+            Name          : string option
+            Size          : string option
+            Color         : string option
+            ImageUrl      : string option
+            PreviewUrl    : string option
+            RetailPrice   : decimal option
+            Currency      : string option
+            Availability  : string option
+        }
+
+        type SyncProduct = {
+            SyncProductId : int
+            ExternalId    : string option
+            Name          : string
+            ThumbnailUrl  : string option
+            VariantCount  : int
+            Variants      : SyncVariant list
+        }
+
+        type SyncProductDetailsResponse = {
+            product : SyncProduct
+        }
+
     type ProductKey =
         | Template of templateId:int
+        | Sync of syncId:int64
         | Catalog  of catalogProductId:int
 
     // ---------------------------------------
@@ -531,6 +599,7 @@ module StoreProductViewer =
     // ---------------------------------------
     type ProductSeed =
         | SeedTemplate of ProductTemplate
+        | SeedSync of SyncProduct.SyncProductSummary
         | SeedCatalog  of CatalogProduct
 
     // ---------------------------------------
@@ -615,53 +684,6 @@ open StoreProductViewer
 
 // This is the responses from the API
 module PrintfulStoreDomain =
-
-    module ProductTemplateResponse =
-        
-        type StoreCardColor = {
-            Name       : string
-            CodeOpt    : string option
-            VariantIds : int list
-        }
-
-        type StoreCard = {
-            TemplateId      : int
-            PriceMin        : decimal option
-            PriceMax        : decimal option
-            CurrencyOpt     : string option
-            Colors          : StoreCardColor list
-            Sizes           : string list
-            DefaultVariantId: int option
-        }
-
-        type ProductTemplatesResponse = {
-            templateItems : ProductTemplate.ProductTemplate list
-            storeCards : StoreCard list
-            paging : PrintfulCommon.PagingInfoDTO
-        }
-
-
-        // type TemplateColorDTO = {
-        //     Name      : string
-        //     CodeOpt       : string option
-        //     VariantIds: int list
-        // }
-
-        // type StoreTemplateCardDTO = {
-        //     templateId   : int
-        //     name         : string
-        //     thumbnailURL : string option
-
-        //     // hydrated from store/variants
-        //     colors       : TemplateColorDTO list
-        //     sizes        : string list
-        //     priceMin     : decimal option
-        //     priceMax     : decimal option
-        //     currencyOpt  : string option
-
-        //     // useful for debugging / UX
-        //     variantCount : int
-        // }
 
     module CatalogProductResponse =
         
@@ -789,6 +811,26 @@ module Api =
 
     module Printful =
 
+        module SyncProduct =
+           
+            type GetSyncProductsRequest = {
+                limit  : int option
+                offset : int option
+            }
+
+            type SyncProductsResponse = {
+                items  : SyncProduct.SyncProductSummary list
+                paging : PagingInfoDTO
+            }
+
+
+            type GetSyncProductDetailsRequest = {
+                syncProductId : int64
+                /// optional: if you want server to “preselect” the best variant/price/image later
+                selectedColor : string option
+                selectedSize  : string option
+            }
+
         module CatalogProductRequest =
 
             type CatalogProductsQuery = {
@@ -820,15 +862,136 @@ module Api =
                     destination_country = stateFilters.DestinationCountry
                 }
 
+    module Checkout =
+        open System
+    
+        type Address = {
+            Name        : string option
+            Email       : string
+            Phone       : string option
+            Line1       : string
+            Line2       : string option
+            City        : string
+            State       : string
+            PostalCode  : string
+            CountryCode : string  // "US", "CA", etc.
+        }
+
+        // How client expresses what's in the cart.
+        // We keep it "Printful-ready" instead of mirroring full CartLineItem.
+        type CartItemKind =
+            | Template
+            | Sync
+            | Custom
+
+        type CheckoutCartItem = {
+            Kind           : CartItemKind
+            Quantity       : int
+            // Sync-based items (Printful "store/sync" world)
+            ExternalProductId  : string option
+            SyncProductId  : int64 option
+            SyncVariantId  : int64 option   // keep as int64, don't truncate
+            // Catalog/template based (if you still want to support later)
+            CatalogProductId : int option
+            CatalogVariantId : int option
+            TemplateId       : int option
+        }
+
+        // ---------- 4.1 Preview ----------
+
+        type CheckoutPreviewLine = {
+            Item          : CheckoutCartItem
+            UnitPrice     : decimal
+            Currency      : string
+            LineTotal     : decimal
+            IsValid       : bool
+            Error         : string option
+        }
+
+        type LineItem = {
+            externalId : string
+            productId : int64
+            variantId : int
+            quantity  : int
+        }
+
+        type ShippingAddress = {
+            name        : string
+            address1    : string
+            city        : string
+            state       : string
+            countryCode : string
+            postalCode  : string
+        }
+
+        type CreateDraftOrderRequest = {
+            items           : LineItem list
+            shippingOptionId: string
+            totalsCents     : int
+            address         : ShippingAddress
+            isTemp : bool
+        }
+
+        type OrderTotals = {
+            ShippingName : string
+            Subtotal         : decimal
+            Shipping         : decimal
+            Tax              : decimal
+            Total            : decimal
+        }
+        type CreateTempDraftOrderResponse = {
+            PreviewLines : CheckoutPreviewLine list
+            DraftOrderTotals: OrderTotals
+        }
+
+        type CreateFinalDraftOrderResponse = {
+            OrderLines : CheckoutPreviewLine list
+            OrderTotals: OrderTotals
+            DraftOrderId : string
+            StripeSecret : string
+            StripePaymentIntentId : string
+        }
+
+        type CreateDraftOrderResponse =
+            | CreatedTemp of CreateTempDraftOrderResponse
+            | CreatedFinal of CreateFinalDraftOrderResponse
+
+
+        // ---------- 4.5 Order Lookup ----------
+
+        type OrderStatus =
+            | Pending          // created locally, not yet paid
+            | AwaitingPayment  // draft in Printful, waiting on Stripe
+            | Paid             // payment succeeded, printful confirm pending
+            | InProduction     // confirmed with Printful
+            | Shipped
+            | Cancelled
+
+        type OrderSummary = {
+            OrderId        : string
+            Email          : string
+            CreatedAt      : DateTime
+            Status         : OrderStatus
+            Total          : decimal
+            Currency       : string
+            PrintfulOrderId: int64 option
+        }
+
+        type OrderLookupRequest = {
+            Email   : string
+            OrderId : string option
+        }
+
+        type OrderLookupResponse = {
+            Orders : OrderSummary list
+        }
+        
+    open Printful.SyncProduct
+
     type ProductApi = {
-        getProducts : 
-            Printful.CatalogProductRequest.CatalogProductsQuery -> 
-                Async<PrintfulStoreDomain.CatalogProductResponse.CatalogProductsResponse>
-        getProductTemplates : 
-            Printful.CatalogProductRequest.CatalogProductsQuery -> 
-                Async<PrintfulStoreDomain.ProductTemplateResponse.ProductTemplatesResponse>
-        getProductDetails : GetDetailsRequest -> Async<GetDetailsResponse>
-        // getProductVariants : int -> Async<SharedShopDomain.CatalogVariant list>
+        getProducts : Printful.CatalogProductRequest.CatalogProductsQuery -> Async<PrintfulStoreDomain.CatalogProductResponse.CatalogProductsResponse>
+        getSyncProducts : GetSyncProductsRequest -> Async<SyncProductsResponse>
+        getSyncProductVariantDetails : GetSyncProductDetailsRequest -> Async<SyncProduct.SyncProductDetailsResponse>
     }
 
     type PaymentApi = {
@@ -839,16 +1002,9 @@ module Api =
     }
 
     type CheckoutApi = {
-        /// Get shipping methods + rates for the given cart & address
-        getShippingRates : ShippingQuoteRequest -> Async<ShippingQuoteResponse>
-        /// (Optional) if you want a server-driven "canonical" tax calc later
-        getTaxEstimate   : ShippingQuoteRequest -> Async<CheckoutTax>
-        /// Create a Printful draft order (no payment capture here)
-        createDraftOrder : DraftOrderRequest  -> Async<DraftResult>
+        CreateDraftOrder : Checkout.CreateDraftOrderRequest -> Async<Checkout.CreateDraftOrderResponse>
+        LookupOrder    : Checkout.OrderLookupRequest     -> Async<Checkout.OrderLookupResponse>
     }
-
-
-
 
 // Ensure that the Client and Server use same end-point
 module Route =
