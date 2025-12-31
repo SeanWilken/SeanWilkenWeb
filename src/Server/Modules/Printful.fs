@@ -575,7 +575,7 @@ module Types =
                 [<JsonPropertyName("external_id")>]
                 external_id : string 
                 [<JsonPropertyName("store")>]
-                store : string
+                store : int64
                 [<JsonPropertyName("status")>]
                 status : string
                 [<JsonPropertyName("shipping")>]

@@ -183,6 +183,7 @@ module Checkout =
             { model with Error = Some err.Message }, Cmd.none
 
         | ConfirmationSuccess confirmationResp ->
+            // need to set cart and totals to none on parent, reset checkout and only use response from here....
             { model with OrderConfirmation = Some confirmationResp },
             Cmd.ofMsg (SetStep Review)
 

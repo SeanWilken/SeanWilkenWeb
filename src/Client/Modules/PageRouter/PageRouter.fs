@@ -34,7 +34,9 @@ let toPath =
     | Some (Shop (Store.ShopSection.ProductDesigner _)) -> "/shop/designer"
     | Some (Shop (Store.ShopSection.ProductViewer { Key = ProductKey.Template _ })) -> "/shop/template" // $"/shop/product/template/{id}"
     | Some (Shop (Store.ShopSection.ProductViewer { Key = ProductKey.Catalog _ })) -> $"/shop/catalog" // $"/shop/product/catalog/{id}"
+    | Some (Shop (Store.ShopSection.ProductViewer { Key = ProductKey.Sync _ })) -> $"/shop/sync" // $"/shop/product/catalog/{id}"
     | Some (Shop Store.ShopSection.Cart) -> "/shop/cart"
+    | Some (Shop (Store.ShopSection.OrderHistory _)) -> "/shop/orders"
     | Some (Shop Store.ShopSection.Checkout) -> "/shop/checkout"
     // | Some (Shop Store.ShopSection.Contact) -> "/shop/contact"
     // | Some (Shop Store.ShopSection.Social) -> "/shop/social"
@@ -76,6 +78,7 @@ let shopParser : Parser<Store.ShopSection->Page,_> =
         map (Store.ShopSection.CollectionBrowser  (Collection.initModel ()) ) (s "collection")
         map (Store.ShopSection.ProductDesigner  (ProductDesigner.initialModel ()) ) (s "designer")
         map Store.ShopSection.Cart (s "cart")
+        map (Store.ShopSection.OrderHistory (OrderHistory.initModel())) (s "orders")
         map Store.ShopSection.Checkout (s "checkout")
     ]
 
