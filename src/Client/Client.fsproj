@@ -16,6 +16,7 @@
         <Compile Include="Components\Typescript\Bindings\LucideIcons.fs" />
         <Compile Include="Components\Typescript\Bindings\ParallaxComponentPortfolio.fs" />
         <Compile Include="Components\Typescript\Bindings\PhysicsSimulation.fs" />
+        <Compile Include="Components\Typescript\Bindings\Utilities.fs" />
         <Compile Include="Components\Typescript\Bindings\Stripe.fs" />
         <Compile Include="Components\Typescript\Bindings\Resume.fs" />
         <Compile Include="Components\Typescript\Bindings\ThemePicker.fs" />
@@ -43,6 +44,8 @@
         <!-- Shop Pages -->
         <Compile Include="Components\FSharp\Shop\Pages\Common.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Cart.fs" />
+        <Compile Include="Components\FSharp\Shop\Pages\OrderHistory.fs" />
+        <Compile Include="Components\FSharp\Shop\Pages\Review.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Checkout.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Collection.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Designer.fs" />
@@ -51,7 +54,6 @@
         <!-- 
         <Compile Include="Components\FSharp\Shop\Pages\Catalog.fs" />
         <Compile Include="Components\FSharp\Shop\Pages\Shipping.fs" />
-        <Compile Include="Components\FSharp\Shop\Pages\Showroom.fs" />
         <Compile Include="Components\FSharp\Shop\Shop.fs" />
         -->
 

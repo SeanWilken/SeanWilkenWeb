@@ -19,6 +19,7 @@ module Product =
             SelectedVariantId = None
             SelectedColor = None
             SelectedSize = None
+            SelectedImage = None
         }
 
         // kick off detail fetch immediately
@@ -28,18 +29,32 @@ module Product =
         xs |> List.fold (fun acc x -> if acc |> List.exists (fun y -> f y = f x) then acc else acc @ [x]) []
 
     let private tryGetSelectedVariant (model: Model) (p: SyncProduct.SyncProduct) =
-        let byId =
-            model.SelectedVariantId
-            |> Option.bind (fun id -> p.Variants |> List.tryFind (fun v -> v.Id = id))
 
         let bySizeColor =
             match model.SelectedSize, model.SelectedColor with
             | Some s, Some c ->
                 p.Variants
+                |> List.filter (fun v -> 
+                    match v.Availability with
+                    | Some "active" -> true
+                    | _ -> false
+                )
                 |> List.tryFind (fun v -> v.Size = Some s && v.Color = Some c)
+            | None, Some c ->
+                p.Variants
+                |> List.filter (fun v -> 
+                    match v.Availability with
+                    | Some "active" -> true
+                    | _ -> false
+                )
+                |> List.tryFind (fun v -> v.Color = Some c)
             | _ -> None
 
-        byId |> Option.orElse bySizeColor |> Option.orElse (p.Variants |> List.tryHead)
+        let byId =
+            model.SelectedVariantId
+            |> Option.bind (fun id -> p.Variants |> List.tryFind (fun v -> v.Id = id))
+
+        bySizeColor |> Option.orElse byId |> Option.orElse  (p.Variants |> List.tryHead)
 
     let private formatMoney (amount: decimal option) (currency: string option) =
         match amount with
@@ -55,9 +70,8 @@ module Product =
         p.Variants
         |> List.filter (fun v -> 
             match v.Availability with
-            | Some "discontinued" -> false
-            | Some "out of stock" -> false
-            | _ -> true
+            | Some "active" -> true
+            | _ -> false
         )
         |> List.choose (fun v -> v.Size)
         |> List.distinct
@@ -66,13 +80,13 @@ module Product =
         p.Variants
         |> List.filter (fun v -> 
             match v.Availability with
-            | Some "discontinued" -> false
-            | Some "out of stock" -> false
-            | _ -> true
+            | Some "active" -> true
+            | _ -> false
         )
         |> List.choose (fun v ->
             v.Color |> Option.map (fun name -> name, v.Color))
         |> distinctBy fst
+
     let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         match msg with
         | InitWith (key, seed, returnTo) ->
@@ -97,45 +111,59 @@ module Product =
 
         | SelectColor c ->
             // optionally clear variant on change
+            let m1 = { model with SelectedColor = Some c }
             let updatedModel =
-                match model.Details  with
+                match m1.Details  with
                 | Deferred.Resolved d -> 
-                    tryGetSelectedVariant model d.product
-                    |> Option.map (fun v -> v.Id)
-                    |> fun variantId -> { model with SelectedVariantId = variantId }
-                | _ -> model
-            let m1 = { updatedModel with SelectedColor = Some c }
-            m1, Cmd.none
+                    tryGetSelectedVariant m1 d.product
+                    |> Option.map (fun v -> v.Id, v.PreviewUrl)
+                    |> function 
+                        | Some (variantId, imgUrl) -> 
+                            { m1 with SelectedVariantId = Some variantId; SelectedImage = imgUrl }
+                        | None -> m1
+                | _ -> m1
+            updatedModel, Cmd.none
 
         | SelectSize s ->
+            let m1 = { model with SelectedSize = Some s }
             let updatedModel =
                 match model.Details  with
                 | Deferred.Resolved d -> 
-                    tryGetSelectedVariant model d.product
+                    tryGetSelectedVariant m1 d.product
                     |> Option.map (fun v -> v.Id)
-                    |> fun variantId -> { model with SelectedVariantId = variantId }
-                | _ -> model
-            let m1 = { updatedModel with SelectedSize = Some s }
-            m1, Cmd.none // Cmd.ofMsg LoadDetails
+                    |> fun variantId -> { m1 with SelectedVariantId = variantId }
+                | _ -> m1
+            updatedModel, Cmd.none
+        
+        | SelectImage imgUrl ->
+            let m1 = { model with SelectedImage = Some imgUrl }
+            m1, Cmd.none
 
         | SelectVariant vid ->
-            let m1 = { model with SelectedVariantId = Some vid }
-            // if you want pricing/image to reflect variant, reload details
-            m1, Cmd.none // Cmd.ofMsg LoadDetails
+            let variantDetailsOpt =
+                match model.Details with
+                | Deferred.Resolved r ->
+                    r.product.Variants
+                    |> List.tryFind ( fun x -> x.Id = vid )
+                    |> Option.map (fun x -> x.Size, x.Color )
+                | _ -> None
 
-        | PrimaryAction ->
-            // handled by Shop-level wrapper (Add-to-cart or Select-for-designer)
-            model, Cmd.none
+            let m1 = 
+                match variantDetailsOpt with
+                | Some (size, color) -> size, color
+                | None -> None, None
+                |> fun (s, c) -> { model with SelectedSize = s; SelectedColor = c; SelectedVariantId = Some vid }
+            m1, Cmd.none
 
-        | GoBack ->
-            model, Cmd.none
+        // handled by Shop-level wrapper (Add-to-cart or Select-for-designer)
+        | PrimaryAction -> model, Cmd.none
+        | GoBack -> model, Cmd.none
 
     [<ReactComponent>]
     let View (props: Model) dispatch =
         let content =
             match props.Details with
             | Deferred.HasNotStartedYet ->
-                // Html.div [ prop.className "py-16 text-base-content/60"; prop.text "Loading product…" ]
                 Html.button [  prop.onClick (fun _ -> dispatch LoadDetails); prop.text "Load Product" ]
 
             | Deferred.InProgress ->
@@ -160,9 +188,19 @@ module Product =
                 let selectedVariantOpt = tryGetSelectedVariant props product
 
                 let heroImg =
-                    selectedVariantOpt
-                    |> Option.bind (fun v -> v.PreviewUrl)
-                    |> Option.orElse product.ThumbnailUrl
+                    match props.SelectedImage with
+                    | Some img -> Some img
+                    | None ->
+                        match props.SelectedColor with
+                        | None -> 
+                            selectedVariantOpt
+                            |> Option.bind (fun v -> v.PreviewUrl)
+                            |> Option.orElse product.ThumbnailUrl
+                        | Some clr ->
+                            product.Variants
+                            |> List.tryFind ( fun v -> v.Color = Some clr)
+                            |> Option.bind (fun v -> v.PreviewUrl)
+                            |> Option.orElse product.ThumbnailUrl
 
                 // if discontinued or no available variants, show message instead
 
@@ -210,6 +248,7 @@ module Product =
                                 // Thumbnail strip (optional) – show first 4 variant images
                                 let thumbs =
                                     product.Variants
+                                    |> List.filter ( fun x -> x.Availability = Some "active"  )
                                     |> List.choose (fun v -> v.PreviewUrl |> Option.map (fun u -> v.VariantId, u))
                                     |> distinctBy snd
                                     |> List.truncate 4
@@ -223,7 +262,7 @@ module Product =
                                                 Html.button [
                                                     prop.key (string vid)
                                                     prop.className "aspect-square bg-base-200 rounded-md overflow-hidden hover:ring-2 ring-primary transition-all"
-                                                    prop.onClick (fun _ -> dispatch (SelectVariant vid))
+                                                    prop.onClick (fun _ -> dispatch (SelectImage url))
                                                     prop.children [
                                                         Html.img [
                                                             prop.src url
@@ -274,6 +313,8 @@ module Product =
                                             prop.className "flex flex-wrap gap-2"
                                             prop.children [
                                                 for s in sizes do
+                                                    printfn $"SELECTED size: {props.SelectedSize}"
+                                                    printfn $"Size: {s}"
                                                     let isSelected = props.SelectedSize = Some s
                                                     Html.button [
                                                         prop.key s
@@ -303,6 +344,9 @@ module Product =
                                             prop.className "flex flex-wrap gap-3"
                                             prop.children [
                                                 for (name, codeOpt) in colors do
+                                                    printfn $"SELECTED COLOR: {props.SelectedColor}"
+                                                    printfn $"COLOR: {name}"
+
                                                     let isSelected = props.SelectedColor = Some name
                                                     Html.button [
                                                         prop.key name

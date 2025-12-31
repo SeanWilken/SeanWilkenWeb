@@ -10,7 +10,7 @@ open PageRouter
 open Elmish.HMR
 #endif
 
-Program.mkProgram Index.init Index.update Index.view
+Program.mkProgram Index.init Index.update Index.View
 #if DEBUG
 |> Program.withConsoleTrace
 #endif

@@ -54,11 +54,11 @@ let update ( msg: WebAppMsg ) ( model: SharedWebAppModels.WebAppModel ): SharedW
     
     // Page Routing
     | SwitchToOtherApp section, _ ->
+        printfn $"SWITCHING TO SECTION: {section}"
         match section with
         | SharedWebAppViewSections.AppView.AboutAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.About )
         | SharedWebAppViewSections.AppView.ShopAppView -> model, Cmd.ofMsg ( LoadPage (SharedPage.Shop Store.ShopSection.ShopLanding) )
         | SharedWebAppViewSections.AppView.ContactAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Contact )
-        | SharedWebAppViewSections.AppView.LandingAppView -> model, Cmd.ofMsg ( LoadPage SharedPage.Landing )
         | SharedWebAppViewSections.AppView.PortfolioAppCodeView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio ( SharedPage.Code SharedPage.CodeSection.CodeLanding ) ) )
         | SharedWebAppViewSections.AppView.PortfolioAppDesignView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.Design ) )
         | SharedWebAppViewSections.AppView.PortfolioAppLandingView -> model, Cmd.ofMsg ( LoadPage ( SharedPage.Portfolio SharedPage.PortfolioSection.PortfolioLanding ) )
@@ -83,7 +83,6 @@ open FSharp.Reflection
 let areaStringToAppSection string =
     printfn $"SECTION: {string}"
     match string with
-    | "Landing" ->  SharedWebAppViewSections.AppView.LandingAppView
     | "About" -> SharedWebAppViewSections.AppView.AboutAppView
     | "Contact" -> SharedWebAppViewSections.AppView.ContactAppView
     | "Projects" ->  SharedWebAppViewSections.AppView.PortfolioAppLandingView
@@ -101,7 +100,6 @@ let currentWebAppSection model =
     | SharedWebAppModels.Portfolio _ -> SharedWebAppViewSections.AppView.PortfolioAppLandingView
     | SharedWebAppModels.Contact -> SharedWebAppViewSections.AppView.ContactAppView
     | SharedWebAppModels.Resume -> SharedWebAppViewSections.AppView.ResumeAppView
-    | SharedWebAppModels.Landing -> SharedWebAppViewSections.AppView.LandingAppView
     | SharedWebAppModels.Services serviceModel -> SharedWebAppViewSections.AppView.ProfessionalServicesAppView serviceModel.CurrentSection
     | SharedWebAppModels.Settings // -> SharedWebAppViewSections.AppView.Help
     | SharedWebAppModels.Help // -> SharedWebAppViewSections.AppView.Help
@@ -302,7 +300,7 @@ let headerContent (model: SharedWebAppModels.WebAppModel) dispatch =
     // ]
 
 [<ReactComponent>]
-let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
+let View (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
     PageLayout {|
         model = model
         dispatch = dispatch
@@ -311,22 +309,25 @@ let view (model: SharedWebAppModels.WebAppModel) (dispatch: WebAppMsg -> unit) =
                 prop.className "container mx-auto p-4"
                 prop.children [
                     match model.CurrentAreaModel with
-                    | SharedWebAppModels.About aboutModel -> Components.FSharp.About.view aboutModel dispatch
-                    | SharedWebAppModels.Contact -> Components.FSharp.Contact.view
-                    | SharedWebAppModels.Shop shopModel -> Components.FSharp.Shop.ShopView shopModel (ShopMsg >> dispatch)
-                    | SharedWebAppModels.Landing -> Html.div "Welcome to the Landing Page"
-                    | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery ->
-                        Components.FSharp.PortfolioLanding.view SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
-                    | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) ->
-                        Components.FSharp.PortfolioLanding.view (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
-                    | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) ->
-                        Components.FSharp.PortfolioLanding.view (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
-                    | SharedWebAppModels.Resume -> 
-                        Components.FSharp.Interop.Resume.ResumePage ()
-                    | SharedWebAppModels.Services serviceModel -> Components.FSharp.Services.Landing.view serviceModel dispatch
                     | Help 
                     | Settings
-                    | SharedWebAppModels.Welcome -> Components.FSharp.Welcome.view (WelcomeMsg >> dispatch)
+                    | SharedWebAppModels.Welcome -> Components.FSharp.Welcome.View (WelcomeMsg >> dispatch)
+                    | SharedWebAppModels.About aboutModel -> Components.FSharp.About.View aboutModel dispatch
+                    | SharedWebAppModels.Services serviceModel -> Components.FSharp.Services.Landing.View serviceModel dispatch
+                    | SharedWebAppModels.Shop shopModel -> Components.FSharp.Shop.ShopView shopModel (ShopMsg >> dispatch)
+                    
+                    | SharedWebAppModels.Contact -> Components.FSharp.Contact.View ()
+
+                    // Portfolio - Games & Gallery
+                    | SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery ->
+                        Components.FSharp.PortfolioLanding.View SharedPortfolioGallery.PortfolioGallery (PortfolioMsg >> dispatch)
+                    | SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery designModel) ->
+                        Components.FSharp.PortfolioLanding.View (SharedPortfolioGallery.DesignGallery designModel) (PortfolioMsg >> dispatch)
+                    | SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery codeModel) ->
+                        Components.FSharp.PortfolioLanding.View (SharedPortfolioGallery.CodeGallery codeModel) (PortfolioMsg >> dispatch)
+
+                    // TSX Page
+                    | SharedWebAppModels.Resume -> Components.FSharp.Interop.Resume.ResumePage ()
                 ]
             ]
     |}

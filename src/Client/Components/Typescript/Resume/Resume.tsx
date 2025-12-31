@@ -1,23 +1,22 @@
 import React, { useState, useEffect, useRef } from "react";
-import html2pdf from "html2pdf.js";
 
 export function TagCloudList({ items }: { items: string[] }) {
   if (!Array.isArray(items)) {
     return null;
   }
   return (
-    <div className="flex flex-wrap gap-3 justify-center items-start">
+    <div className="flex flex-wrap gap-3 justify-center">
       {items.map((item, idx) => (
         <span
           key={idx}
-          className={`
-            px-4 py-2 rounded-full bg-primary/10 text-primary border border-primary/20
-            text-sm font-medium shadow hover:shadow-md transition-all duration-300
-            hover:scale-110 hover:bg-primary/20 cursor-default select-none
-            animate-fade-in opacity-0 animate-delay-${idx * 50}ms
-          `}
+          className="px-4 py-2.5 bg-transparent border border-base-content/8 
+            text-sm font-light tracking-wide transition-all duration-500
+            hover:border-base-content/20 hover:bg-base-100/50 
+            hover:-translate-y-1 hover:scale-105 cursor-default select-none
+            hover:shadow-lg hover:shadow-base-content/5"
           style={{
-            animation: `fadeInUp 0.4s ease ${idx * 50}ms forwards`,
+            animation: `fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${idx * 40}ms forwards`,
+            opacity: 0,
           }}
         >
           {item}
@@ -32,13 +31,21 @@ export function SectionList({ items }: { items: string[] }) {
     return null;
   }
   return (
-    <div className="grid gap-6 sm:grid-cols-1 md:grid-cols-2">
+    <div className="space-y-8">
       {items.map((item, idx) => (
         <div
           key={idx}
-          className="bg-base-100 border-l-4 border-primary shadow-lg rounded-lg p-4 transition hover:shadow-xl hover:-translate-y-1 duration-300"
+          className="pl-8 border-l border-base-content/10 transition-all duration-500
+            hover:border-base-content/20 hover:pl-12 group"
+          style={{
+            animation: `slideInLeft 0.7s cubic-bezier(0.4, 0, 0.2, 1) ${idx * 100}ms forwards`,
+            opacity: 0,
+          }}
         >
-          <div className="text-base text-base-content">{item}</div>
+          <p className="text-sm leading-loose text-base-content/70 font-light
+            transition-all duration-300 group-hover:text-base-content/90">
+            {item}
+          </p>
         </div>
       ))}
     </div>
@@ -60,56 +67,95 @@ export function Timeline({ items }: { items: TimelineItem[] }) {
   return (
     <ul className="timeline timeline-snap-icon max-md:timeline-compact timeline-vertical">
       {items.map((item, idx) => (
-        <li key={idx}>
-          {idx !== 0 && <hr />}
+        <li key={idx} className="group">
+          {idx !== 0 && <hr className="bg-base-content/8" />}
+          
+          {/* Center icon */}
           <div className="timeline-middle">
-            <div className="bg-primary text-white rounded-full p-2 shadow">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-                className="h-5 w-5"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                  clipRule="evenodd"
-                />
-              </svg>
+            <div className="relative">
+              <div className="bg-primary/20 text-primary rounded-full p-2 shadow-lg
+                transition-all duration-500 group-hover:bg-primary/40 group-hover:scale-125
+                ring-4 ring-base-100">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                  className="h-5 w-5"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              {/* Pulse ring on hover */}
+              <div className="absolute inset-0 rounded-full bg-primary/20 
+                opacity-0 group-hover:opacity-100 group-hover:animate-ping" />
             </div>
           </div>
+          
+          {/* Alternating content */}
           <div
             className={`timeline-${
               idx % 2 === 0 ? "start" : "end"
-            } mb-10 p-2`}
+            } mb-10 md:mb-16 p-2 transition-all duration-700 group-hover:scale-[1.02]`}
+            style={{
+              animation: `fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${idx * 150}ms forwards`,
+              opacity: 0,
+            }}
           >
             <div
               className={`flex flex-col ${
                 idx % 2 === 0 ? "items-end text-right" : "items-start text-left"
               }`}
             >
-              <div className="font-mono italic text-sm text-base-content/60">
-                {item.startDateString} - {item.endDateString}
+              {/* Date */}
+              <div className="font-mono text-xs tracking-widest uppercase text-base-content/40 mb-2
+                transition-all duration-300 group-hover:text-base-content/60">
+                {item.startDateString} — {item.endDateString}
               </div>
-              <div className="text-lg font-bold text-primary clash-font">
+              
+              {/* Company */}
+              <div className="text-2xl font-light mb-1 tracking-tight transition-all duration-300
+                group-hover:text-primary/80"
+                style={{ fontFamily: "'Cormorant Garamond', serif" }}>
                 {item.company}
               </div>
-              <div className="text-base text-base-content/70 mb-2 clash-font text-secondary">
+              
+              {/* Role */}
+              <div className="text-base text-base-content/70 mb-3 font-light tracking-wide
+                transition-colors duration-300 group-hover:text-base-content/90">
                 {item.role}
               </div>
             </div>
-            <p className="text-base text-base-content/70 mb-2 satoshi-font text-accent">
+            
+            {/* Summary */}
+            <p className={`text-sm text-base-content/70 mb-4 leading-loose font-light
+              transition-all duration-500 group-hover:text-base-content/90
+              ${idx % 2 === 0 ? "text-right" : "text-left"}`}>
               {item.summary}
             </p>
-            <ul className="list-disc pl-4 text-base text-base-content space-y-1">
+            
+            {/* Responsibilities */}
+            <ul className={`list-disc space-y-2 text-sm text-base-content
+              ${idx % 2 === 0 ? "pl-0 pr-4 text-right list-inside" : "pl-4 text-left"}`}>
               {item.responsibilities.map((bullet, i) => (
-                <li className="satoshi-font" key={i}>
+                <li 
+                  key={i} 
+                  className="font-light transition-all duration-500 hover:text-base-content/80"
+                  style={{
+                    animation: `fadeInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(idx * 150) + (i * 80)}ms forwards`,
+                    opacity: 0,
+                  }}
+                >
                   {bullet}
                 </li>
               ))}
             </ul>
           </div>
-          <hr />
+          
+          {idx !== items.length - 1 && <hr className="bg-base-content/8" />}
         </li>
       ))}
     </ul>
@@ -121,15 +167,6 @@ export type ResumeSection =
   | { label: string; kind: "timeline"; items: TimelineItem[] }
   | { label: string; kind: "tagcloud"; items: string[] };
 
-const gradientColors = [
-  "from-base-100 to-base-200",
-  "from-base-200 to-base-300",
-  "from-primary/5 to-primary/10",
-  "from-secondary/5 to-secondary/10",
-  "from-accent/5 to-accent/10",
-  "from-neutral/5 to-neutral/10",
-];
-
 const RESUME_HTML_PATH = "./html/Resume.html";
 
 interface ResumePageProps {
@@ -139,12 +176,10 @@ interface ResumePageProps {
 export function openResumeForPrint() {
   const win = window.open(RESUME_HTML_PATH, "_blank");
   if (!win) {
-    // Popup blocked, fallback: just navigate in current tab
     window.location.href = RESUME_HTML_PATH;
     return;
   }
 
-  // Once the new window's document is loaded, trigger print
   const checkReady = () => {
     try {
       if (win.document && win.document.readyState === "complete") {
@@ -153,16 +188,13 @@ export function openResumeForPrint() {
         return true;
       }
     } catch {
-      // If something goes cross-origin (shouldn't here), just stop trying
       return true;
     }
     return false;
   };
 
-  // If it's already loaded (very fast load), print immediately
   if (checkReady()) return;
 
-  // Otherwise, poll until it's ready
   const interval = setInterval(() => {
     if (!win || win.closed || checkReady()) {
       clearInterval(interval);
@@ -175,9 +207,28 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
     sections[0]?.label || ""
   );
   const [mode, setMode] = useState<"interactive" | "reader">("interactive");
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isVisible, setIsVisible] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  // Scroll tracking for active section (only in interactive mode)
+  // Page entrance animation
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  // Scroll progress tracking
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = (window.scrollY / totalHeight) * 100;
+      setScrollProgress(Math.min(progress, 100));
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Active section tracking
   useEffect(() => {
     if (mode !== "interactive") return;
 
@@ -200,62 +251,118 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
 
   return (
     <div className="relative">
-      {/* Header with mode toggle + download */}
-      <div className="px-4 sm:px-6 lg:px-10 pt-4 pb-3">
-        <div className="max-w-4xl mx-auto flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      {/* Scroll progress bar */}
+      <div className="fixed top-0 left-0 right-0 h-0.5 bg-base-content/5 z-50 print:hidden">
+        <div 
+          className="h-full bg-gradient-to-r from-primary/40 to-secondary/40 transition-all duration-300"
+          style={{ width: `${scrollProgress}%` }}
+        />
+      </div>
 
-          {/* Left: title + subtitle */}
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold clash-font text-primary">
+      {/* Premium Header with entrance animation */}
+      <div 
+        className={`px-8 lg:px-12 pt-24 pb-12 transition-all duration-1000 print:pt-8 print:pb-4 ${
+          isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+        }`}
+      >
+        <div className="max-w-5xl mx-auto">
+
+          {/* Title Section with staggered animation */}
+          <div className="text-center mb-16 print:mb-6">
+            <h1 
+              className="text-6xl lg:text-7xl font-light mb-6 leading-tight tracking-tight
+                transition-all duration-1000 delay-100 print:text-4xl print:mb-3"
+              style={{ 
+                fontFamily: "'Cormorant Garamond', serif",
+                animation: 'fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1) 200ms forwards',
+                opacity: 0
+              }}
+            >
               Resume
             </h1>
-            <p className="text-xs sm:text-sm text-base-content/70 satoshi-font max-w-xl">
-              View interactively or switch to a clean reader mode.
+            <p 
+              className="text-sm text-base-content/60 leading-loose max-w-2xl mx-auto font-light
+                print:text-xs print:mb-2"
+              style={{
+                animation: 'fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1) 400ms forwards',
+                opacity: 0
+              }}
+            >
+              A comprehensive overview of my professional experience, technical skills, and the systems I've built. This page is entirely built in TypeScript, and leveraged using bindings through Fable.
+              Toggle reader mode for a traditional view, or explore interactively.
             </p>
           </div>
 
-          {/* Right: reader toggle + download button */}
-          <div className="flex flex-col sm:flex-row gap-3 items-center sm:items-end md:items-center">
-
-            {/* Download button (PDF generation / html2pdf or static if you add one) */}
+          {/* Controls with entrance animation */}
+          <div 
+            className="flex flex-col sm:flex-row gap-6 items-center justify-center print:hidden"
+            style={{
+              animation: 'fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1) 600ms forwards',
+              opacity: 0
+            }}
+          >
+            {/* Download Button with hover animation */}
             <button
               onClick={openResumeForPrint}
-              className="btn btn-outline btn-sm gap-2 shadow-md hover:shadow-lg w-full sm:w-auto"
+              className="px-8 py-3.5 bg-transparent border border-base-content/20 
+                text-xs tracking-widest uppercase font-light
+                hover:bg-base-content hover:text-base-100 hover:border-base-content
+                transition-all duration-400 hover:-translate-y-1 hover:shadow-xl
+                flex items-center gap-3 group relative overflow-hidden"
             >
-              Download PDF
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-4 h-4"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path d="M3 14a1 1 0 011-1h3v-7a1 1 0 112 0v7h3a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z" />
-                <path d="M7 10a1 1 0 011.707-.707L10 10.586l1.293-1.293A1 1 0 1112.707 10.707l-3 3a1 1 0 01-1.414 0l-3-3A1 1 0 017 10z" />
+              {/* Shimmer effect on hover */}
+              <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full 
+                transition-transform duration-1000 bg-gradient-to-r from-transparent 
+                via-base-100/10 to-transparent" />
+              <span className="relative z-10">Download PDF</span>
+              <svg className="w-4 h-4 relative z-10 transition-transform duration-300 
+                group-hover:translate-y-1" 
+                fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
             </button>
 
-            {/* Reader mode toggle */}
-            <label className="flex items-center gap-3 cursor-pointer">
-              <span className="text-base sm:text-sm font-medium text-base-content/80">
+            {/* Reader Mode Toggle with smooth animation */}
+            <label className="flex items-center gap-4 cursor-pointer group">
+              <span className="text-xs tracking-wider uppercase font-light text-base-content/60
+                group-hover:text-base-content transition-colors duration-300">
                 Reader Mode
               </span>
-              <input
-                type="checkbox"
-                className="toggle toggle-xl toggle-primary"
-                checked={mode === "reader"}
-                onChange={(e) =>
-                  setMode(e.target.checked ? "reader" : "interactive")
-                }
-              />
+              <div className="relative">
+                <input
+                  type="checkbox"
+                  className="sr-only"
+                  checked={mode === "reader"}
+                  onChange={(e) =>
+                    setMode(e.target.checked ? "reader" : "interactive")
+                  }
+                />
+                <div className={`w-14 h-7 border border-base-content/20 rounded-full
+                  transition-all duration-500 
+                  ${mode === "reader" ? 'bg-base-content/10 border-base-content/40' : 'bg-transparent'}`}>
+                  <div className={`w-5 h-5 bg-base-content rounded-full 
+                    transition-all duration-500 mt-0.5 shadow-lg
+                    ${mode === "reader" ? 'translate-x-8 scale-110' : 'translate-x-1'}`} />
+                </div>
+              </div>
             </label>
           </div>
         </div>
       </div>
 
       {mode === "reader" ? (
-        // Reader View: inline iframe loading the HTML resume
-        <div className="px-10 pb-10 pt-2">
-          <div className=" mx-auto h-[80vh] bg-base-200 rounded-xl overflow-hidden shadow-md">
+        // Reader View with fade in
+        <div 
+          className="px-8 lg:px-12 pb-24 transition-all duration-700 print:px-0 print:pb-0"
+          style={{
+            animation: 'fadeIn 0.7s cubic-bezier(0.4, 0, 0.2, 1) forwards',
+            opacity: 0
+          }}
+        >
+          <div className="max-w-6xl mx-auto h-[80vh] bg-base-100 
+            border border-base-content/8 rounded-lg overflow-hidden
+            shadow-lg hover:shadow-xl transition-shadow duration-500 print:border-0 print:rounded-none print:shadow-none print:h-auto">
             <iframe
               src={RESUME_HTML_PATH}
               title="Resume Reader View"
@@ -264,11 +371,8 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
           </div>
         </div>
       ) : (
-        // Interactive section/timeline view
-        <main
-          className="pt-2 space-y-0 scroll-snap-y-mandatory overflow-y-scroll"
-          style={{ scrollSnapType: "y mandatory" }}
-        >
+        // Interactive View with scroll reveal
+        <main className="space-y-0 print:space-y-0">
           {sections.map((section, index) => (
             <section
               key={section.label + "-" + index}
@@ -276,24 +380,37 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
               ref={(el) => {
                 sectionRefs.current[section.label] = el;
               }}
-              className={`scroll-mt-24 px-10 ${
-                index === sections.length - 1 ? "pb-10 pt-10" : "py-10"
-              } bg-gradient-to-b ${
-                gradientColors[index % gradientColors.length]
-              }`}
-              style={{ scrollSnapAlign: "start" }}
+              className={`px-8 lg:px-12 ${
+                index === 0 ? 'pt-12 pb-24' : 'py-24'
+              } transition-all duration-700 print:py-6 print:px-4`}
             >
-              <div className="max-w-4xl mx-auto">
-                <h2
-                  className={`text-3xl font-bold mb-6 text-center clash-font ${
-                    activeSection === section.label
-                      ? "text-primary"
-                      : "text-base-content/70"
-                  }`}
-                >
-                  {section.label}
-                </h2>
-                <div className="prose max-w-none bg-base-100 rounded-xl shadow-md p-6">
+              <div className="max-w-5xl mx-auto">
+                {/* Section Label with reveal animation */}
+                <div className="flex items-center justify-center mb-16 print:mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className={`h-px bg-base-content/10 transition-all duration-700 ${
+                      activeSection === section.label ? 'w-24' : 'w-12'
+                    } print:w-12`} />
+                    <h2
+                      className={`text-xs tracking-widest uppercase font-light transition-all duration-500 print:text-[10px]
+                        ${activeSection === section.label
+                          ? "text-base-content scale-110"
+                          : "text-base-content/40 scale-100"
+                        }`}
+                    >
+                      {section.label}
+                    </h2>
+                    <div className={`h-px bg-base-content/10 transition-all duration-700 ${
+                      activeSection === section.label ? 'w-24' : 'w-12'
+                    } print:w-12`} />
+                  </div>
+                </div>
+
+                {/* Section Content with entrance animation */}
+                <div className="bg-base-100/50 backdrop-blur-sm border border-base-content/6 
+                  rounded-2xl p-8 lg:p-12 transition-all duration-700
+                  hover:border-base-content/12 hover:shadow-2xl hover:bg-base-100/70
+                  hover:scale-[1.01] print:bg-transparent print:border-0 print:p-2 print:hover:scale-100 print:shadow-none">
                   {section.kind === "tagcloud" ? (
                     <TagCloudList items={section.items as string[]} />
                   ) : section.kind === "timeline" ? (
@@ -307,6 +424,165 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
           ))}
         </main>
       )}
+
+      {/* Animated Scroll Progress Indicator */}
+      {mode === "interactive" && (
+        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 print:hidden">
+          <div className="flex gap-2 bg-base-100/80 backdrop-blur-md px-4 py-3 rounded-full
+            border border-base-content/8 shadow-lg">
+            {sections.map((section, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  const el = sectionRefs.current[section.label];
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth", block: "start" });
+                  }
+                }}
+                className={`h-1.5 transition-all duration-500 rounded-full relative overflow-hidden
+                  ${activeSection === section.label 
+                    ? 'w-12 bg-base-content' 
+                    : 'w-1.5 bg-base-content/20 hover:bg-base-content/40 hover:scale-125'
+                  }`}
+                aria-label={`Scroll to ${section.label}`}
+              >
+                {activeSection === section.label && (
+                  <div className="absolute inset-0 bg-gradient-to-r from-primary/40 to-secondary/40 
+                    animate-shimmer" />
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Floating scroll indicator (on first load) */}
+      {mode === "interactive" && scrollProgress < 5 && (
+        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 z-40 animate-bounce print:hidden">
+          <svg className="w-6 h-6 text-base-content/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+          </svg>
+        </div>
+      )}
+
+      {/* Enhanced CSS animations */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes fadeInRight {
+          from {
+            opacity: 0;
+            transform: translateX(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes shimmer {
+          0% {
+            transform: translateX(-100%);
+          }
+          100% {
+            transform: translateX(100%);
+          }
+        }
+
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+
+        @keyframes ping {
+          75%, 100% {
+            transform: scale(2);
+            opacity: 0;
+          }
+        }
+
+        .animate-ping {
+          animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+
+        /* Print styles for single page */
+        @media print {
+          @page {
+            size: letter;
+            margin: 0.5in;
+          }
+          
+          body {
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+          }
+
+          section {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          .timeline li {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+
+          /* Compact spacing for print */
+          h1 {
+            font-size: 2rem !important;
+            margin-bottom: 0.5rem !important;
+          }
+
+          p {
+            font-size: 0.75rem !important;
+            line-height: 1.3 !important;
+          }
+
+          .timeline {
+            transform: scale(0.85);
+            transform-origin: top center;
+          }
+        }
+      `}</style>
     </div>
   );
 };

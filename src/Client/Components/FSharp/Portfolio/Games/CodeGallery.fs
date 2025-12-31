@@ -66,6 +66,246 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
 
 
 // HEADER
+// let codeGalleryHeader =
+//     Html.div [
+//         prop.className "text-center space-y-2"
+//         prop.children [
+//             Html.h1 [
+//                 prop.className "text-4xl font-bold text-primary"
+//                 prop.text "Code Experiments"
+//                 // prop.text "Design Gallery"
+//             ]
+//             Html.p [
+//                 prop.className "text-sm text-base-content/70 max-w-xl mx-auto"
+//                 prop.text "Play with interactive demos built in F#. Each experiment explores a different UI, game loop, or logic challenge."
+//             ]
+//         ]
+//     ]
+
+// // tiny helper to pick an icon + tag per game
+// let private gameMeta title =
+//     match title with
+//     | "Goal Roll" ->
+//         LucideIcon.Target "w-4 h-4", "Physics"
+//     | "Tile Sort" ->
+//         LucideIcon.PanelLeft "w-4 h-4", "Logic"
+//     | "Tile Tap" ->
+//         LucideIcon.MousePointerClick "w-4 h-4", "Reflex"
+//     | "Pivot Points" ->
+//         LucideIcon.GitBranch "w-4 h-4", "Pathing"
+//     | _ ->
+//         LucideIcon.Gamepad2 "w-4 h-4", "Experiment"
+
+// let codeGalleryCard (title: string) (description: string) gallerySection dispatch =
+//     let icon, tag = gameMeta title
+
+//     Html.div [
+//         prop.className
+//             "group card bg-base-100/90 border border-base-200/80 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-[3px] hover:border-primary/50 transition duration-200 ease-out overflow-hidden"
+//         prop.children [
+
+//             // gradient strip
+//             Html.div [
+//                 prop.className
+//                     "h-1.5 w-full rounded-t-2xl bg-gradient-to-r from-primary via-secondary to-accent"
+//             ]
+
+//             Html.div [
+//                 prop.className "card-body space-y-4"
+//                 prop.children [
+
+//                     // title row
+//                     Html.div [
+//                         prop.className "flex items-center gap-2"
+//                         prop.children [
+//                             Html.div [
+//                                 prop.className
+//                                     "inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary"
+//                                 prop.children [ icon ]
+//                             ]
+//                             Html.div [
+//                                 prop.children [
+//                                     Html.h2 [
+//                                         prop.className "card-title text-base sm:text-lg text-primary"
+//                                         prop.text title
+//                                     ]
+//                                     Html.span [
+//                                         prop.className
+//                                             "mt-0.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-base-200/80 text-base-content/60 uppercase tracking-wide"
+//                                         prop.text tag
+//                                     ]
+//                                 ]
+//                             ]
+//                         ]
+//                     ]
+
+
+//                     // description
+//                     Html.p [
+//                         prop.className "text-sm text-base-content/80"
+//                         prop.text description
+//                     ]
+
+//                     // footer buttons
+//                     Html.div [
+//                         prop.className "card-actions justify-end gap-2 pt-2"
+//                         prop.children [
+//                             Html.button [
+//                                 prop.className
+//                                     "btn btn-xs sm:btn-sm btn-outline group-hover:btn-secondary/90"
+//                                 prop.text "Source code"
+//                                 prop.onClick (fun _ -> LoadSourceCode gallerySection |> dispatch)
+//                             ]
+//                             Html.button [
+//                                 prop.className
+//                                     "btn btn-xs sm:btn-sm btn-primary gap-1 group-hover:translate-y-[-0.5px]"
+//                                 prop.onClick (fun _ -> dispatch (LoadSection gallerySection))
+//                                 prop.children [
+//                                     Html.span [ prop.text "Launch demo" ]
+//                                     LucideIcon.Play "w-3 h-3"
+//                                 ]
+//                             ]
+//                         ]
+//                     ]
+//                 ]
+//             ]
+//         ]
+//     ]
+
+
+
+// type Props = {|
+//     Section: GallerySection
+//     OnBack: unit -> unit
+// |}
+
+
+// let SourceViewer = React.functionComponent(fun (props: Props) ->
+//     Html.div [
+//         prop.className "max-w-6xl mx-auto p-4 space-y-4"
+
+//         // Header with back button
+//         prop.children [
+//             Html.div [
+//                 prop.className "flex items-center justify-between"
+//                 prop.children [
+//                     Html.button [
+//                         prop.className "btn btn-primary btn-sm"
+//                         prop.onClick (fun _ -> props.OnBack())
+//                         prop.text "Back to gallery"
+//                     ]
+//                     Html.h2 [
+//                         prop.className "text-xl font-bold"
+//                         prop.text (sprintf "Source: %s.fs" (props.Section.ToString()))
+//                     ]
+//                 ]
+//             ]
+
+//             // Code block
+//             Html.div [
+//                 prop.className "overflow-auto rounded-lg bg-base-200 p-4"
+//                 prop.children [
+//                     Html.pre [
+//                         prop.className "text-sm font-mono whitespace-pre"
+//                         prop.children [
+//                             Html.code [
+//                                 prop.text (getSourceCode props.Section)
+//                             ]
+//                         ]
+//                     ]
+//                 ]
+//             ]
+//         ]
+//     ]
+// )
+
+// let view model dispatch =
+//     match model with
+//     | CodeGallery ->
+//         Html.section [
+//             // prop.className "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8"
+//             prop.className
+//                 "relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 bg-gradient-to-b from-primary/5 via-transparent to-transparent"
+//             prop.children [
+//                 SharedViewModule.galleryHeaderControls {
+//                     onClose = fun () -> BackToPortfolio |> dispatch
+//                     rightIcon = Some {
+//                         icon = LucideIcon.Github "w-5 h-5"
+//                         label = "GitHub"
+//                         externalLink = Some "https://github.com/seanwilken"
+//                         externalAlt = Some "Go to GitHub"
+//                     }
+//                 }
+
+//                 // hero
+//                 Html.div [
+//                     prop.className "text-center space-y-2"
+//                     prop.children [
+//                         Html.h1 [
+//                             prop.className "text-4xl sm:text-5xl font-bold text-primary"
+//                             prop.text "Code Experiments"
+//                         ]
+//                         Html.p [
+//                             prop.className "text-sm sm:text-base text-base-content/80 max-w-2xl mx-auto"
+//                             prop.text
+//                                 "Play with interactive demos built in F#. Each experiment explores a different UI, game loop, or logic challenge."
+//                         ]
+//                         Html.p [
+//                             prop.className "text-[11px] text-base-content/60"
+//                             prop.text "Built for fun in F# and TypeScript."
+//                         ]
+//                     ]
+//                 ]
+
+//                 // panel around the cards
+//                 Html.div [
+//                     prop.className
+//                         "rounded-3xl border border-base-200/70 bg-base-100/80 shadow-sm px-4 sm:px-6 py-6 sm:py-8"
+//                     prop.children [
+//                         Html.div [
+//                             prop.className "flex flex-wrap items-center justify-between gap-2 text-[11px] px-4 pb-4"
+//                             prop.children [
+//                                 Html.div [
+//                                     prop.className "inline-flex items-center gap-1 text-base-content/70"
+//                                     prop.children [
+//                                         LucideIcon.Gamepad2 "w-3 h-3"
+//                                         Html.span [ prop.text "4 playable experiments" ]
+//                                     ]
+//                                 ]
+//                                 Html.span [
+//                                     prop.className "text-base-content/50"
+//                                     prop.text "F# • SAFE stack • TypeScript"
+//                                 ]
+//                             ]
+//                         ]
+//                         Html.div [
+//                             prop.className "grid gap-6 sm:grid-cols-1 md:grid-cols-2"
+//                             prop.children [
+//                                 // meta strip
+//                                 codeGalleryCard "Goal Roll"  "Roll the ball in straight lines to the goal."            SharedCodeGallery.GoalRoll  dispatch
+//                                 codeGalleryCard "Tile Sort"  "Arrange the tiles in the correct order."                 SharedCodeGallery.TileSort  dispatch
+//                                 codeGalleryCard "Tile Tap"   "Tap tiles to smash them while avoiding bombs."          SharedCodeGallery.TileTap   dispatch
+//                                 codeGalleryCard "Pivot Points" "Pivot the ball to collect coins across lanes."        SharedCodeGallery.PivotPoint dispatch
+//                             ]
+//                         ]
+//                     ]
+//                 ]
+//             ]
+//         ]
+
+
+//     | GoalRoll m   -> GoalRoll.view m (GoalRollMsg >> dispatch) (LoadSection Gallery) dispatch
+//     | TileSort m   -> TileSort.view m (TileSortMsg >> dispatch) (LoadSection Gallery) dispatch
+//     | TileTap m    -> TileTap.view  m (TileTapMsg >> dispatch) (LoadSection Gallery) dispatch
+//     | PivotPoint m -> PivotPoints.view m (PivotPointMsg >> dispatch) (LoadSection Gallery) dispatch
+//     | SourceCode gallerySection ->
+//         SourceViewer {|
+//             Section = gallerySection
+//             OnBack  = fun () -> dispatch (LoadSection Gallery)
+//         |}
+
+
+// HEADER (small helper you can keep if you want; not strictly required)
 let codeGalleryHeader =
     Html.div [
         prop.className "text-center space-y-2"
@@ -73,7 +313,6 @@ let codeGalleryHeader =
             Html.h1 [
                 prop.className "text-4xl font-bold text-primary"
                 prop.text "Code Experiments"
-                // prop.text "Design Gallery"
             ]
             Html.p [
                 prop.className "text-sm text-base-content/70 max-w-xl mx-auto"
@@ -92,46 +331,47 @@ let private gameMeta title =
     | "Tile Tap" ->
         LucideIcon.MousePointerClick "w-4 h-4", "Reflex"
     | "Pivot Points" ->
-        LucideIcon.GitBranch "w-4 h-4", "Pathing"
+        LucideIcon.GitBranch "w-4 h-4", "Patterns"
     | _ ->
         LucideIcon.Gamepad2 "w-4 h-4", "Experiment"
 
+// “experiment card” for the ALL EXPERIMENTS grid
 let codeGalleryCard (title: string) (description: string) gallerySection dispatch =
     let icon, tag = gameMeta title
 
     Html.div [
         prop.className
-            "group card bg-base-100/90 border border-base-200/80 rounded-2xl shadow-md hover:shadow-xl hover:-translate-y-[3px] hover:border-primary/50 transition duration-200 ease-out overflow-hidden"
+            "group border border-base-200/80 bg-base-100/90 shadow-md hover:shadow-2xl hover:-translate-y-3 transition duration-200 ease-out overflow-hidden relative"
         prop.children [
 
-            // gradient strip
+            // top gradient bar
             Html.div [
                 prop.className
-                    "h-1.5 w-full rounded-t-2xl bg-gradient-to-r from-primary via-secondary to-accent"
+                    "h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-accent"
             ]
 
             Html.div [
-                prop.className "card-body space-y-4"
+                prop.className "p-6 sm:p-8 space-y-5"
                 prop.children [
 
                     // title row
                     Html.div [
-                        prop.className "flex items-center gap-2"
+                        prop.className "flex items-center gap-4"
                         prop.children [
                             Html.div [
                                 prop.className
-                                    "inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary"
+                                    "inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/15 text-primary"
                                 prop.children [ icon ]
                             ]
                             Html.div [
                                 prop.children [
-                                    Html.h2 [
-                                        prop.className "card-title text-base sm:text-lg text-primary"
+                                    Html.h3 [
+                                        prop.className "serif text-2xl font-light"
                                         prop.text title
                                     ]
                                     Html.span [
                                         prop.className
-                                            "mt-0.5 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-base-200/80 text-base-content/60 uppercase tracking-wide"
+                                            "mt-1 inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full bg-base-200/80 text-base-content/60 uppercase tracking-[0.15em]"
                                         prop.text tag
                                     ]
                                 ]
@@ -139,26 +379,25 @@ let codeGalleryCard (title: string) (description: string) gallerySection dispatc
                         ]
                     ]
 
-
                     // description
                     Html.p [
-                        prop.className "text-sm text-base-content/80"
+                        prop.className "text-sm text-base-content/70 leading-relaxed"
                         prop.text description
                     ]
 
                     // footer buttons
                     Html.div [
-                        prop.className "card-actions justify-end gap-2 pt-2"
+                        prop.className "flex flex-wrap gap-3 pt-2 justify-around"
                         prop.children [
                             Html.button [
                                 prop.className
-                                    "btn btn-xs sm:btn-sm btn-outline group-hover:btn-secondary/90"
+                                    "inline-flex-1 btn btn-xs sm:btn-sm btn-outline tracking-[0.15em] uppercase text-[0.7rem]"
                                 prop.text "Source code"
                                 prop.onClick (fun _ -> LoadSourceCode gallerySection |> dispatch)
                             ]
                             Html.button [
                                 prop.className
-                                    "btn btn-xs sm:btn-sm btn-primary gap-1 group-hover:translate-y-[-0.5px]"
+                                    "btn btn-xs sm:btn-sm btn-primary gap-2 tracking-[0.15em] uppercase text-[0.7rem]"
                                 prop.onClick (fun _ -> dispatch (LoadSection gallerySection))
                                 prop.children [
                                     Html.span [ prop.text "Launch demo" ]
@@ -173,26 +412,131 @@ let codeGalleryCard (title: string) (description: string) gallerySection dispatc
     ]
 
 
+// -------- FEATURED EXPERIMENT COMPONENT (reusable) --------
 
-type Props = {|
-    Section: GallerySection
-    OnBack: unit -> unit
+type FeaturedExperimentProps = {| 
+    Title       : string
+    Tag         : string
+    Description : string
+    Icon        : ReactElement
+    OnSource    : unit -> unit
+    OnLaunch    : unit -> unit
+    Media       : ReactElement
 |}
 
+[<ReactComponent>]
+let FeaturedExperiment (props: FeaturedExperimentProps) =
+    Html.div [
+        prop.className
+            "rounded-3xl border border-base-200/80 bg-gradient-to-br from-base-200/80 via-base-100 to-base-100 px-6 py-8 lg:px-10 lg:py-10 shadow-xl transition-transform duration-300 hover:-translate-y-2"
+        prop.children [
+            Html.div [
+                prop.className "grid lg:grid-cols-2 gap-10 lg:gap-12 items-center"
+                prop.children [
+
+                    // LEFT: text
+                    Html.div [
+                        prop.children [
+
+                            Html.div [
+                                prop.className "flex items-center gap-4 mb-6"
+                                prop.children [
+                                    Html.div [
+                                        prop.className
+                                            "w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white"
+                                        prop.children [ props.Icon ]
+                                    ]
+                                    Html.div [
+                                        prop.children [
+                                            Html.h3 [
+                                                prop.className "serif text-3xl font-light mb-1"
+                                                prop.text props.Title
+                                            ]
+                                            Html.span [
+                                                prop.className
+                                                    "inline-flex items-center px-3 py-1 rounded-full bg-primary/15 border border-primary/40 text-[0.65rem] tracking-[0.15em] uppercase"
+                                                prop.text props.Tag
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+
+                            Html.p [
+                                prop.className "text-sm text-base-content/70 mb-8 leading-relaxed"
+                                prop.text props.Description
+                            ]
+
+                            Html.div [
+                                prop.className "flex flex-wrap gap-4"
+                                prop.children [
+                                    Html.button [
+                                        prop.className
+                                            "inline-flex items-center gap-2 border border-base-300 px-4 py-2 text-[0.7rem] tracking-[0.15em] uppercase hover:border-base-400 hover:-translate-y-0.5 transition"
+                                        prop.onClick (fun _ -> props.OnSource())
+                                        prop.children [
+                                            LucideIcon.Code2 "w-3 h-3"
+                                            Html.span [ prop.text "Source code" ]
+                                        ]
+                                    ]
+                                    Html.button [
+                                        prop.className
+                                            "inline-flex items-center gap-2 px-5 py-2 bg-primary text-primary-content text-[0.7rem] tracking-[0.15em] uppercase hover:bg-primary/90 hover:-translate-y-0.5 shadow-md transition"
+                                        prop.onClick (fun _ -> props.OnLaunch())
+                                        prop.children [
+                                            Html.span [ prop.text "Launch demo" ]
+                                            LucideIcon.ArrowRight "w-3 h-3"
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+
+                    // RIGHT: media slot (video / placeholder)
+                    Html.div [
+                        prop.className
+                            "aspect-video rounded-2xl border border-base-300/60 bg-gradient-to-br from-primary/10 via-base-100/40 to-secondary/10 flex items-center justify-center overflow-hidden"
+                        prop.children [ props.Media ]
+                    ]
+                ]
+            ]
+        ]
+    ]
+
+
+// Simple placeholder media until you drop in an actual <video>
+let goalRollPreviewMedia =
+    Html.div [
+        prop.className "text-center text-base-content/60 space-y-3"
+        prop.children [
+            LucideIcon.PlayCircle "w-16 h-16 mx-auto opacity-70"
+            Html.p [
+                prop.className "text-xs tracking-[0.15em] uppercase"
+                prop.text "Preview demo"
+            ]
+        ]
+    ]
+
+
+// ---------- SOURCE VIEWER (unchanged) ----------
+
+type Props = {| Section: GallerySection; OnBack: unit -> unit |}
 
 let SourceViewer = React.functionComponent(fun (props: Props) ->
     Html.div [
         prop.className "max-w-6xl mx-auto p-4 space-y-4"
-
-        // Header with back button
         prop.children [
             Html.div [
                 prop.className "flex items-center justify-between"
                 prop.children [
                     Html.button [
-                        prop.className "btn btn-primary btn-sm"
+                        prop.className "btn btn-sm btn-outline rounded-full gap-1 tracking-[0.15em] uppercase text-[0.7rem]"
                         prop.onClick (fun _ -> props.OnBack())
-                        prop.text "Back to gallery"
+                        prop.children [
+                            LucideIcon.ArrowLeft "w-3 h-3"
+                            Html.span [ prop.text "Back to gallery" ]
+                        ]
                     ]
                     Html.h2 [
                         prop.className "text-xl font-bold"
@@ -201,7 +545,6 @@ let SourceViewer = React.functionComponent(fun (props: Props) ->
                 ]
             ]
 
-            // Code block
             Html.div [
                 prop.className "overflow-auto rounded-lg bg-base-200 p-4"
                 prop.children [
@@ -219,87 +562,251 @@ let SourceViewer = React.functionComponent(fun (props: Props) ->
     ]
 )
 
+
+// ---------------- MAIN VIEW ----------------
+
 let view model dispatch =
     match model with
     | CodeGallery ->
         Html.section [
-            // prop.className "max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8"
             prop.className
-                "relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8 bg-gradient-to-b from-primary/5 via-transparent to-transparent"
+                "relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-16 space-y-16"
             prop.children [
-                SharedViewModule.galleryHeaderControls {
-                    onClose = fun () -> BackToPortfolio |> dispatch
-                    rightIcon = Some {
-                        icon = LucideIcon.Github "w-5 h-5"
-                        label = "GitHub"
-                        externalLink = Some "https://github.com/seanwilken"
-                        externalAlt = Some "Go to GitHub"
-                    }
-                }
 
-                // hero
+                // Top nav: back + GitHub
                 Html.div [
-                    prop.className "text-center space-y-2"
+                    prop.className "flex items-center justify-between"
+                    prop.children [
+                        Html.button [
+                            prop.className
+                                "inline-flex items-center gap-2 text-[0.7rem] tracking-[0.15em] uppercase text-base-content/60 hover:text-base-content transition hover:-translate-x-1"
+                            prop.onClick (fun _ -> BackToPortfolio |> dispatch)
+                            prop.children [
+                                LucideIcon.ArrowLeft "w-4 h-4"
+                                Html.span [ prop.text "Back to portfolio" ]
+                            ]
+                        ]
+
+                        Html.a [
+                            prop.href "https://github.com/seanwilken"
+                            prop.target "_blank"
+                            prop.className
+                                "inline-flex items-center gap-2 text-[0.7rem] tracking-[0.15em] uppercase border border-base-300 rounded-full px-4 py-2 hover:bg-base-200/60 hover:border-base-400 transition"
+                            prop.children [
+                                LucideIcon.Github "w-4 h-4"
+                                Html.span [ prop.text "GitHub" ]
+                            ]
+                        ]
+                    ]
+                ]
+
+                // HERO
+                Html.div [
+                    prop.className "text-center max-w-3xl mx-auto space-y-6"
                     prop.children [
                         Html.h1 [
-                            prop.className "text-4xl sm:text-5xl font-bold text-primary"
+                            prop.className "serif text-5xl sm:text-6xl font-light leading-tight"
                             prop.text "Code Experiments"
                         ]
                         Html.p [
-                            prop.className "text-sm sm:text-base text-base-content/80 max-w-2xl mx-auto"
+                            prop.className "text-sm sm:text-base text-base-content/70 leading-loose"
                             prop.text
-                                "Play with interactive demos built in F#. Each experiment explores a different UI, game loop, or logic challenge."
+                                "Play with interactive demos built in F#. Each experiment explores a different UI, game loop, or logic challenge. These are living prototypes—proof that functional programming can be playful and surprisingly fun."
                         ]
-                        Html.p [
-                            prop.className "text-[11px] text-base-content/60"
-                            prop.text "Built for fun in F# and TypeScript."
-                        ]
-                    ]
-                ]
-
-                // panel around the cards
-                Html.div [
-                    prop.className
-                        "rounded-3xl border border-base-200/70 bg-base-100/80 shadow-sm px-4 sm:px-6 py-6 sm:py-8"
-                    prop.children [
                         Html.div [
-                            prop.className "flex flex-wrap items-center justify-between gap-2 text-[11px] px-4 pb-4"
+                            prop.className "flex flex-wrap justify-center gap-3"
                             prop.children [
-                                Html.div [
-                                    prop.className "inline-flex items-center gap-1 text-base-content/70"
-                                    prop.children [
-                                        LucideIcon.Gamepad2 "w-3 h-3"
-                                        Html.span [ prop.text "4 playable experiments" ]
-                                    ]
+                                Html.span [
+                                    prop.className
+                                        "px-4 py-1 border border-base-300 rounded-full text-[0.65rem] tracking-[0.15em] uppercase"
+                                    prop.text "F#"
                                 ]
                                 Html.span [
-                                    prop.className "text-base-content/50"
-                                    prop.text "F# • SAFE stack • TypeScript"
+                                    prop.className
+                                        "px-4 py-1 border border-base-300 rounded-full text-[0.65rem] tracking-[0.15em] uppercase"
+                                    prop.text "SAFE stack"
+                                ]
+                                Html.span [
+                                    prop.className
+                                        "px-4 py-1 border border-base-300 rounded-full text-[0.65rem] tracking-[0.15em] uppercase"
+                                    prop.text "TypeScript"
                                 ]
                             ]
                         ]
+                        Html.p [
+                            prop.className "text-[0.7rem] uppercase tracking-[0.18em] text-base-content/40"
+                            prop.text "Built for fun in F# and TypeScript"
+                        ]
+                    ]
+                ]
+
+                // STATS
+                Html.div [
+                    prop.className "max-w-xl mx-auto"
+                    prop.children [
                         Html.div [
-                            prop.className "grid gap-6 sm:grid-cols-1 md:grid-cols-2"
+                            prop.className "grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6"
                             prop.children [
-                                // meta strip
-                                codeGalleryCard "Goal Roll"  "Roll the ball in straight lines to the goal."            SharedCodeGallery.GoalRoll  dispatch
-                                codeGalleryCard "Tile Sort"  "Arrange the tiles in the correct order."                 SharedCodeGallery.TileSort  dispatch
-                                codeGalleryCard "Tile Tap"   "Tap tiles to smash them while avoiding bombs."          SharedCodeGallery.TileTap   dispatch
-                                codeGalleryCard "Pivot Points" "Pivot the ball to collect coins across lanes."        SharedCodeGallery.PivotPoint dispatch
+                                Html.div [
+                                    prop.className
+                                        "rounded-2xl border border-base-200/80 bg-base-100/80 text-center px-4 py-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition"
+                                    prop.children [
+                                        Html.div [
+                                            prop.className "text-3xl font-light mb-1"
+                                            prop.text "4"
+                                        ]
+                                        Html.p [
+                                            prop.className "text-[0.7rem] uppercase tracking-[0.18em] text-base-content/60"
+                                            prop.text "Playable\nExperiments"
+                                        ]
+                                    ]
+                                ]
+                                Html.div [
+                                    prop.className
+                                        "rounded-2xl border border-base-200/80 bg-base-100/80 text-center px-4 py-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition"
+                                    prop.children [
+                                        Html.div [
+                                            prop.className "text-3xl font-light mb-1"
+                                            prop.text "100%"
+                                        ]
+                                        Html.p [
+                                            prop.className "text-[0.7rem] uppercase tracking-[0.18em] text-base-content/60"
+                                            prop.text "Open\nSource"
+                                        ]
+                                    ]
+                                ]
+                                Html.div [
+                                    prop.className
+                                        "rounded-2xl border border-base-200/80 bg-base-100/80 text-center px-4 py-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition"
+                                    prop.children [
+                                        Html.div [
+                                            prop.className "text-3xl font-light mb-1"
+                                            prop.text "F#"
+                                        ]
+                                        Html.p [
+                                            prop.className "text-[0.7rem] uppercase tracking-[0.18em] text-base-content/60"
+                                            prop.text "Functional\nFirst"
+                                        ]
+                                    ]
+                                ]
                             ]
                         ]
                     ]
                 ]
+
+                // FEATURED EXPERIMENT (Goal Roll for now)
+                Html.div [
+                    prop.children [
+                        Html.p [
+                            prop.className
+                                "text-[0.7rem] tracking-[0.2em] uppercase text-base-content/50 text-center mb-6"
+                            prop.text "Featured experiment"
+                        ]
+                        FeaturedExperiment {| 
+                            Title       = "Goal Roll"
+                            Tag         = "Physics"
+                            Description =
+                                "Roll the ball in straight lines to the goal. A simple physics puzzle that explores grid-based movement, collision detection, and state management in F#. Clean code, smooth animations, and surprisingly addictive gameplay."
+                            Icon        = LucideIcon.CirclePlus "w-8 h-8"
+                            OnSource    = (fun () -> LoadSourceCode GallerySection.GoalRoll |> dispatch)
+                            OnLaunch    = (fun () -> LoadSection GallerySection.GoalRoll |> dispatch)
+                            Media       = goalRollPreviewMedia
+                        |}
+                    ]
+                ]
+
+                // ALL EXPERIMENTS GRID
+                Client.Components.Shop.Common.Ui.Animations.ProgressiveReveal {
+                    Children =
+                        Html.div [
+                            prop.className "space-y-8"
+                            prop.children [
+                                Html.p [
+                                    prop.className
+                                        "text-[0.7rem] tracking-[0.2em] uppercase text-base-content/50 text-center"
+                                    prop.text "All experiments"
+                                ]
+                                Html.div [
+                                    prop.className "grid gap-8 md:grid-cols-2"
+                                    prop.children [
+                                        codeGalleryCard
+                                            "Goal Roll"
+                                            "Roll the ball in straight lines to the goal."
+                                            SharedCodeGallery.GoalRoll
+                                            dispatch
+
+                                        codeGalleryCard
+                                            "Tile Sort"
+                                            "Arrange the tiles in the correct order."
+                                            SharedCodeGallery.TileSort
+                                            dispatch
+
+                                        codeGalleryCard
+                                            "Tile Tap"
+                                            "Tap tiles to smash them while avoiding bombs."
+                                            SharedCodeGallery.TileTap
+                                            dispatch
+
+                                        codeGalleryCard
+                                            "Pivot Points"
+                                            "Pivot the ball to collect coins across lanes."
+                                            SharedCodeGallery.PivotPoint
+                                            dispatch
+                                    ]
+                                ]
+                            ]
+                        ]
+                }
+
+                // CTA
+                
+                Client.Components.Shop.Common.Ui.Animations.ProgressiveReveal {
+                    Children =
+                        Html.div [
+                            prop.className "max-w-3xl mx-auto text-center space-y-6 pt-4"
+                            prop.children [
+                                Html.h2 [
+                                    prop.className "serif text-3xl sm:text-4xl font-light"
+                                    prop.text "Want to see the code?"
+                                ]
+                                Html.p [
+                                    prop.className "text-sm text-base-content/70 leading-loose"
+                                    prop.text
+                                        "Every experiment is open source. Browse the repositories, fork the code, or use them as learning examples for your own F# projects."
+                                ]
+                                Html.div [
+                                    prop.className "flex flex-col sm:flex-row gap-4 justify-center"
+                                    prop.children [
+                                        Html.a [
+                                            prop.href "https://github.com/seanwilken"
+                                            prop.target "_blank"
+                                            prop.className
+                                                "inline-flex items-center justify-center gap-2 border border-base-300 rounded-full px-5 py-2 text-[0.7rem] tracking-[0.15em] uppercase hover:bg-base-200/60 hover:border-base-400 transition"
+                                            prop.children [
+                                                LucideIcon.Github "w-4 h-4"
+                                                Html.span [ prop.text "View all repositories" ]
+                                            ]
+                                        ]
+                                        Html.button [
+                                            prop.className
+                                                "inline-flex items-center justify-center gap-2 rounded-full px-5 py-2 bg-base-200 text-base-content text-[0.7rem] tracking-[0.15em] uppercase hover:bg-base-300 transition"
+                                            prop.onClick (fun _ -> BackToPortfolio |> dispatch)
+                                            prop.children [
+                                                LucideIcon.LayoutTemplate "w-4 h-4"
+                                                Html.span [ prop.text "Back to portfolio" ]
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                }
             ]
         ]
-
 
     | GoalRoll m   -> GoalRoll.view m (GoalRollMsg >> dispatch) (LoadSection Gallery) dispatch
     | TileSort m   -> TileSort.view m (TileSortMsg >> dispatch) (LoadSection Gallery) dispatch
     | TileTap m    -> TileTap.view  m (TileTapMsg >> dispatch) (LoadSection Gallery) dispatch
     | PivotPoint m -> PivotPoints.view m (PivotPointMsg >> dispatch) (LoadSection Gallery) dispatch
     | SourceCode gallerySection ->
-        SourceViewer {|
-            Section = gallerySection
-            OnBack  = fun () -> dispatch (LoadSection Gallery)
-        |}
+        SourceViewer {| Section = gallerySection; OnBack = fun () -> dispatch (LoadSection Gallery) |}

@@ -922,6 +922,8 @@ module Api =
             state       : string
             countryCode : string
             postalCode  : string
+            email : string
+            phone :string option
         }
 
         type CreateDraftOrderRequest = {
@@ -939,6 +941,7 @@ module Api =
             Tax              : decimal
             Total            : decimal
         }
+
         type CreateTempDraftOrderResponse = {
             PreviewLines : CheckoutPreviewLine list
             DraftOrderTotals: OrderTotals
@@ -956,16 +959,80 @@ module Api =
             | CreatedTemp of CreateTempDraftOrderResponse
             | CreatedFinal of CreateFinalDraftOrderResponse
 
+        type CustomerOrderDetails = {
+            FirstName: string
+            LastName: string
+            Email: string
+            Phone: string option
+        }
+
+        type ConfirmOrderRequest = {
+            CustomerInfo : CustomerOrderDetails
+            StripeConfirmation: string
+            OrderDraftId     : string // should be able to find by this, but we'll send the email as well
+            IsSuccess: bool
+        }
+
+        type OrderShipment = {
+            Carrier: string
+            Service: string
+            TrackingNumber: string
+            TrackingUrl: string
+            ShipDate: string
+            Items: int list // look them up in order items
+        }
+
+        type ConfirmOrderResponse = {
+            OrderId : int
+            InternalId : string
+            Status: string
+            ShippingServiceName: string
+            Shipments: OrderShipment list
+            OrderItems : CheckoutPreviewLine list
+            Costs: OrderTotals
+        }
 
         // ---------- 4.5 Order Lookup ----------
 
         type OrderStatus =
             | Pending          // created locally, not yet paid
+            | Processing          // created locally, not yet paid
             | AwaitingPayment  // draft in Printful, waiting on Stripe
             | Paid             // payment succeeded, printful confirm pending
+            | Refunded          // created locally, not yet paid
             | InProduction     // confirmed with Printful
             | Shipped
             | Cancelled
+            | Other of string
+
+            static member fromString (os: string) =
+                match os.ToLowerInvariant() with
+                | "draft-requested"
+                | "draft-created"
+                | "pending" -> Pending
+                | "awaitingpayment" -> AwaitingPayment
+                | "payment-succeeded" -> Processing
+                | "paid" -> Paid
+                | "inproduction" -> InProduction
+                | "order-confirmed" 
+                | "shipped" -> Shipped
+                | "payment-failed"
+                | "canceled" 
+                | "cancelled" -> Cancelled
+                | "refunded" -> Refunded
+                | _ -> Other os
+
+            static member toString =
+                function
+                | Pending -> "pending"
+                | Processing -> "processing"
+                | Refunded -> "refunded"
+                | AwaitingPayment -> "awaitingpayment"
+                | Paid -> "paid" 
+                | InProduction -> "inproduction" 
+                | Shipped -> "shipped" 
+                | Cancelled -> "cancelled"
+                | Other os -> os 
 
         type OrderSummary = {
             OrderId        : string
@@ -1003,6 +1070,7 @@ module Api =
 
     type CheckoutApi = {
         CreateDraftOrder : Checkout.CreateDraftOrderRequest -> Async<Checkout.CreateDraftOrderResponse>
+        ConfirmOrder : Checkout.ConfirmOrderRequest -> Async<Checkout.ConfirmOrderResponse>
         LookupOrder    : Checkout.OrderLookupRequest     -> Async<Checkout.OrderLookupResponse>
     }
 

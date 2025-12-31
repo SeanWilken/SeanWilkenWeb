@@ -16,7 +16,6 @@ let toPath =
     function
     | Some About -> "/about"
     | Some Contact -> "/contact"
-    | Some Landing -> "/landing"
     | Some ( Portfolio ( Code ( code ) ) ) -> 
         match code with
         | GoalRoll -> "/portfolio-goalRoll" 
@@ -94,8 +93,6 @@ let pageParser : Parser<Page -> Page,_> =
     oneOf [
         map Page.About (s "about")
         map Page.Contact (s "contact")
-        map Page.Landing (s "landing")
-        map Page.Landing (s "index")
         map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.AI) (s "ai-services")
         map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Automation) (s "automation-services")
         map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Development) (s "development-services")
@@ -123,9 +120,6 @@ let urlParser location =
 
 let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebAppModel) : SharedWebAppModels.WebAppModel * Cmd<SharedWebAppModels.WebAppMsg> =
     match result with
-    | Some SharedPage.Page.Landing ->
-        { model with CurrentAreaModel = SharedWebAppModels.Landing },
-        Navigation.newUrl (toPath (Some Landing))
     | Some SharedPage.Page.About ->
         { model with CurrentAreaModel = SharedWebAppModels.About SharedAboutSection.getInitialModel },
         Navigation.newUrl (toPath (Some About))

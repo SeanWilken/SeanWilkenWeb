@@ -18,7 +18,7 @@ module Env =
 
 // GRID GAMES THAT USE LIST OF LANE OBJECTS TO DEFINE THEIR GRID BOARD AND CONTENTS
 module GridGame =
-    
+
     // Grid Movement Directions
     type MovementDirection =
         | Up
@@ -80,7 +80,7 @@ module GridGame =
         positions.GridPositions.Item(gridPositionIndex) = objToFind
 
     // returns the object at a given positions index
-    let getObjectAtPositionIndex (positions: LaneObject list) (positionIndex: int) = 
+    let getObjectAtPositionIndex (positions: LaneObject list) (positionIndex: int) =
         positions.Item(positionIndex)
 
     // would return the first index if one is found
@@ -88,13 +88,13 @@ module GridGame =
         List.tryFindIndex (fun x -> x = positionObject ) positions.GridPositions
 
     // updates the grid position with an object
-    let updatePositionWithObject positions (object: LaneObject) position = 
+    let updatePositionWithObject positions (object: LaneObject) position =
         let gridLength = positions.GridPositions.Length - 1
         let newGrid =
             // [ for i in 0 .. gridLength do
             [ for i in 0 .. gridLength do
                 if i = position
-                    then object 
+                    then object
                     else positions.GridPositions.Item(i)
             ]
         {GridPositions = newGrid}
@@ -102,30 +102,30 @@ module GridGame =
     // GRID POSITION REPRESENTATION
     // GridPositions Represented in column groups
     let getPositionsAsColumns (positions: GridBoard) gridDimension =
-        Seq.toList (seq { 
+        Seq.toList (seq {
             for i in 0 .. (gridDimension - 1) do
-                yield Seq.toList (seq { 
+                yield Seq.toList (seq {
                     for n in 0 .. (gridDimension - 1) do
-                        yield! seq{ 
-                            positions.GridPositions.Item(i + (n * gridDimension)) 
+                        yield! seq{
+                            positions.GridPositions.Item(i + (n * gridDimension))
                         }
                 })
         })
 
     // GridPositions Represented in row groups
     let getPositionsAsRows (positions: GridBoard) gridDimension =
-        Seq.toList (seq { 
+        Seq.toList (seq {
             for i in 0 .. (gridDimension - 1) do
                 yield Seq.toList (seq {
                     for n in 0 .. (gridDimension - 1) do
-                        yield! seq{ 
+                        yield! seq{
                             positions.GridPositions.Item(n + (i * gridDimension))
                         }
                 })
         })
 
     let modelValueAsString strin value =
-        if value = -1 
+        if value = -1
             then strin + "\u221E";
             else strin + string value
 
@@ -162,13 +162,13 @@ module RollableGridGameHelpers =
         let ballToBlankGrid = updatePositionWithObject (gameBoard) Blank (piecePosition)
         updatePositionWithObject ballToBlankGrid Ball movedPiecePosition
 
-    let nonWrappingPieceMovementPositionIndex ballPosition direction = 
+    let nonWrappingPieceMovementPositionIndex ballPosition direction =
         getRolledBallPositionIndex false ballPosition direction
 
-    let wrappablePieceMovementPositionIndex ballPosition direction = 
+    let wrappablePieceMovementPositionIndex ballPosition direction =
         checkDirectionalBound ( getRolledBallPositionIndex false ballPosition direction ) direction
-        |> fun x -> getRolledBallPositionIndex ( not x ) ballPosition direction 
-    
+        |> fun x -> getRolledBallPositionIndex ( not x ) ballPosition direction
+
     let checkDirectionMovementWithFunction movementPositionFunc ballPosition direction gameBoard =
         let updatedPiecePosition = movementPositionFunc ballPosition direction
         if checkGridBoardPositionForBlocker gameBoard updatedPiecePosition
@@ -177,7 +177,7 @@ module RollableGridGameHelpers =
 
     let checkRollableDirectionMovement ballPosition direction gameBoard =
         checkDirectionMovementWithFunction nonWrappingPieceMovementPositionIndex ballPosition direction gameBoard
-    
+
     let checkDirectionMovement ballPosition direction gameBoard =
         checkDirectionMovementWithFunction wrappablePieceMovementPositionIndex ballPosition direction gameBoard
 
@@ -218,7 +218,7 @@ module SharedGoalRoll =
     // ------------------------
     // LEVEL CREATION DOMAIN, PLEASE RELOCATE ME, UNSURE OF POSITION
     // SEED GENERATION???
-    let Level0 = { 
+    let Level0 = {
         GridPositions = [
             Blank; Blocker; Blank; Blank; Blank; Blank; Blank; Blank;
             Blank; Blank; Heart; Blank; Blank; Blank; Blank; Blank;
@@ -230,7 +230,7 @@ module SharedGoalRoll =
             Blank; Blank; Blank; Blank; Blank; Blank; Blank; Heart;
         ] }
 
-    let Level1 = { 
+    let Level1 = {
         GridPositions = [
             Ball; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
             Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
@@ -239,10 +239,10 @@ module SharedGoalRoll =
             Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
             Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
             Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
-            Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank; 
+            Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
         ] }
 
-    let Level2 = { 
+    let Level2 = {
         GridPositions = [
             Blank; Blank; Blank; Blank; Blank; Blank; Blocker; Blank;
             Blocker; Goal; Blank; Blank; Blank; Blank;Blank; Blank;
@@ -254,7 +254,7 @@ module SharedGoalRoll =
             Blank; Blank; Blank; Blank; Blank; Blocker; Blocker; Blank;
         ] }
 
-    let Level3 = { 
+    let Level3 = {
         GridPositions = [
             Blocker; Blocker; Blocker; Blank; Blank; Blocker; Blank; Blank;
             Blocker; Blocker; Blank; Blank; Blank; Blank; Blank; Blank;
@@ -263,7 +263,7 @@ module SharedGoalRoll =
             Blank; Blank; Blocker; Blocker; Blocker; Blank; Blank; Blank;
             Blank; Blank; Blocker; Blocker; Blank; Blank; Blank; Blank;
             Blank; Blank; Blank; Blank; Blank; Blocker; Goal; Blank;
-            Blocker; Blank; Blank; Blank; Blank; Ball; Blocker; Blocker; 
+            Blocker; Blank; Blank; Blank; Blank; Ball; Blocker; Blocker;
         ] }
 
     // --------------------------------------------------------------
@@ -290,7 +290,7 @@ module SharedGoalRoll =
         }
         initialModel
 
-module SharedPivotPoint = 
+module SharedPivotPoint =
     open GridGame
 
     type PivotDirection =
@@ -329,7 +329,7 @@ module SharedPivotPoint =
         CoinsCollected: int // # of coins obtained
     }
 
-    let demoGameBoard = { 
+    let demoGameBoard = {
         GridPositions = [
             Blocker; Blank; Blank; Blank; Blank; Blocker; Blank; Blank;
             Blank; Blocker; Blank; Blank; Blank; Blank; Blank; Blank;
@@ -338,7 +338,7 @@ module SharedPivotPoint =
             Blank; Blank; Blocker; Blank; Goal; Blank; Blank; Blank;
             Blank; Blank; Blocker; Blank; Blank; Blank; Blank; Blank;
             Ball; Blank; Blank; Blank; Blank; Blocker; Blank; Blank;
-            Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blocker; 
+            Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blocker;
         ] }
 
     let initModel = {
@@ -364,7 +364,7 @@ module SharedTileTap =
         | Medium
         | Hard
 
-    // KINDA USELESS IMPLEMENTATION CURRENTLY, 
+    // KINDA USELESS IMPLEMENTATION CURRENTLY,
     // NEEDS MORE TWEAKS
     type TileTapGameMode =
         | Survival
@@ -404,7 +404,7 @@ module SharedTileTap =
 
     type TileTapRoundDetails = {
         RoundMistakes: int // How many mistakes were made that Round
-        TilesSpawned: int // Current # of tiles spawned on the board 
+        TilesSpawned: int // Current # of tiles spawned on the board
         TilesSmashed: int // # of tiles destroyed by the player
         RoundScore: int // Score of tiles destroyed within Round
         GameClock: int
@@ -418,7 +418,7 @@ module SharedTileTap =
         GameClock = 0
     }
 
-    
+
     type Msg =
         // GAME LOOP
         | SetGameState of RoundState
@@ -486,7 +486,7 @@ module SharedTileTap =
             CompletedRoundDetails = model.CurrentRoundDetails
         }
 
-    let resetRound model = 
+    let resetRound model =
         { model with
             TileTapGridBoard = generateEmptyTileTapGrid gridDimension
             LastSpawnInterval = 2
@@ -530,7 +530,7 @@ module SharedTileSort =
         | Easy // 4x4
         | Medium // 5x5
         | Hard // 6x6
-    
+
     type Msg =
         | SetGameState of GridGame.RoundState
         | NewRound // Starts a New Round, initializing the board again with the selected difficulty
@@ -628,7 +628,7 @@ module SharedTileSort =
     let selectedTilePositionIndex (gameGrid : GridBoard) selectedTile : int option =
         gameGrid.GridPositions
         |> List.tryFindIndex ( fun x -> x = selectedTile )
-    
+
     let blankTilePositionIndex (gameGrid : GridBoard) =
         gameGrid.GridPositions
         |> List.tryFindIndex (
@@ -645,21 +645,21 @@ module SharedTileSort =
         |> List.contains true
 
     let sortTilesFromGridBoard grid =
-        List.filter ( fun x -> 
-            match x with 
+        List.filter ( fun x ->
+            match x with
             | TileSortLaneObject x ->
                 true
             | _ -> false
         ) grid.GridPositions
 
     let checkSwapInColumn selectedIndex blankIndex tiles selected gridDimension =
-        let tileColumns = 
+        let tileColumns =
             getPositionsAsColumns tiles gridDimension
-        let selectedColIndex = 
+        let selectedColIndex =
             unwrapIndex ( List.tryFindIndex ( fun x -> checkTileGroup x selected ) ( tileColumns ) )
-        let blankColIndex = 
+        let blankColIndex =
             unwrapIndex ( List.tryFindIndex ( fun x -> checkTileGroup x  ( TileSortLaneObject { Value = None } ) ) ( tileColumns ) )
-        
+
         if ( selectedColIndex <> -1 && selectedColIndex = blankColIndex )
             then
                 if selectedIndex + gridDimension = blankIndex || selectedIndex - gridDimension = blankIndex
@@ -668,11 +668,11 @@ module SharedTileSort =
             else false
 
     let checkSwapInRow selectedIndex blankIndex tiles selected gridDimension =
-        let tileRows = 
+        let tileRows =
             getPositionsAsRows tiles gridDimension
-        let selectedColIndex = 
+        let selectedColIndex =
             unwrapIndex ( List.tryFindIndex ( fun x -> checkTileGroup x selected ) ( tileRows ) )
-        let blankColIndex = 
+        let blankColIndex =
             unwrapIndex ( List.tryFindIndex ( fun x -> checkTileGroup x  ( TileSortLaneObject { Value = None } ) ) ( tileRows ) )
         if ( selectedColIndex <> -1 && selectedColIndex = blankColIndex )
             then
@@ -694,11 +694,11 @@ module SharedTileSort =
             else
                 let colSwap = checkSwapInColumn selectedIndex blankIndex tiles selected gridDimension
                 let rowSwap = checkSwapInRow selectedIndex blankIndex tiles selected gridDimension
-                if (colSwap || rowSwap) 
+                if (colSwap || rowSwap)
                     then swapBlankWithSelected tiles selected selectedIndex blankIndex, true
                     else tiles, false
 
-    
+
 
     // // BLANK TILE VALUE POSITION VALIDATION
     // // gets the current index of the Blank Tile and adds one to the index
@@ -752,7 +752,7 @@ module SharedTileSort =
             let selectedTile = TileSortLaneObject { Value = Some rewindTile }
             let selectedIndex = unwrapIndex ( selectedTilePositionIndex model.CurrentTiles selectedTile )
             let blankIndex = unwrapIndex ( blankTilePositionIndex model.CurrentTiles )
-            { model with 
+            { model with
                 CurrentTiles = swapBlankWithSelected (model.CurrentTiles) (selectedTile) ( selectedIndex ) (blankIndex)
                 Turns = model.Turns.Tail
             }
@@ -769,7 +769,7 @@ module SharedTileSort =
 
     // RESET ROUND - CURRENT TILES = INITIAL TILES && TURNS = []
     let resetRound model =
-        { model with 
+        { model with
             CurrentTiles = model.InitialTiles
             Turns = []
         }
@@ -809,7 +809,6 @@ module SharedWebAppViewSections =
         | AboutAppView
         | ContactAppView
         | ProfessionalServicesAppView of ProfessionalServicesView
-        | LandingAppView
         | ShopAppView
         | PortfolioAppLandingView
         | PortfolioAppCodeView
@@ -823,7 +822,6 @@ module SharedWebAppViewSections =
         | PortfolioAppCodeView -> "Code"
         | ContactAppView -> "Contact"
         | ProfessionalServicesAppView _ -> "Services"
-        | LandingAppView -> "Landing"
         | PortfolioAppDesignView -> "Design"
         | PortfolioAppLandingView -> "Projects"
         | ResumeAppView -> "Resume"
@@ -831,7 +829,7 @@ module SharedWebAppViewSections =
         | WelcomeAppView -> "Welcome"
 
 module SharedCodeGallery =
-    
+
     open SharedGoalRoll
     open SharedTileTap
     open SharedTileSort
@@ -876,12 +874,12 @@ module SharedDesignGallery =
 
 module SharedServices =
 
-    type ServiceFeature = { 
+    type ServiceFeature = {
         Title: string
-        Description: string 
+        Description: string
     }
 
-    type ServiceTier = { 
+    type ServiceTier = {
         Name: string
         Items: string list
     }
@@ -897,25 +895,25 @@ module SharedServices =
     | Down
 
     type ServiceStat =
-        { 
+        {
             Label : string
             Value : string
             Trend : StatTrend }
 
     type ServiceIndustry =
-        { 
+        {
             Name        : string
             Summary     : string
             Outcomes    : string list }
 
     type ServiceCapability =
-        { 
+        {
             Heading     : string
             Icon        : string      // emoji for now
             Description : string }
 
     type ServicePageModel =
-        { 
+        {
             Id                     : string
             Name                   : string
             HeroTitle              : string
@@ -966,11 +964,11 @@ module SharedServices =
     type Model = {
         CurrentSection: SharedWebAppViewSections.ProfessionalServicesView
     }
-        
+
     let getInitialModel section = { CurrentSection = section }
 
 module SharedPortfolioGallery =
-    
+
     open SharedCodeGallery
     open SharedDesignGallery
 
@@ -1007,10 +1005,10 @@ module SharedAboutSection =
         PreviousLabel: string
         NextLabel: string
     }
-       
+
     let getInitialModel = {ActiveModalIndex = 0; ModalIsActive = false}
 
-module SharedWelcome = 
+module SharedWelcome =
     type Msg =
         | SwitchSection of SharedWebAppViewSections.AppView
 
@@ -1044,14 +1042,14 @@ module Store =
             | FailedSyncProducts of exn
             | ViewSyncProduct of SyncProductSummary
 
-        let initModel () : Model = { 
+        let initModel () : Model = {
                 Filters    = defaultFilters
                 Paging     = emptyPaging
                 SearchTerm = None
                 Products   = Deferred.HasNotStartedYet
                 TotalCount = 0
                 IsLoading  = false
-                Error      = None 
+                Error      = None
             }
 
 
@@ -1068,7 +1066,7 @@ module Store =
             type TransformMode = ModePosition | ModeRotate | ModeScale
 
         open DesignerOptions
-        
+
         module ProductOptions =
 
             // Color and Size ?
@@ -1136,7 +1134,7 @@ module Store =
                 LayerOptions : PrintfulLayerOption list
             }
 
-            
+
             type Placement =
                 | Front
                 | Back
@@ -1263,13 +1261,13 @@ module Store =
         type NormRect = { X: float; Y: float; W: float; H: float } // 0..1 in preview space
 
         type Msg =
-            
+
             | BackToDropLanding
             | LoadProducts
             | ProductsLoaded of Shared.PrintfulStoreDomain.CatalogProductResponse.CatalogProductsResponse
             | LoadFailed of string
             | ViewProduct of CatalogProduct
-            
+
             | GoToStep of StepDesigner
             | SelectBase of CatalogProduct
             | SelectColor of string
@@ -1297,7 +1295,7 @@ module Store =
             | SetTransformMode of TransformMode
 
             | AddToCart of quantity:int
-            
+
 
         type Model = {
             Products             : Deferred<CatalogProduct list>
@@ -1319,7 +1317,7 @@ module Store =
             TransformMode     : TransformMode
             Placements           : PlacementOption list
         }
- 
+
         // ADD DEFERRED!!!!
         let initialModel () = {
             Products = Deferred.HasNotStartedYet
@@ -1379,14 +1377,14 @@ module Store =
                 }
             ]
         }
-    
-    
+
+
     module ProductViewer =
 
         open Shared.StoreProductViewer
 
         type Model =
-            { 
+            {
                 Key                 : ProductKey
                 Seed                : ProductSeed option
                 ReturnTo            : ReturnTo
@@ -1394,6 +1392,7 @@ module Store =
                 Details             : Deferred<SyncProduct.SyncProductDetailsResponse>
                 SelectedColor       : string option
                 SelectedSize        : string option
+                SelectedImage        : string option
                 SelectedVariantId   : int64 option
             }
 
@@ -1406,6 +1405,7 @@ module Store =
             | SelectColor of string
             | SelectSize  of string
             | SelectVariant of int64
+            | SelectImage of string
 
             // “primary CTA”
             | PrimaryAction
@@ -1419,25 +1419,56 @@ module Store =
             | SeedTemplate t -> Template t.id
 
         let initModel (key: ProductKey) (seed: ProductSeed option) (returnTo: ReturnTo) : Model =
-            { 
+            {
                 Key               = key
                 Seed              = seed
                 ReturnTo          = returnTo
                 Details           = Deferred.HasNotStartedYet
                 SelectedColor     = None
                 SelectedSize      = None
+                SelectedImage      = None
                 SelectedVariantId = None }
 
         let detailsReq (m: Model) : Shared.Api.Printful.SyncProduct.GetSyncProductDetailsRequest =
-            { 
+            {
                 selectedColor  = m.SelectedColor
                 selectedSize   = m.SelectedSize
-                syncProductId = 
+                syncProductId =
                     match m.Key with
                     | Catalog id -> id
                     | Sync id -> int id
                     | Template id -> id
             }
+
+    module OrderHistory =
+        open Shared.Api.Checkout
+
+
+        type Model = {
+            Email: string
+            OrderId: string
+            IsSearching: bool
+            Orders: Deferred<OrderSummary list>
+            Error: string option
+        }
+
+        type Msg =
+            | SetEmail of string
+            | SetOrderId of string
+            | SearchOrders
+            | OrdersLoaded of OrderLookupResponse
+            | SearchFailed of string
+            | ClearResults
+
+        let initModel () : Model =
+            {
+                Email = ""
+                OrderId = ""
+                IsSearching = false
+                Orders = Deferred.HasNotStartedYet
+                Error = None
+            }
+
 
     module Checkout =
 
@@ -1464,7 +1495,7 @@ module Store =
         }
         // we need shipping validation here....
 
-        // 
+        //
         type PaymentMethod =
             | Stripe
             // | ApplePay
@@ -1485,17 +1516,17 @@ module Store =
             Step            : CheckoutStep
 
             CustomerShippingInfo    : ShippingInfo
-            
+
             // SelectedShippingMethod  : ShippingOption option   // still used locally for UI
             // ShippingOptions : Shared.Api.Checkout.ShippingOption list
-            
+
             // From server preview:
             PreviewTotals   : PreviewTotals option
             CheckoutPreviewLines : CheckoutPreviewLine list
             // QuoteTotals: QuoteTotals list option
-            
+
             PaymentMethod   : PaymentMethod
-            
+
             Cart : CartState
 
             // From server payment session:
@@ -1506,19 +1537,30 @@ module Store =
 
             IsBusy         : bool
             Error          : string option
+
+            OrderConfirmation          : ConfirmOrderResponse option
         }
 
         type Msg =
             | UpdateShippingField of Field * string
             | SelectPaymentMethod of PaymentMethod
             | SubmitShipping
-            | SubmitPayment of IStripeElement
-            | PaymentSucceeded of string * string
+
+            // | SubmitCardPayment of IStripeElement
+            
+            // | PaymentSetupFailed of string
+            
+            | SubmitPayment of IElements
+            | SubmitCompleted of Result<IElements * obj, exn>
+            | ConfirmCompleted of Result<ConfirmPaymentResult, exn>
+            | ConfirmationSuccess of ConfirmOrderResponse
+            | ConfirmationFailed of exn
+            
             | PaymentFailed of string
-            | PaymentSetupFailed of string
+            
             | SetStep of CheckoutStep
             | BackToCart
-    
+
     open ProductDesigner.Designs
     open Shared.StoreProductViewer
 
@@ -1587,7 +1629,7 @@ module Store =
 
                 // 2. Preview image from the selected product
                 let previewImage =
-                    
+
                     product.thumbnailURL
                     |> function
                         | null | "" -> None
@@ -1733,7 +1775,7 @@ module Store =
                 }
             )
 
-        
+
         let toSyncCartDU
             (qty   : int)
             (model : ProductViewer.Model)
@@ -1753,11 +1795,12 @@ module Store =
         | ProductViewer of ProductViewer.Model
         | Cart
         | Checkout
+        | OrderHistory of OrderHistory.Model
         | NotFound
 
         // | Social
         // | Contact
-        
+
     type ShopLandingMsg =
         | SwitchSection of ShopSection
 
@@ -1767,13 +1810,14 @@ module Store =
         | Designer
         | Product
         | Cart
+        | History
         | Checkout
 
     open Shared.Store.Cart
     open Bindings.Stripe.StripePayment
 
     type ShopMsg =
-    
+
         | NavigateTo of ShopSection
         // Landing / Drop Hero
         | ShopLanding of ShopLandingMsg
@@ -1783,12 +1827,14 @@ module Store =
         | ShopDesignerMsg of ProductDesigner.Msg
         // Product Browser
         | ShopProduct of ProductViewer.Msg
-        
+        // Order History
+        | ShopOrderHistory of OrderHistory.Msg
+
         // Cart
         | AddCartItem      of CartLineItem
         | RemoveCartItem   of CartLineItem
         | UpdateCartQty    of CartLineItem * int
-        
+
         // Checkout
         | CheckoutMsg of Checkout.Msg
         // Checkout → Checkout Preview (Step 1)
@@ -1847,7 +1893,7 @@ module Store =
     }
 
 module SharedPage =
-    
+
     type CodeSection =
         | CodeLanding
         | GoalRoll
@@ -1863,7 +1909,6 @@ module SharedPage =
     type Page =
         | About
         | Contact
-        | Landing
         | Portfolio of PortfolioSection
         | Services of SharedWebAppViewSections.ProfessionalServicesView
         | Resume
@@ -1871,7 +1916,7 @@ module SharedPage =
         | Welcome
 
 module SharedWebAppModels =
-    
+
     type Theme =
         | Light
         | Dark
@@ -1947,7 +1992,6 @@ module SharedWebAppModels =
         | Help
         | Settings
         | Shop of Store.Model
-        | Landing
         | Services of SharedServices.Model
         | Portfolio of SharedPortfolioGallery.Model
         | Resume
@@ -1955,6 +1999,7 @@ module SharedWebAppModels =
 
     type WebAppModel = {
         CurrentAreaModel: Model
+        // cart needs and checkout at this level?
         Theme: Theme
     }
 

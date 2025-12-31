@@ -37,6 +37,7 @@ module Iniitializers =
         PrintfulDraftId    = None
         IsBusy         = false
         Error          = None
+        OrderConfirmation = None
     }
 
 module Helpers =
@@ -51,23 +52,74 @@ module Helpers =
         )
 
 module Checkout =
+    open Fable.Core.JS
 
-    let confirmCardCmd (stripe: IStripe) clientSecret confirmParams =
+    let paymentHandler model stripePaymentId status =
+        printfn $"STATUS FROM PAYMENT: {status}"
+        Cmd.OfAsync.either
+            Client.Api.checkoutApi.ConfirmOrder
+            {
+                CustomerInfo = {
+                    FirstName = model.CustomerShippingInfo.FirstName
+                    LastName = model.CustomerShippingInfo.LastName
+                    Email = model.CustomerShippingInfo.Email
+                    Phone = None
+                }
+                StripeConfirmation = stripePaymentId
+                OrderDraftId = model.PrintfulDraftId |> Option.defaultValue ""
+                IsSuccess =
+                    status = "success"
+            }
+            ConfirmationSuccess
+            ConfirmationFailed
+
+    // let confirmCardCmd (stripe: IStripe) clientSecret confirmParams =
+    //     Cmd.OfPromise.either
+    //         (fun (cs, cp) -> stripe.confirmCardPayment(cs, cp))
+    //         (clientSecret, confirmParams)
+    //         (fun res ->
+    //             match res.error with
+    //             | Some err ->
+    //                 PaymentFailed (defaultArg err.message err.``type``)
+    //             | None ->
+    //                 match res.paymentIntent with
+    //                 | None -> PaymentFailed "No payment intent returned."
+    //                 | Some pi -> PaymentSucceeded (pi.id, pi.status))
+    //         (fun ex -> PaymentFailed ex.Message)
+
+    let submitPayment (elements: IElements) =
         Cmd.OfPromise.either
-            (fun (cs, cp) -> stripe.confirmCardPayment(cs, cp))
-            (clientSecret, confirmParams)
-            (fun res ->
-                match res.error with
-                | Some err ->
-                    PaymentFailed (defaultArg err.message err.``type``)
-                | None ->
-                    match res.paymentIntent with
-                    | None -> PaymentFailed "No payment intent returned."
-                    | Some pi -> PaymentSucceeded (pi.id, pi.status))
-            (fun ex -> PaymentFailed ex.Message)
+            (fun (el: IElements) -> el.submit())
+            elements
+            (fun submitResult -> SubmitCompleted (Ok (elements, submitResult)))
+            (fun ex -> SubmitCompleted (Error ex))
+   
+    let confirmPaymentPromise (stripe: IStripe) clientSecret (elements: IElements) =
+        let params =
+            createObj [
+                "elements" ==> elements
+                "clientSecret" ==> clientSecret
+                // "confirmParams" ==> createObj [ "return_url" ==> "http://localhost:8080/shop/cart" ]
+                "redirect" ==> "if_required"
+            ] |> unbox
+        Cmd.OfPromise.either
+            stripe.confirmPayment 
+            params
+            (fun x -> ConfirmCompleted (Ok x))
+            (fun e -> ConfirmationFailed e)
+
+
 
     let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         match msg with
+        | SubmitShipping ->
+            // parent call to server to get order totals
+            model, Cmd.none
+
+        | BackToCart ->
+            // handled by parent Shop module, just bubble intent
+            model, Cmd.none
+
         | SetStep step ->
             // TODO — integrate Stripe "create session" later
             { model with Step = step }, 
@@ -89,51 +141,51 @@ module Checkout =
 
             { model with CustomerShippingInfo = updated }, Cmd.none
 
-        | SubmitShipping ->
-            // parent call to server to get order totals
-            model, Cmd.none
-
+        // Not used currently
         | SelectPaymentMethod method ->
             { model with PaymentMethod = method }, Cmd.none
 
         | SubmitPayment ce ->
-            match model.Stripe with
-            | None -> model, Cmd.none
-            | Some strp ->
-                let confirmParams =
-                    jsOptions<ConfirmCardPaymentParams>(fun cp ->
-                        cp.payment_method <-
-                            jsOptions<ConfirmCardPaymentMethod>(fun pm ->
-                                pm.card <- ce
-                                // pm.billing_details <- null
-                            )
-                    )
+            model,
+            submitPayment ce
+
+        | SubmitCompleted (Error ex) ->
+            { model with Error = Some ex.Message }, Cmd.none
+
+        | SubmitCompleted (Ok (elements, submitResult)) ->
+            match model.Stripe, submitResult?error with
+            | Some strp, None ->
+                // proceed to confirm
                 model,
-                confirmCardCmd
+                confirmPaymentPromise 
                     strp
-                    (model.StripeClientSecret |> Option.defaultValue "")
-                    confirmParams
-
-        | BackToCart ->
-            // handled by parent Shop module, just bubble intent
-            model, Cmd.none
-
-        | PaymentSucceeded (piId, status) ->
-            // TODO: call ConfirmOrder endpoint using model.DraftExternalId / PaymentIntentId
-            match model.Stripe with
-            | None -> model, Cmd.none
-            | Some stripe ->
-                printfn $"PAYMENT INTENT: {piId}; MODEL INTENT: {model.StripeSessionId}"
-                model,
-                Cmd.none
+                    model.StripeClientSecret
+                    elements
+                    
+            | None, _ -> model, Cmd.none
+            | Some _, Some err ->
+                { model with Error = Some err?message }, Cmd.none
 
         | PaymentFailed err ->
-                { model with 
-                    // Section = 
-                        // Complete
-                    Error = Some err
-                },
-                Cmd.none
+            { model with Error = Some err }, Cmd.none
+
+        | ConfirmCompleted confirmResponse ->
+            // TODO: call ConfirmOrder endpoint using model.DraftExternalId / PaymentIntentId
+            match (confirmResponse: Result<ConfirmPaymentResult,exn>) with
+            | Error e -> model, Cmd.none
+            | Ok resp when resp.error.IsSome -> {model with Error = resp.error.Value.message }, Cmd.none
+            | Ok resp when resp.paymentIntent.IsSome ->
+                model,
+                paymentHandler model resp.paymentIntent.Value.id resp.paymentIntent.Value.status
+            | _ -> model, Cmd.none
+
+        | ConfirmationFailed err ->
+            { model with Error = Some err.Message }, Cmd.none
+
+        | ConfirmationSuccess confirmationResp ->
+            { model with OrderConfirmation = Some confirmationResp },
+            Cmd.ofMsg (SetStep Review)
+
 
 module View =
 
@@ -151,10 +203,6 @@ module View =
         Html.div [
             prop.className "mb-10 md:mb-12"
             prop.children [
-                Html.h1 [
-                    prop.className "text-3xl md:text-4xl font-light mb-6 md:mb-8"
-                    prop.text "Checkout"
-                ]
                 Html.div [
                     prop.className "flex items-center justify-between gap-4"
                     prop.children [
@@ -467,8 +515,41 @@ module View =
         {|
             Stripe: IStripe option
             ClientSecret: string option
-            OnCardReady: IStripeElement option -> unit
+            // OnCardPaymentReady: IStripeElement option -> unit
+            OnPaymentReady: IElements option -> unit
         |}
+
+    let stripeOptions : obj * obj =
+        let style : obj =
+            box 
+                {| 
+                    ``base`` = 
+                        box {| 
+                            fontSize = "18px"
+                            lineHeight = "1.6"
+                            color = "#111827"
+                            backgroundColor = "#F9FAFB"
+                            borderRadius = "0.5rem"
+                        |}
+                    invalid = box {| color = "#DC2626" |}
+                |}
+        let classes : obj = 
+            box {| 
+                // host element (outside iframe)
+                ``base`` = "px-4 py-3 rounded-lg border border-base-300 bg-base-100 shadow-sm"
+                focus = "ring-2 ring-primary/70 border-primary"
+                invalid = "border-error"
+            |}
+
+        style, classes
+
+    
+
+    let safeCssVar name fallback = 
+        let value = TSXUtilities.getCssVar name 
+        if System.String.IsNullOrWhiteSpace value
+        then fallback else TSXUtilities.convertOklchToHex value
+
 
     [<ReactComponent>]
     let StripeCardHost (props: StripeCardHostProps) =
@@ -477,7 +558,7 @@ module View =
         let containerRef = React.useRef<HTMLElement option> None
 
         // Store created card element so we don’t recreate/remount every render
-        let cardRef = React.useRef<IStripeElement option>(None)
+        let paymentRef = React.useRef<IStripeElement option>(None)
         let elementsRef = React.useRef<IElements option>(None)
 
         React.useEffect(
@@ -488,35 +569,46 @@ module View =
                 match props.Stripe, props.ClientSecret, containerRef.current with
                 | Some stripe, Some clientSecret, Some containerEl ->
 
+                    let stripeAppearance =
+                        createObj [
+                            "theme" ==> "flat"
+                            "variables" ==> createObj [
+                                "colorPrimary" ==> safeCssVar "--color-primary" "#0A84FF"
+                                "colorBackground" ==> safeCssVar "--color-background" "#ffffff"
+                                "colorText" ==> safeCssVar "--color-text" "#111827"
+                            ]
+                        ]
+
+                    printfn $"appearance: {stripeAppearance}"
                     // Only create/mount once
-                    if cardRef.current.IsNone then
+                    if paymentRef.current.IsNone then
                         let opts =
                             jsOptions<StripeElementsOptions>(fun o ->
                                 o.clientSecret <- Some clientSecret
-                                // o.appearance <- None
+                                o.appearance <- Some stripeAppearance
                             )
-
                         let elements = stripe.elements opts
-                        let card = elements.create("card", jsOptions(fun _ -> ()))
-
-                        printfn $"SHOULD BE MOUNTING THE CARD"
-
+                        let style, classes = stripeOptions
+                        let paymentElem = elements.create(
+                            "payment", 
+                            jsOptions(fun o -> 
+                                o?style <- style
+                                o?classes <- classes
+                            )
+                        )
                         // ⭐ Use the HTMLElement overload here
-                        card.mount(containerEl)
-
+                        paymentElem.mount(containerEl)
                         elementsRef.current <- Some elements
-                        cardRef.current <- Some card
-                        props.OnCardReady (Some card)
-
-
+                        paymentRef.current <- Some paymentElem
+                        props.OnPaymentReady (Some elements)
                 | _ -> ()
 
                 // cleanup on unmount / dependencies change
                 React.createDisposable(fun () ->
-                    match cardRef.current with
+                    match paymentRef.current with
                     | Some card ->
                         card.destroy()
-                        cardRef.current <- None
+                        paymentRef.current <- None
                     | None -> ()
                 )
             ),
@@ -531,7 +623,8 @@ module View =
 
     [<ReactComponent>]
     let CheckoutPayment (model: Model) (dispatch: Msg -> unit) =
-        let cardElement, setCardElement = React.useState None
+        let elementsGroup, setElementsGroup = React.useState None
+
         Html.div [
             prop.className "space-y-4"
             prop.children [
@@ -539,7 +632,7 @@ module View =
                 StripeCardHost {|
                     Stripe = model.Stripe
                     ClientSecret = model.StripeClientSecret
-                    OnCardReady = setCardElement
+                    OnPaymentReady = setElementsGroup
                 |}
 
                 Html.button [
@@ -547,9 +640,9 @@ module View =
                     prop.disabled (model.IsBusy || model.Stripe.IsNone || model.StripeClientSecret.IsNone)
                     prop.text (if model.IsBusy then "Processing..." else "Pay now")
                     prop.onClick (fun _ -> 
-                        match cardElement with
+                        match elementsGroup with
                         | None -> ()
-                        | Some ce -> dispatch (SubmitPayment ce)
+                        | Some eg -> dispatch (SubmitPayment eg)
                     )
                 ]
 
@@ -866,23 +959,27 @@ module View =
             prop.children [
                 CheckoutStepper model
 
-                Html.div [
-                    prop.className "grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12"
-                    prop.children [
-                        Html.div [
-                            prop.className "lg:col-span-2 space-y-8"
-                            prop.children [
-                                match model.Step with
-                                | Shipping -> CheckoutShipping model dispatch
-                                | Payment  -> CheckoutPayment model dispatch
-                                | Review   -> CheckoutReview model dispatch
+                match model.Step, model.OrderConfirmation with
+                | Review, Some confirmationResp ->
+                    OrderConfirmation.ExampleOrderConfirmation confirmationResp
+                | _ -> 
+                    Html.div [
+                        prop.className "grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12"
+                        prop.children [
+                            Html.div [
+                                prop.className "lg:col-span-2 space-y-8"
+                                prop.children [
+                                    match model.Step with
+                                    | Shipping -> CheckoutShipping model dispatch
+                                    | Payment  -> CheckoutPayment model dispatch
+                                    | _ -> ()
+                                ]
+                            ]
+                            Html.div [
+                                prop.className "lg:col-span-1"
+                                prop.children [ CheckoutSummarySidebar model ]
                             ]
                         ]
-                        Html.div [
-                            prop.className "lg:col-span-1"
-                            prop.children [ CheckoutSummarySidebar model ]
-                        ]
                     ]
-                ]
             ]
         ]

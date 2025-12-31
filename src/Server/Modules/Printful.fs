@@ -19,8 +19,9 @@ open MongoService
 open System.Text.Json.Serialization
 
 let storeHeaders =
+    
     [ 
-        "X-PF-Store-ID", "6302847"
+        "X-PF-Store-ID", EnvConfig.printfulStoreKey
     ]
     |> Map.ofList
 
@@ -501,102 +502,105 @@ module Types =
                 result : OrderResult
             }
 
+            [<CLIMutable>]    
+            type RecipientAddress = { 
+                [<JsonPropertyName("name")>]
+                name : string 
+                [<JsonPropertyName("address1")>]
+                address1 : string
+                [<JsonPropertyName("address2")>]
+                address2 : string
+                [<JsonPropertyName("city")>]
+                city : string
+                [<JsonPropertyName("state_code")>]
+                state_code : string
+                [<JsonPropertyName("state_name")>]
+                state_name : string
+                [<JsonPropertyName("country_code")>]
+                country_code : string
+                [<JsonPropertyName("country_name")>]
+                country_name : string
+                [<JsonPropertyName("zip")>]
+                zip : string
+                [<JsonPropertyName("phone")>]
+                phone : string
+                [<JsonPropertyName("email")>]
+                email : string
+            }
 
+            [<CLIMutable>]    
+            type ShipmentItem = { 
+                [<JsonPropertyName("item_id")>]
+                item_id : int 
+                [<JsonPropertyName("quantity")>]
+                quantity : int 
+                [<JsonPropertyName("picked")>]
+                picked : int
+                [<JsonPropertyName("printed")>]
+                printed : int
+            }
 
-    // module Checkout =
-        
-        // module Shipping =
+            [<CLIMutable>]    
+            type Shipment = { 
+                [<JsonPropertyName("id")>]
+                id : string 
+                [<JsonPropertyName("carrier")>]
+                carrier : string 
+                [<JsonPropertyName("service")>]
+                service : string
+                [<JsonPropertyName("tracking_number")>]
+                tracking_number : string
+                [<JsonPropertyName("tracking_url")>]
+                tracking_url : string
+                [<JsonPropertyName("created")>]
+                created : string
+                [<JsonPropertyName("ship_date")>]
+                ship_date : string
+                [<JsonPropertyName("shipped_at")>]
+                shipped_at : string
+                [<JsonPropertyName("items")>]
+                items : ShipmentItem array
+                [<JsonPropertyName("zip")>]
+                zip : string
+                [<JsonPropertyName("phone")>]
+                phone : string
+                [<JsonPropertyName("email")>]
+                email : string
+            }
 
-        //     type Recipient = {
-        //         phone        : string option
-        //         address1     : string
-        //         address2     : string option
-        //         city         : string
-        //         state_code   : string
-        //         country_code : string
-        //         zip          : string
-        //     }
+            [<CLIMutable>]    
+            type ConfirmOrderResult = { 
+                [<JsonPropertyName("id")>]
+                id : int
+                [<JsonPropertyName("external_id")>]
+                external_id : string 
+                [<JsonPropertyName("store")>]
+                store : string
+                [<JsonPropertyName("status")>]
+                status : string
+                [<JsonPropertyName("shipping")>]
+                shipping : string
+                [<JsonPropertyName("shipping_service_name")>]
+                shipping_service_name : string
+                [<JsonPropertyName("shipments")>]
+                shipments : Shipment array
+                [<JsonPropertyName("recipient")>]
+                recipient : RecipientAddress
+                [<JsonPropertyName("items")>]
+                items : OrderItem array
+                [<JsonPropertyName("costs")>]
+                costs : OrderCosts
+                [<JsonPropertyName("retail_costs")>]
+                retail_costs : OrderRetailCosts
+            }
 
-        //     type Item = {
-        //         variant_id      : string option
-        //         external_variant_id: string option
-        //         warehouse_product_variant_id: string option
-        //         quantity        : int
-        //         value : string option
-        //     }
-
-        //     type RatesRequest = {
-        //         recipient : Recipient
-        //         items     : Item list
-        //         currency : string
-        //         locale : string
-        //     }
-
-        //     open System.Text.Json.Serialization
-
-        //     [<CLIMutable>]       
-        //     type Rate = {
-        //         [<JsonPropertyName("id")>]
-        //         id                 : string
-        //         [<JsonPropertyName("name")>]
-        //         name               : string
-        //         [<JsonPropertyName("rate")>]
-        //         rate               : string
-        //         [<JsonPropertyName("currency")>]
-        //         currency           : string
-        //         [<JsonPropertyName("minDeliveryDays")>]
-        //         minDeliveryDays  : int
-        //         [<JsonPropertyName("maxDeliveryDays")>]
-        //         maxDeliveryDays  : int
-        //     }
-
-        //     [<CLIMutable>]    
-        //     type RatesResponse = {
-        //         [<JsonPropertyName("code")>]
-        //         code : int
-        //         [<JsonPropertyName("result")>]
-        //         result : Rate array
-        //         [<JsonPropertyName("extra")>]
-        //         extra : obj array
-        //     }
-
-  
-        //     module Mapping =
-        //         let toPrintfulRatesRequest (req: CheckoutQuoteRequest) : RatesRequest =
-        //             let r = req.ShippingAddress
-
-        //             let recipient : Recipient = {
-        //                 phone        = r.Phone
-        //                 address1     = r.Line1
-        //                 address2     = r.Line2
-        //                 city         = r.City
-        //                 state_code   = r.State
-        //                 country_code = r.CountryCode
-        //                 zip          = r.PostalCode
-        //             }
-
-        //             let items =
-        //                 req.Items
-        //                 |> List.map (
-        //                     fun ci ->
-        //                         { 
-        //                             variant_id      =
-        //                                 match ci.CatalogVariantId with
-        //                                 | None -> None
-        //                                 | Some cvid -> string cvid |> Some
-        //                             external_variant_id      =
-        //                                 match ci.CatalogProductId with
-        //                                 | None -> None
-        //                                 | Some spid -> string spid |> Some
-        //                             warehouse_product_variant_id      = None
-        //                             quantity        = ci.Quantity
-        //                             value = None
-        //                         }
-        //                 )
-
-        //             { recipient = recipient; items = items ; currency = "usd"; locale = "en_US" }
-
-// open Types.Checkout.Shipping
+            [<CLIMutable>]    
+            type PrintfulConfirmOrderResponse = { 
+                [<JsonPropertyName("code")>]
+                code : int 
+                [<JsonPropertyName("result")>]
+                result : ConfirmOrderResult
+            }
 
 
 module PrintfulApi =
@@ -775,291 +779,6 @@ module PrintfulApi =
 
         // ---------------- helpers ----------------
 
-        // remove this
-        // let estimateTax (countryCode: string) (state: string) (subtotal: decimal) =
-        //     if countryCode = "US" then
-        //         subtotal * 0.08m
-        //     else
-        //         subtotal * 0.15m
-
-        // // /// repricing for sync-based items using Printful sync product details
-        // let private repriceSyncItem
-        //     (item : CheckoutCartItem)
-        //     : Async<CheckoutPreviewLine option> =
-        //     async {
-        //         match item.ExternalProductId, item.SyncVariantId with
-        //         | Some externalId, Some syncVariantId ->
-        //             try
-        //                 Console.WriteLine $"product id: {externalId}"
-        //                 Console.WriteLine $"sync variant id: {syncVariantId}"
-        //                 let! details = 
-        //                     SyncProduct.fetchSyncProductVariantDetails externalId
-             
-        //                 match details with
-        //                 | None ->
-        //                     return None
-        //                 | Some v ->
-        //                     let unitPrice = v.result.retail_price |> Decimal.TryParse |> function (false, _) -> 0m | true, price -> price 
-        //                     let currency  = v.result.currency
-        //                     let lineTotal = unitPrice * decimal item.Quantity
-
-        //                     return Some {
-        //                         Item      = item
-        //                         UnitPrice = unitPrice
-        //                         Currency  = currency
-        //                         LineTotal = lineTotal
-        //                         IsValid   = true
-        //                         Error     = None
-        //                     }
-        //             with e ->
-        //                 Console.WriteLine $"EXCEPTION REPRICING: {e.Message}"
-        //                 return failwith e.Message
-        //         | _ ->
-        //             return None
-        //     }
-
-        // // Template/custom – stub for now
-        // let private repriceTemplateOrCustomItem (item: CheckoutCartItem) : Async<CheckoutPreviewLine option> =
-        //     async {
-        //         return None
-        //     }
-
-        // let repriceItem
-        //     (item : CheckoutCartItem)
-        //     : Async<CheckoutPreviewLine option> =
-        //     match item.Kind with
-        //     | CartItemKind.Sync     -> repriceSyncItem item
-        //     | CartItemKind.Template -> repriceTemplateOrCustomItem item
-        //     | CartItemKind.Custom   -> repriceTemplateOrCustomItem item
-
-        // // ---------- Printful shipping DTOs (server-only) ----------
-
-        // module Shipping =
-        //     let fetchShippingRates
-        //         (pfReq    : RatesRequest)
-        //         : Async<RatesResponse> =
-        //         async {
-        //             let printfulClient = PrintfulClient.configureClient None EnvConfig.printfulKey storeHeaders
-
-        //             System.Console.WriteLine $"[Printful][ShippingRates] Request: {pfReq}"
-        //             let url = "shipping/rates"
-        //             let body =
-        //                 JsonSerializer.Serialize(
-        //                     {| 
-        //                         recipient =
-        //                             {| 
-        //                                 phone        = pfReq.recipient.phone |> Option.toObj
-        //                                 address1     = pfReq.recipient.address1
-        //                                 address2     = pfReq.recipient.address2 |> Option.toObj
-        //                                 city         = pfReq.recipient.city
-        //                                 state_code   = pfReq.recipient.state_code
-        //                                 country_code = pfReq.recipient.country_code
-        //                                 zip          = pfReq.recipient.zip
-        //                             |}
-        //                         items =
-        //                             pfReq.items
-        //                             |> List.map (fun i ->
-        //                                 {| 
-        //                                     variant_id =  i.variant_id |> Option.toObj
-        //                                     external_variant_id = None |> Option.toObj
-        //                                     warehouse_product_variant_id = None |> Option.toObj
-        //                                     quantity = i.quantity
-        //                                     value = None |> Option.toObj
-        //                                 |})
-        //                             |> Array.ofList
-        //                         currency = pfReq.currency
-        //                         locale   = pfReq.locale 
-        //                     |}
-        //                 )
-
-        //             System.Console.WriteLine $"[Printful][ShippingRates] POST Request Body: {body}"
-        //             let content = new StringContent(body, Encoding.UTF8, "application/json")
-
-        //             System.Console.WriteLine $"[Printful][ShippingRates] POST {url}"
-
-        //             let! resp = printfulClient.PostAsync(url, content) |> Async.AwaitTask
-        //             let! respBody = resp.Content.ReadAsStringAsync() |> Async.AwaitTask
-
-        //             System.Console.WriteLine $"[Printful][ShippingRates] RESPONSE BODY {respBody}"
-
-        //             if not resp.IsSuccessStatusCode then
-        //                 System.Console.WriteLine $"[Printful][ShippingRates] FAILED {resp.StatusCode}: {respBody}"
-        //                 failwith $"[Printful][ShippingRates] {resp.StatusCode}: {respBody}"
-
-
-        //             let parsed = 
-        //                 try JsonSerializer.Deserialize<RatesResponse>(respBody)
-        //                 with e -> 
-        //                     System.Console.WriteLine $"[Printful][ShippingRates] EXCEPTION PARSING {e.Message}: {respBody}"
-        //                     failwith e.Message
-
-        //             return parsed
-        //         }
-
-        // module Tax =
-        //     open StripeService.Types
-
-        //     let fetchTaxRates
-        //         (taxAddress    : TaxAddress)
-        //         (total    : decimal)
-        //         : Async<TaxResponse> =
-        //         async {
-        //             use printfulClient = PrintfulClient.configureClient None EnvConfig.printfulKey storeHeaders
-
-        //             let url = "tax/rates"
-
-        //             let taxRateReq : TaxRequest = {
-        //                 recipient = taxAddress
-        //                 amount = total
-        //             }
-
-        //             System.Console.WriteLine $"[Printful][TaxRates] tax rate req {taxRateReq}"
-        //             let json =
-        //                 JsonSerializer.Serialize(
-        //                     taxRateReq,
-        //                     JsonSerializerOptions(PropertyNamingPolicy = JsonNamingPolicy.CamelCase)
-        //                 )
-        //             System.Console.WriteLine $"[Printful][TaxRates] JSON {json}"
-
-        //             let content = new StringContent(json, Encoding.UTF8, "application/json")
-
-        //             try
-        //                 let! response = printfulClient.PostAsync(url, content) |> Async.AwaitTask
-
-        //                 System.Console.WriteLine $"[Printful][TaxRates] response {response.IsSuccessStatusCode}"
-
-        //                 if not response.IsSuccessStatusCode 
-        //                 then failwith $"[Printful][TaxRate] {response.StatusCode}"
-                        
-        //                 let! body = response.Content.ReadAsStringAsync() |> Async.AwaitTask
-
-        //                 System.Console.WriteLine $"[Printful][TaxRates] BODY {body}"
-        //                 let parsed =
-        //                     JsonSerializer.Deserialize<TaxResponse>(
-        //                         body,
-        //                         JsonSerializerOptions(PropertyNamingPolicy = JsonNamingPolicy.CamelCase)
-        //                     )
-
-        //                 return parsed
-        //             with e ->
-        //                 System.Console.WriteLine $"[Printful][TaxRates] EXCEPTION {e.Message}; INNER: {e.InnerException.Message}"
-        //                 return failwith e.Message
-        //         }
-
-        // -------- Stripe (stubbed) --------
-        // think about how this actually fits in, supposed to be validation
-        // let getPreviewCart (req: CheckoutPreviewRequest) : Async<CheckoutPreviewResponse> =
-        //     async {
-        //         let! linesArr =
-        //             req.Items
-        //             |> List.map repriceItem
-        //             |> Async.Parallel
-
-        //         let lines = 
-        //             linesArr 
-        //             |> Array.toList
-        //             |> List.choose id
-
-        //         let subtotal =
-        //             lines
-        //             |> List.filter (fun l -> l.IsValid)
-        //             |> List.sumBy (fun l -> l.LineTotal)
-
-        //         let shippingEstimate = 0m
-
-        //         // For preview we can assume US unless you decide to pass address
-        //         let taxEstimate = estimateTax "US" "" subtotal
-
-        //         return {
-        //             Lines            = lines
-        //             Subtotal         = subtotal
-        //             ShippingEstimate = shippingEstimate
-        //             TaxEstimate      = taxEstimate
-        //             TotalEstimate    = subtotal + shippingEstimate + taxEstimate
-        //         }
-        //     }
-
-        // let getQuote (req: CheckoutQuoteRequest) : Async<CheckoutQuoteResponse> =
-        //     async {
-        //         System.Console.WriteLine $"Request: {req}"
-        //         // 1. Reprice like preview
-        //         let! linesArr =
-        //             req.Items
-        //             |> List.map repriceItem
-        //             |> Async.Parallel
-
-        //         let lines =
-        //             linesArr 
-        //             |> Array.toList
-        //             |> List.choose id
-
-        //         let subtotal =
-        //             lines
-        //             |> List.filter (fun l -> l.IsValid)
-        //             |> List.sumBy (fun l -> l.LineTotal)
-
-        //         // 2. Printful shipping rates
-        //         let pfReq = Types.Checkout.Shipping.Mapping.toPrintfulRatesRequest req
-
-        //         try
-
-        //             // todo: storeHeaders
-        //             let! ratesResp = Shipping.fetchShippingRates pfReq
-
-        //             System.Console.WriteLine $"WE GOT THE RATES RESPONSE"
-
-        //             let shippingOptions : ShippingOption list =
-        //                 ratesResp.result
-        //                 |> Array.map (fun r ->
-        //                     {
-        //                         Id       = r.id
-        //                         Name     = r.name
-        //                         Price    = decimal r.rate
-        //                         Currency = r.currency
-        //                         MinDays  = r.minDeliveryDays
-        //                         MaxDays  = r.maxDeliveryDays
-        //                     })
-        //                 |> List.ofArray
-
-        //             // 3. Totals per option
-        //             let totals : QuoteTotals list =
-        //                 shippingOptions
-        //                 |> List.map (fun opt ->
-        //                     let tax =
-        //                         StripeTaxHelper.fetchTaxRatesAsync
-        //                             req.ShippingAddress.CountryCode
-        //                             req.ShippingAddress.State
-        //                             req.ShippingAddress.City
-        //                             req.ShippingAddress.PostalCode
-        //                             (subtotal + opt.Price)
-        //                         |> Async.RunSynchronously
-
-        //                     Console.WriteLine $"Subtotal: {subtotal}"
-        //                     Console.WriteLine $"Opt Prices: {opt.Price}"
-        //                     Console.WriteLine $"Int64 Tax Cents: {tax.taxCents}"
-        //                     Console.WriteLine $"Decimal Tax Cents: { decimal tax.taxCents}"
-        //                     Console.WriteLine $"Output: {subtotal + opt.Price + ( decimal tax.taxCents / 100m )}"
-
-        //                     {
-        //                         ShippingOptionId = opt.Id
-        //                         Subtotal         = subtotal
-        //                         Shipping         = opt.Price
-        //                         Tax              = StripeService.StripeTaxHelper.fromCentsToDollars (decimal tax.taxCents)
-        //                         Total            = subtotal + opt.Price + ( decimal tax.taxCents / 100m )
-        //                     })
-
-
-        //             return {
-        //                 Lines           = lines
-        //                 ShippingOptions = shippingOptions
-        //                 Totals          = totals
-        //             }
-        //         with e ->
-        //             System.Console.WriteLine $"EXCEPTION: {e.Message}; INNER: {e.InnerException.Message}"
-        //             return failwith e.Message
-        //     }
-
-        
         let stringToDecimal (str: string) =
             match Decimal.TryParse str with
             | false, _ -> failwith "unable to parse decimal"
@@ -1166,9 +885,14 @@ module PrintfulApi =
                         let draftId = (string parsed.result.id)
 
                         let! _ =
-                            OrderDraftStorage.insertDraft
+                            OrderDraftStorage.insertDraftWithCustomer
                                 draftId
                                 json
+                                (Some "usd")
+                                (decimal req.totalsCents * 100m)
+                                (req.address.name.Split " " |> Array.tryHead)
+                                (req.address.name.Split " " |> Array.rev |> Array.tryHead )
+                                (Some req.address.email)
 
                         let! clientSecret, paymentId =
                             StripePayments.createPaymentIntent
@@ -1193,20 +917,130 @@ module PrintfulApi =
                     return failwith e.Message
             }
 
+        let confirmOrder (req : ConfirmOrderRequest) : Async<ConfirmOrderResponse> =
+            async {
+
+                let printfulClient = 
+                    PrintfulClient.configureClient 
+                        None 
+                        EnvConfig.printfulKey
+                        storeHeaders
+
+                let urlParam =
+                    match Guid.TryParse req.OrderDraftId with
+                    | false, _ -> req.OrderDraftId
+                    | true, g -> "@" + g.ToString()
+
+                let url = $"orders/{urlParam}/confirm"
+
+                try
+                    use content = new StringContent("", Encoding.UTF8, "application/json")
+
+                    let! _ = 
+                        OrderDraftStorage.setStripePaymentIntent
+                            req.OrderDraftId
+                            req.StripeConfirmation
+
+                    System.Console.WriteLine $"[Printful][CONFIRM] JSON {json}"
+
+                    let! response = printfulClient.PostAsync(url, content) |> Async.AwaitTask
+                    System.Console.WriteLine $"[Printful][CONFIRM] RESPONSE {response}"
+
+                    response.EnsureSuccessStatusCode() |> ignore
+                    let! body = response.Content.ReadAsStringAsync() |> Async.AwaitTask
+                    System.Console.WriteLine $"[Printful][CONFIRM] BODY {body}"
+
+                    let parsed : Types.Sync.Order.PrintfulConfirmOrderResponse = JsonSerializer.Deserialize<Types.Sync.Order.PrintfulConfirmOrderResponse>(body)
+                    System.Console.WriteLine $"[Printful][CONFIRM] PARSED {parsed}"
+                    
+                    let! _ = 
+                        OrderDraftStorage.setOrderConfirmed
+                            req.OrderDraftId
+                            parsed.result.id
+                            parsed.result.status
+
+                    let previewLines =
+                        parsed.result.items
+                        |> Array.toList
+                        |> List.map (mapOrderItemToPreviewLine "USD")
+
+                    let orderTotals =
+                        {
+                            ShippingName = parsed.result.shipping
+                            Subtotal         = parsed.result.retail_costs.subtotal
+                            Shipping         = parsed.result.retail_costs.shipping
+                            Tax              = parsed.result.retail_costs.tax |> Option.defaultValue 0m
+                            Total            = parsed.result.retail_costs.total
+                        }
+
+                    return {
+                        OrderId = parsed.result.id
+                        InternalId = parsed.result.external_id
+                        Status = parsed.result.status
+                        ShippingServiceName = parsed.result.shipping_service_name
+                        Shipments =
+                            parsed.result.shipments
+                            |> Array.map ( fun x ->
+                                {
+                                    Carrier = x.carrier
+                                    Service = x.service
+                                    TrackingNumber = x.tracking_number
+                                    TrackingUrl = x.tracking_url
+                                    ShipDate = x.ship_date
+                                    Items = 
+                                        x.items 
+                                        |> Array.map ( fun it -> it.item_id )
+                                        |> Array.toList
+                                }
+                            )
+                            |> Array.toList
+                            
+                        OrderItems = previewLines
+                        Costs = orderTotals
+                    }
+
+                with e ->
+                    System.Console.WriteLine $"[Printful][DRAFT] EXCEPTION PARSING {e.Message}"
+                    return failwith e.Message
+            }
+
         let lookupOrder (req: OrderLookupRequest) : Async<OrderLookupResponse> =
             async {
-                // let! orders = env.OrderRepository.FindByEmailAndOptionalOrderId(req.Email, req.OrderId)
-                return { Orders =  [] } // orders }
+                let! drafts =
+                    OrderDraftStorage.findByEmailAndOptionalOrderId
+                        req.Email
+                        req.OrderId
+
+                // Map OrderDraftDocument -> your DTO shape
+                let orders =
+                    drafts
+                    |> List.map (fun d ->
+                        {
+                            OrderId = d.DraftExternalId
+                            Email = d.CustomerEmail |> Option.defaultValue ""
+                            CreatedAt = d.CreatedAt
+                            Status =
+                                d.Status |> OrderStatus.fromString
+                            Total = d.OrderTotal
+                            Currency = d.OrderCurrency |> Option.defaultValue "usd"
+                            PrintfulOrderId =
+                                if d.PrintfulOrderId.HasValue
+                                then Some d.PrintfulOrderId.Value
+                                else None
+                        }
+                    )
+
+                return { Orders = orders }
             }
+
 
     module CheckoutAPI =
         open Checkout
 
         let private checkoutApi : Shared.Api.CheckoutApi =
             {
-                // GetPreviewCart        = getPreviewCart
-                // GetQuote              = getQuote
                 CreateDraftOrder      = createDraftOrder
+                ConfirmOrder          = confirmOrder
                 LookupOrder           = lookupOrder
             }
 

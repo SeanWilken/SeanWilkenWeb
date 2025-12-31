@@ -223,18 +223,18 @@ module Collection =
             Html.div [
                 prop.className "py-10 md:py-20 space-y-16"
                 prop.children [
-                    CatalogHeader.CatalogHeader {
-                        Title      = "New Arrivals"
-                        Subtitle   = Some "Curated templates from the Xero Effort catalog."
-                        TotalCount = props.TotalCount
-                        Filters    = props.Filters
-                        Paging     = props.Paging
-                        SearchTerm = props.SearchTerm
-                        DisableControls = true
-                        OnSearchChanged = (fun term -> dispatch (SearchChanged term))
-                        OnFiltersChanged = (fun newFilters -> dispatch (FiltersChanged newFilters))
-                        OnPageChange = (fun _ -> () )
-                    }
+                    // CatalogHeader.CatalogHeader {
+                    //     Title      = "New Arrivals"
+                    //     Subtitle   = Some "Curated templates from the Xero Effort catalog."
+                    //     TotalCount = props.TotalCount
+                    //     Filters    = props.Filters
+                    //     Paging     = props.Paging
+                    //     SearchTerm = props.SearchTerm
+                    //     DisableControls = true
+                    //     OnSearchChanged = (fun term -> dispatch (SearchChanged term))
+                    //     OnFiltersChanged = (fun newFilters -> dispatch (FiltersChanged newFilters))
+                    //     OnPageChange = (fun _ -> () )
+                    // }
 
                     // Featured block
                     let featured = 
@@ -276,12 +276,8 @@ module Collection =
                                         Html.div [
                                             prop.className "p-10 md:p-16 flex flex-col justify-center space-y-6 bg-base-100"
                                             prop.children [
-                                                Html.span [
-                                                    prop.className "badge badge-neutral rounded-none uppercase tracking-[0.2em] text-[0.6rem]"
-                                                    prop.text "Featured"
-                                                ]
                                                 Html.h3 [
-                                                    prop.className "text-3xl md:text-4xl font-light tracking-tight text-base-content"
+                                                    prop.className "text-3xl md:text-4xl font-light tracking-tight text-base-content cormorant-font"
                                                     prop.text f.Name
                                                 ]
                                                 Html.p [
@@ -369,7 +365,7 @@ module Collection =
                                                                     prop.text "Apparel"
                                                                 ]
                                                                 Html.h3 [
-                                                                    prop.className "font-medium text-base md:text-lg leading-tight truncate"
+                                                                    prop.className "font-medium text-base md:text-lg leading-tight truncate cormorant-font"
                                                                     prop.text p.Name
                                                                 ]
                                                             ]

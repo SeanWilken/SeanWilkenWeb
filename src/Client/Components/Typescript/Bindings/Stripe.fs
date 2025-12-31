@@ -29,6 +29,7 @@ module StripePayment =
     type IElements =
         abstract create: elementType: string * ?options: obj -> IStripeElement
         abstract getElement: elementType: string -> IStripeElement
+        abstract submit: unit -> JS.Promise<obj>   // <-- add this
 
     [<AllowNullLiteral>]
     type StripeElementsOptions =
@@ -50,12 +51,28 @@ module StripePayment =
         abstract paymentIntent: PaymentIntent option
 
     [<AllowNullLiteral>]
+    type ConfirmPaymentParams =
+        abstract elements: IElements with get, set
+        abstract clientSecret: string with get, set
+        abstract confirmParams: obj option with get, set
+        abstract redirect: string option with get, set
+
+    [<AllowNullLiteral>]
+    type ConfirmPaymentResult =
+        abstract error: StripeError option
+        abstract paymentIntent: PaymentIntent option
+
+    [<AllowNullLiteral>]
     type IStripe =
         abstract elements: StripeElementsOptions -> IElements
         abstract confirmCardPayment:
             clientSecret: string *
             confirmParams: ConfirmCardPaymentParams ->
                 JS.Promise<ConfirmCardPaymentResult>
+        abstract confirmPayment:
+            ConfirmPaymentParams ->
+                JS.Promise<ConfirmPaymentResult>
+
 
     // ---------- loadStripe wrapper ----------
 

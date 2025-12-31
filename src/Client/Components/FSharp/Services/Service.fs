@@ -3,37 +3,39 @@ module Components.FSharp.Service
 open Feliz
 open Client.Domain.SharedServices
 
+// --------- Small layout helpers ----------
 
 let private heroMetricCard (stat: ServiceStat) =
-    let arrow, colorClass =
+    let arrow, colorClass, bgClass =
         match stat.Trend with
-        | Up   -> "↑", "text-accent"
-        | Down -> "↓", "text-error"
+        | Up   -> "↑", "text-accent", "bg-accent/10"
+        | Down -> "↓", "text-error",  "bg-error/10"
 
     Html.div [
-        prop.className "rounded-2xl bg-base-100/10 border border-base-100/40 p-4 backdrop-blur shadow-md flex items-center gap-3"
+        prop.className "rounded-2xl bg-base-100/90 border border-base-300/70 p-4 shadow-sm flex items-center gap-3"
         prop.children [
-            // big arrow on the left
+
+            // Arrow
             Html.div [
-                prop.className "w-12 h-12 rounded-full bg-base-100/25 flex items-center justify-center"
+                prop.className ("w-11 h-11 rounded-full flex items-center justify-center " + bgClass)
                 prop.children [
                     Html.span [
-                        prop.className ("text-3xl font-bold " + colorClass)
+                        prop.className ("text-2xl font-semibold " + colorClass)
                         prop.text arrow
                     ]
                 ]
             ]
 
-            // label + value on the right
+            // Label + value
             Html.div [
-                prop.className "flex-1 text-center"
+                prop.className "flex-1"
                 prop.children [
                     Html.div [
-                        prop.className "text-[0.65rem] font-semibold uppercase tracking-wide text-base-100/75"
+                        prop.className "text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-base-content/60"
                         prop.text stat.Label
                     ]
                     Html.div [
-                        prop.className ("mt-1 text-2xl font-extrabold " + colorClass)
+                        prop.className ("mt-1 text-xl font-semibold " + colorClass)
                         prop.text stat.Value
                     ]
                 ]
@@ -43,20 +45,20 @@ let private heroMetricCard (stat: ServiceStat) =
 
 let private capabilityCard (cap: ServiceCapability) =
     Html.div [
-        prop.className "rounded-2xl bg-base-100/95 border border-base-300 shadow-sm p-4 flex items-start gap-3"
+        prop.className "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-4 flex items-start gap-3 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
         prop.children [
             Html.div [
-                prop.className "w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-lg"
+                prop.className "w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-base"
                 prop.text cap.Icon
             ]
             Html.div [
                 prop.children [
                     Html.h4 [
-                        prop.className "text-sm font-semibold text-primary"
+                        prop.className "text-sm font-semibold text-base-content"
                         prop.text cap.Heading
                     ]
                     Html.p [
-                        prop.className "text-xs md:text-sm text-base-content/70"
+                        prop.className "mt-1 text-xs md:text-sm text-base-content/70 leading-relaxed"
                         prop.text cap.Description
                     ]
                 ]
@@ -66,14 +68,14 @@ let private capabilityCard (cap: ServiceCapability) =
 
 let private industryCard (ind: ServiceIndustry) =
     Html.div [
-        prop.className "rounded-2xl bg-base-100/95 border border-base-300 shadow-sm p-5 text-left"
+        prop.className "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-5 text-left space-y-2"
         prop.children [
             Html.h3 [
-                prop.className "text-base font-semibold text-secondary mb-1"
+                prop.className "cormorant-font text-lg font-medium text-base-content"
                 prop.text ind.Name
             ]
             Html.p [
-                prop.className "text-xs md:text-sm text-base-content/70 mb-2"
+                prop.className "text-xs md:text-sm text-base-content/70 leading-relaxed"
                 prop.text ind.Summary
             ]
             Html.ul [
@@ -86,28 +88,31 @@ let private industryCard (ind: ServiceIndustry) =
         ]
     ]
 
+// --------- Main page layout ----------
 
 [<ReactComponent>]
 let ServicePage (model: ServicePageModel) =
     Html.div [
-        prop.className "min-h-screen text-base-content"
+        // Let the surrounding layout decide height; keep this page flexible
+        prop.className "w-full text-base-content"
         prop.children [
 
             Html.div [
-                prop.className "max-w-6xl mx-auto px-4 lg:px-8 py-10 space-y-16"
+                prop.className "max-w-6xl mx-auto px-4 lg:px-8 py-12 md:py-16 space-y-14 md:space-y-18"
                 prop.children [
 
                     // HERO
                     Html.section [
                         prop.className
-                            (sprintf "relative overflow-hidden rounded-3xl shadow-[0_25px_80px_rgba(15,23,42,0.35)] border border-base-300/60 bg-gradient-to-br %s p-8 md:p-12"
+                            (sprintf "relative overflow-hidden rounded-3xl border border-base-300/70 bg-gradient-to-br %s p-7 md:p-10 lg:p-12 shadow-[0_24px_70px_rgba(15,23,42,0.40)]"
                                  model.HeroGradientClass)
                         prop.children [
+                            // Soft blobs
                             Html.div [
-                                prop.className "pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/15 blur-3xl"
+                                prop.className "pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-base-100/10 blur-3xl"
                             ]
                             Html.div [
-                                prop.className "pointer-events-none absolute -bottom-32 -left-10 w-80 h-80 rounded-full bg-secondary/25 blur-3xl"
+                                prop.className "pointer-events-none absolute -bottom-32 -left-10 w-80 h-80 rounded-full bg-base-100/5 blur-3xl"
                             ]
 
                             Html.div [
@@ -116,7 +121,7 @@ let ServicePage (model: ServicePageModel) =
 
                                     // Copy
                                     Html.div [
-                                        prop.className "flex-1 space-y-4"
+                                        prop.className "flex-1 space-y-4 md:space-y-5"
                                         prop.children [
                                             match model.HeroBadge with
                                             | Some badge ->
@@ -130,29 +135,30 @@ let ServicePage (model: ServicePageModel) =
                                             | None -> Html.none
 
                                             Html.h1 [
-                                                prop.className "text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight text-base-100"
+                                                prop.className "cormorant-font text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-light leading-tight text-base-100"
                                                 prop.text model.HeroTitle
                                             ]
 
                                             Html.p [
-                                                prop.className "mt-2 text-base md:text-lg text-base-100/85 max-w-xl"
+                                                prop.className "mt-1 text-sm md:text-base lg:text-lg text-base-100/85 max-w-xl leading-relaxed"
                                                 prop.text model.HeroSubtitle
                                             ]
 
                                             Html.div [
-                                                prop.className "mt-5 flex flex-wrap gap-3 items-center"
+                                                prop.className "mt-4 flex flex-wrap gap-3 items-center"
                                                 prop.children [
                                                     Html.button [
-                                                        prop.className "btn btn-secondary btn-md shadow-lg shadow-secondary/40"
+                                                        // Intentional: you can wire onClick → Contact page or Calendly later
+                                                        prop.className "btn btn-sm md:btn-md btn-secondary shadow-lg shadow-secondary/40 tracking-[0.18em] uppercase text-[0.72rem]"
                                                         prop.text model.CtaText
                                                     ]
                                                     Html.div [
-                                                        prop.className "inline-flex items-center gap-2 text-xs md:text-sm text-base-100/80"
+                                                        prop.className "inline-flex items-center gap-2 text-[0.72rem] md:text-xs text-base-100/85"
                                                         prop.children [
-                                                            Html.span "Avg first-month ROI: "
+                                                            Html.span "Avg first-month ROI:"
                                                             Html.span [
                                                                 prop.className "font-semibold text-accent"
-                                                                prop.text "3-5x"
+                                                                prop.text "3–5×"
                                                             ]
                                                         ]
                                                     ]
@@ -161,30 +167,15 @@ let ServicePage (model: ServicePageModel) =
                                         ]
                                     ]
 
-                                    // Metrics (top 4 stats)
+                                    // Metrics
                                     Html.div [
-                                        prop.className "flex-1 md:pl-8"
+                                        prop.className "flex-1 md:pl-4 lg:pl-8"
                                         prop.children [
                                             Html.div [
                                                 prop.className "grid grid-cols-2 gap-3"
                                                 prop.children [
                                                     for s in model.Stats |> List.truncate 6 do
                                                         heroMetricCard s
-                                                        // Html.div [
-                                                        //     prop.className "rounded-2xl bg-base-100/12 border border-base-100/40 p-4 backdrop-blur shadow-md"
-                                                        //     prop.children [
-                                                        //         Html.div [
-                                                        //             prop.className "text-[0.65rem] font-semibold text-xs uppercase flex justify-between tracking-wide text-base-100/70"
-                                                        //             prop.children [
-                                                        //                 // Html.span [ prop.text s.Label ]
-                                                        //                 // Html.span [ prop.text s.Value ]
-                                                        //             ]
-                                                        //         ]
-                                                        //         // Html.div [
-                                                        //         //     prop.className "mt-1 text-2xl font-bold text-accent text-right"
-                                                        //         // ]
-                                                        //     ]
-                                                        // ]
                                                 ]
                                             ]
                                         ]
@@ -198,16 +189,16 @@ let ServicePage (model: ServicePageModel) =
                     Html.section [
                         prop.children [
                             Html.div [
-                                prop.className "flex items-center justify-between mb-3 gap-4"
+                                prop.className "flex items-center justify-between gap-4 mb-4"
                                 prop.children [
                                     Html.div [
                                         prop.children [
                                             Html.span [
-                                                prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/50"
+                                                prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
                                                 prop.text "Product Modules"
                                             ]
                                             Html.h2 [
-                                                prop.className "mt-1 text-2xl md:text-3xl font-semibold text-primary"
+                                                prop.className "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content"
                                                 prop.text model.CoreSectionTitle
                                             ]
                                         ]
@@ -220,48 +211,46 @@ let ServicePage (model: ServicePageModel) =
                             ]
 
                             Html.div [
-                                prop.className "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
-                                prop.children (
-                                    model.CoreFeatures
-                                    |> List.map (fun f ->
+                                prop.className "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
+                                prop.children [
+                                    for f in model.CoreFeatures do
                                         Html.div [
-                                            prop.className "group relative rounded-2xl bg-base-100/95 border border-base-300 shadow-sm p-6 text-center transition transform hover:-translate-y-1 hover:shadow-xl hover:border-secondary/70"
+                                            prop.className "group relative rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-5 text-left transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
                                             prop.children [
                                                 Html.div [
                                                     prop.className "absolute inset-0 rounded-2xl bg-gradient-to-br from-secondary/5 to-accent/10 opacity-0 group-hover:opacity-100 transition pointer-events-none"
                                                 ]
                                                 Html.h3 [
-                                                    prop.className "relative text-base font-semibold text-secondary mb-1"
+                                                    prop.className "relative text-sm font-semibold text-base-content mb-1"
                                                     prop.text f.Title
                                                 ]
                                                 Html.p [
-                                                    prop.className "relative text-xs md:text-sm text-base-content/80"
+                                                    prop.className "relative text-xs md:text-sm text-base-content/75 leading-relaxed"
                                                     prop.text f.Description
                                                 ]
                                             ]
-                                        ])
-                                )
+                                        ]
+                                ]
                             ]
                         ]
                     ]
 
-                    // thin divider
                     Html.hr [ prop.className "border-base-300/60" ]
 
                     // INTEGRATION TIERS
                     Html.section [
                         prop.children [
                             Html.div [
-                                prop.className "flex items-center justify-between mb-3 gap-4"
+                                prop.className "flex items-center justify-between gap-4 mb-4"
                                 prop.children [
                                     Html.div [
                                         prop.children [
                                             Html.span [
-                                                prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/50"
+                                                prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
                                                 prop.text "Implementation Levels"
                                             ]
                                             Html.h2 [
-                                                prop.className "mt-1 text-2xl md:text-3xl font-semibold text-primary"
+                                                prop.className "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content"
                                                 prop.text model.TierSectionTitle
                                             ]
                                         ]
@@ -275,14 +264,14 @@ let ServicePage (model: ServicePageModel) =
 
                             Html.div [
                                 prop.className "grid grid-cols-1 md:grid-cols-3 gap-6"
-                                prop.children (
+                                prop.children [
                                     model.Tiers
                                     |> List.mapi (fun idx tier ->
                                         let isFeatured = idx = 1
                                         Html.div [
                                             prop.className (
-                                                "relative rounded-2xl p-6 bg-base-100/95 border shadow-sm transition transform hover:-translate-y-1 hover:shadow-2xl " +
-                                                (if isFeatured then "border-secondary/70 ring-2 ring-secondary/25" else "border-base-300")
+                                                "relative rounded-2xl p-6 bg-base-100 border transition-transform duration-200 shadow-sm hover:-translate-y-1 hover:shadow-xl " +
+                                                (if isFeatured then "border-secondary/70 ring-1 ring-secondary/25" else "border-base-300/70")
                                             )
                                             prop.children [
                                                 if isFeatured then
@@ -292,68 +281,68 @@ let ServicePage (model: ServicePageModel) =
                                                     ]
 
                                                 Html.h3 [
-                                                    prop.className "mt-3 text-lg font-semibold text-secondary mb-2"
+                                                    prop.className "mt-2 text-base font-semibold text-base-content mb-2"
                                                     prop.text tier.Name
                                                 ]
                                                 Html.ul [
-                                                    prop.className "list-disc pl-5 text-xs md:text-sm text-base-content/80 space-y-1"
-                                                    prop.children (
-                                                        tier.Items
-                                                        |> List.map (fun i -> Html.li i)
-                                                    )
+                                                    prop.className "list-disc pl-4 text-xs md:text-sm text-base-content/75 space-y-1 leading-relaxed"
+                                                    prop.children [
+                                                        for i in tier.Items do Html.li i
+                                                    ]
                                                 ]
                                             ]
                                         ])
-                                )
+                                      |> React.fragment
+                                ]
                             ]
                         ]
                     ]
 
                     Html.hr [ prop.className "border-base-300/60" ]
 
-                    // WHO THIS IS FOR (Industries)
+                    // INDUSTRIES
                     match model.IndustriesSectionTitle, model.Industries with
                     | Some title, _ :: _ ->
                         Html.section [
                             prop.children [
                                 Html.span [
-                                    prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/50"
+                                    prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
                                     prop.text "Industries"
                                 ]
                                 Html.h2 [
-                                    prop.className "mt-1 text-2xl md:text-3xl font-semibold text-primary mb-4"
+                                    prop.className "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content mb-4"
                                     prop.text title
                                 ]
                                 Html.div [
                                     prop.className "grid grid-cols-1 md:grid-cols-2 gap-5"
-                                    prop.children (
-                                        model.Industries
-                                        |> List.map industryCard
-                                    )
+                                    prop.children [
+                                        for ind in model.Industries do
+                                            industryCard ind
+                                    ]
                                 ]
                             ]
                         ]
                     | _ -> Html.none
 
-                    // ADDITIONAL CAPABILITIES
+                    // CAPABILITIES
                     match model.CapabilitiesSectionTitle, model.Capabilities with
                     | Some title, _ :: _ ->
                         Html.section [
                             prop.children [
                                 Html.span [
-                                    prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/50"
+                                    prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
                                     prop.text "Capabilities"
                                 ]
                                 Html.h2 [
-                                    prop.className "mt-1 text-2xl md:text-3xl font-semibold text-primary mb-4"
+                                    prop.className "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content mb-4"
                                     prop.text title
                                 ]
                                 Html.div [
                                     prop.className "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-                                    prop.children (
-                                        model.Capabilities
-                                        |> List.map capabilityCard
-                                    )
+                                    prop.children [
+                                        for cap in model.Capabilities do
+                                            capabilityCard cap
+                                    ]
                                 ]
                             ]
                         ]
@@ -365,16 +354,16 @@ let ServicePage (model: ServicePageModel) =
                     Html.section [
                         prop.children [
                             Html.div [
-                                prop.className "flex items-center justify-between mb-3 gap-4"
+                                prop.className "flex items-center justify-between gap-4 mb-4"
                                 prop.children [
                                     Html.div [
                                         prop.children [
                                             Html.span [
-                                                prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/50"
+                                                prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
                                                 prop.text "Pricing"
                                             ]
                                             Html.h2 [
-                                                prop.className "mt-1 text-2xl md:text-3xl font-semibold text-primary"
+                                                prop.className "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content"
                                                 prop.text model.PricingSectionTitle
                                             ]
                                         ]
@@ -388,25 +377,25 @@ let ServicePage (model: ServicePageModel) =
 
                             Html.div [
                                 prop.className "grid grid-cols-1 md:grid-cols-3 gap-6"
-                                prop.children (
+                                prop.children [
                                     model.PricingPlans
                                     |> List.mapi (fun idx plan ->
                                         let isFeatured = idx = 1
                                         Html.div [
                                             prop.className (
-                                                "flex flex-col rounded-2xl bg-base-100/95 border shadow-sm p-6 text-left transition transform hover:-translate-y-1 hover:shadow-2xl " +
-                                                (if isFeatured then "border-secondary/70 ring-2 ring-secondary/25" else "border-base-300")
+                                                "flex flex-col rounded-2xl bg-base-100 border p-6 text-left transition-transform duration-200 shadow-sm hover:-translate-y-1 hover:shadow-xl " +
+                                                (if isFeatured then "border-secondary/70 ring-1 ring-secondary/20" else "border-base-300/70")
                                             )
                                             prop.children [
                                                 Html.h3 [
-                                                    prop.className "text-base md:text-lg font-semibold text-secondary"
+                                                    prop.className "text-base md:text-lg font-semibold text-base-content"
                                                     prop.text plan.Name
                                                 ]
                                                 Html.div [
                                                     prop.className "mt-3 flex items-baseline gap-2"
                                                     prop.children [
                                                         Html.span [
-                                                            prop.className "text-2xl font-bold text-primary"
+                                                            prop.className "text-2xl font-semibold text-primary"
                                                             prop.text plan.Setup
                                                         ]
                                                         Html.span [
@@ -420,12 +409,13 @@ let ServicePage (model: ServicePageModel) =
                                                     prop.text ("Monthly: " + plan.Monthly)
                                                 ]
                                                 Html.div [
-                                                    prop.className "mt-4 text-[0.7rem] md:text-xs text-base-content/60"
+                                                    prop.className "mt-4 text-[0.7rem] md:text-xs text-base-content/60 leading-relaxed"
                                                     prop.text "Includes configuration, QA, and go-live support."
                                                 ]
                                             ]
                                         ])
-                                )
+                                      |> React.fragment
+                                ]
                             ]
                         ]
                     ]
@@ -436,42 +426,40 @@ let ServicePage (model: ServicePageModel) =
                     Html.section [
                         prop.children [
                             Html.span [
-                                prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/50"
+                                prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
                                 prop.text "Impact"
                             ]
                             Html.h2 [
-                                prop.className "mt-1 text-2xl md:text-3xl font-semibold text-primary mb-4"
+                                prop.className "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content mb-4"
                                 prop.text model.StatsSectionTitle
                             ]
                             Html.div [
                                 prop.className "grid grid-cols-2 md:grid-cols-3 gap-4"
-                                prop.children (
-                                    model.Stats
-                                    |> List.map (fun s ->
+                                prop.children [
+                                    for s in model.Stats do
                                         Html.div [
-                                            prop.className "rounded-2xl bg-base-100/95 border border-base-300 shadow-sm p-4 text-left"
+                                            prop.className "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-4"
                                             prop.children [
                                                 Html.div [
                                                     prop.className "text-[0.7rem] font-semibold uppercase tracking-wide text-base-content/60"
                                                     prop.text s.Label
                                                 ]
                                                 Html.div [
-                                                    prop.className "mt-1 text-2xl font-bold text-accent"
+                                                    prop.className "mt-1 text-2xl font-semibold text-accent"
                                                     prop.text s.Value
                                                 ]
                                             ]
-                                        ])
-                                )
+                                        ]
+                                ]
                             ]
                         ]
                     ]
 
                     // CTA FOOTER
                     Html.section [
-                        prop.className "pt-2"
                         prop.children [
                             Html.div [
-                                prop.className "rounded-2xl bg-gradient-to-r from-primary to-secondary text-base-100 px-6 md:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_18px_45px_rgba(15,23,42,0.55)]"
+                                prop.className "rounded-2xl bg-gradient-to-r from-primary to-secondary text-base-100 px-6 md:px-8 py-6 md:py-7 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_18px_45px_rgba(15,23,42,0.55)]"
                                 prop.children [
                                     Html.div [
                                         prop.className "text-left space-y-1"
@@ -481,13 +469,13 @@ let ServicePage (model: ServicePageModel) =
                                                 prop.text "Ready to see this in your business?"
                                             ]
                                             Html.p [
-                                                prop.className "text-xs md:text-sm text-base-100/85 max-w-xl"
+                                                prop.className "text-xs md:text-sm text-base-100/85 max-w-xl leading-relaxed"
                                                 prop.text "Walk through your current process, identify quick wins, and leave with an implementation plan tailored to your operations."
                                             ]
                                         ]
                                     ]
                                     Html.button [
-                                        prop.className "btn btn-lg md:btn-md bg-base-100 text-primary border-none shadow-lg hover:bg-base-200"
+                                        prop.className "btn btn-sm md:btn-md bg-base-100 text-primary border-none shadow-lg hover:bg-base-200 tracking-[0.18em] uppercase text-[0.72rem]"
                                         prop.text model.CtaText
                                     ]
                                 ]
@@ -498,6 +486,7 @@ let ServicePage (model: ServicePageModel) =
             ]
         ]
     ]
+
 
 // --- AI SALES & OPS ---
 

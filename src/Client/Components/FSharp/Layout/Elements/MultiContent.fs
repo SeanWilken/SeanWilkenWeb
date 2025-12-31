@@ -24,7 +24,7 @@ let multiContentNavCard index selectedIndex setSelectedIndex (content: TileConte
                 prop.className "flex items-center gap-3 text-primary mb-2"
                 prop.children [
                     content.Icon
-                    Html.h2 [ prop.className "clash-font card-title text-xl"; prop.text content.Title ]
+                    Html.h2 [ prop.className "cormorant-font card-title text-xl"; prop.text content.Title ]
                 ]
             ]
             Html.p [
@@ -56,7 +56,7 @@ let selectedContentDisplay (content: TileContent option) =
                     prop.className "space-y-4"
                     prop.children [
                         Html.h2 [
-                            prop.className "clash-font text-2xl text-primary"
+                            prop.className "cormorant-font text-2xl text-primary"
                             prop.text content.Title
                         ]
                         Html.p [

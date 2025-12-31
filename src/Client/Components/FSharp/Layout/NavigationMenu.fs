@@ -1,144 +1,187 @@
-module Components.Layout.NavigationMenu
+module Components.Layout.UnifiedNavigation
 
 open Feliz
-open Bindings.LucideIcon
-open Bindings.FramerMotion
 
-let navIconFor label =
-    match label with
-    | "About" -> LucideIcon.UserCircle "w-6 h-6"
-    | "AI" -> LucideIcon.Bot "w-6 h-6"
-    | "Contact" -> LucideIcon.Mail "w-6 h-6"
-    | "Help" -> LucideIcon.CircleQuestionMark "w-6 h-6"
-    | "Home" -> LucideIcon.Home "w-6 h-6"
-    | "Projects" -> LucideIcon.Briefcase "w-6 h-6"
-    | "Resume" -> LucideIcon.File "w-6 h-6"
-    | "Settings" -> LucideIcon.Cog "w-6 h-6"
-    | "Theme" -> LucideIcon.Palette "w-6 h-6"
-    | "Shop" -> LucideIcon.ShoppingCart "w-6 h-6"
-    | "Services" -> LucideIcon.HandPlatter "w-6 h-6"
-    | _ -> Html.none
+type UnifiedNavProps = {| 
+    activeItem: string
+    onSelect: string -> unit
+    isShopBrand: bool
+    cartCount: int
+    onCartClick: unit -> unit
+    onThemeClick: unit -> unit
+|}
 
-let navItem (label: string) icon isActive expandedMenu onSelect isEnd =
-    Html.button [
-        prop.className (
-            "group w-full rounded-xl flex items-center justify-between align-center px-2 lg:px-4 py-3 " +
-            "transition-all duration-200 ease-in-out hover:bg-base-200"
-        )
-        prop.onClick (fun _ -> onSelect label)
+[<ReactComponent>]
+let UnifiedNavigation (props: UnifiedNavProps) =
+    let isMobileOpen, setIsMobileOpen = React.useState false
+
+    let brandName =
+        if props.isShopBrand then "XERO EFFORT"
+        else "SEAN WILKEN"
+
+    let mainNavItems =
+        [| {| id = "Home";     label = "Home";     icon = "◆" |}
+           {| id = "About";    label = "About";    icon = "○" |}
+           {| id = "Contact";  label = "Contact";  icon = "◌" |}
+           {| id = "Projects"; label = "Projects"; icon = "◈" |}
+           {| id = "Resume";   label = "Resume";   icon = "▢" |}
+           {| id = "Services"; label = "Services"; icon = "◇" |}
+           {| id = "Shop";     label = "Shop";     icon = "⊙" |} 
+        |]
+
+    // If we later want Lucide icons here, we can swap out `icon` strings.
+    let utilityButtons =
+        [| ("account", "◉", "Account", None) |]
+
+    Html.div [
+        prop.className "nav-container cormorant-font"
         prop.children [
+            Html.div [ prop.className "nav-backdrop" ]
+
             Html.div [
+                prop.className "nav-content"
                 prop.children [
+
+                    // Top bar
+                    Html.nav [
+                        prop.className "nav-main"
+                        prop.children [
+
+                            // Left: logo / brand
+                            Html.button [
+                                prop.className "logo"
+                                prop.onClick (fun _ ->
+                                    if props.isShopBrand then props.onSelect "Shop"
+                                    else props.onSelect "Home"
+                                )
+                                prop.text brandName
+                            ]
+
+                            // Center: main nav items (desktop only)
+                            Html.div [
+                                prop.className "hidden md:flex flex-1 justify-center gap-1"
+                                prop.children [
+                                    for item in mainNavItems do
+                                        Html.button [
+                                            prop.key item.id
+                                            prop.className (
+                                                "nav-item " +
+                                                (if props.activeItem = item.id then "active" else "")
+                                            )
+                                            prop.custom ("data-icon", item.icon)
+                                            prop.onClick (fun _ -> props.onSelect item.id)
+                                            prop.children [
+                                                Html.span [ prop.text item.label ]
+                                                Html.div [ prop.className "nav-item-indicator" ]
+                                            ]
+                                        ]
+                                ]
+                            ]
+
+                            // Right: utility buttons (desktop only)
+                            Html.div [
+                                prop.className "hidden md:flex items-center gap-2"
+                                prop.children [
+                                    Html.button [
+                                        prop.key "theme"
+                                        prop.className "utility-btn"
+                                        prop.ariaLabel "Theme"
+                                        prop.onClick (fun _ -> props.onThemeClick ())
+                                        prop.children [
+                                            Html.span [ prop.text "◐" ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+
+                            // Mobile: right-side controls
+                            Html.div [
+                                prop.className "flex items-center gap-2 md:hidden"
+                                prop.children [
+
+                                    // Cart
+                                    // Html.button [
+                                    //     prop.key "m-cart"
+                                    //     prop.className "utility-btn"
+                                    //     prop.ariaLabel "Cart"
+                                    //     prop.onClick (fun _ -> props.onCartClick ())
+                                    //     prop.children [
+                                    //         Html.span [ prop.text "⊙" ]
+                                    //         if props.cartCount > 0 then
+                                    //             Html.div [
+                                    //                 prop.className "badge"
+                                    //                 prop.text (string props.cartCount)
+                                    //             ]
+                                    //     ]
+                                    // ]
+
+                                    // Theme
+                                    Html.button [
+                                        prop.key "m-theme"
+                                        prop.className "utility-btn"
+                                        prop.ariaLabel "Theme"
+                                        prop.onClick (fun _ -> props.onThemeClick ())
+                                        prop.children [
+                                            Html.span [ prop.text "◐" ]
+                                        ]
+                                    ]
+
+                                    // Hamburger
+                                    Html.button [
+                                        prop.key "m-menu"
+                                        prop.className "utility-btn"
+                                        prop.ariaLabel "Menu"
+                                        prop.custom ("aria-expanded", isMobileOpen)
+                                        prop.custom ("aria-controls", "mobile-nav")
+                                        prop.onClick (fun _ -> setIsMobileOpen (not isMobileOpen))
+                                        prop.children [
+                                            Html.span [
+                                                prop.className "text-lg leading-none"
+                                                prop.text (if isMobileOpen then "×" else "≡")
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+
+                    // Mobile dropdown nav
                     Html.div [
+                        prop.id "mobile-nav"
                         prop.className (
-                            "relative w-10 h-10 flex items-center justify-center shrink-0" +
-                            (if isActive then
-                                " before:content-['']  " +
-                                "before:left-2 before:right-0 before:bg-primary/20 " +
-                                "before:-skew-x-12 before:z-0 before:rounded-lg"
-                            else "")
+                            "m-2 md:hidden bg-base-300/95 border-b border-base-200 " +
+                            "overflow-hidden transition-[max-height,opacity] duration-300 " +
+                            (if isMobileOpen then "max-h-96 opacity-100" else "max-h-0 opacity-0")
                         )
-                        prop.style [ style.paddingRight 10 ]
                         prop.children [
                             Html.div [
-                                prop.className "w-6 h-6 flex items-center justify-center text-primary"
-                                prop.children [ icon ]
+                                prop.className "px-4 py-3 flex flex-col gap-1"
+                                prop.children [
+                                    for item in mainNavItems do
+                                        Html.button [
+                                            prop.key ("m-" + item.id)
+                                            prop.onClick (fun _ ->
+                                                props.onSelect item.id
+                                                setIsMobileOpen false
+                                            )
+                                            prop.className (
+                                                "w-full flex items-center justify-between px-3 py-2 rounded-lg " +
+                                                "text-[12px] tracking-[0.18em] uppercase " +
+                                                (if props.activeItem = item.id then
+                                                    "bg-base-100 text-primary"
+                                                 else
+                                                    "text-base-content/80 hover:bg-base-200")
+                                            )
+                                            prop.children [
+                                                Html.span [ prop.text item.label ]
+                                            ]
+                                        ]
+                                ]
                             ]
                         ]
                     ]
                 ]
             ]
-            Html.div [
-                prop.className "flex"
-                prop.children [
-                    Html.span [
-                        prop.className (
-                            "text-sm items-center clash-font text-secondary font-medium transition-all duration-200 ease-in-out " +
-                            (if expandedMenu then "opacity-100 scale-100" else "opacity-0 scale-95 w-0 overflow-hidden")
-                        )
-                        prop.text label
-                    ]
-                ]
-            ]
         ]
     ]
-
-type SubSection = {
-    label: string
-    href: string
-}
-
-type NavigationMenuProps = {|
-    items: string[]
-    endItems: string[]
-    menuOpen: bool
-    activeItem: string
-    onSelect: string -> unit
-    subSections: SubSection[]
-    currentSubSection: SubSection
-|}
-
-[<ReactComponent>]
-let NavigationMenu (props: NavigationMenuProps) =
-    let (isHovered, setHovered) = React.useState false
-
-    printfn $"CURRENT ACTIVE AREA: -{props.activeItem}-"
-
-    React.useEffect (
-        fun () ->
-            if props.menuOpen
-            then setHovered true
-            else setHovered false
-       , [| box props.menuOpen |]
-    )
-
-    Html.div
-        [
-            prop.className (
-                "bg-base-300 shadow-lg flex flex-col py-8 px-4 h-screen " +
-                // "transition-all duration-300 " +
-                (if isHovered then "w-64" else "w-20")
-            )
-            prop.onMouseEnter (fun _ -> setHovered true)
-            prop.onMouseLeave (fun _ -> setHovered false)
-            prop.children [
-                Html.div [
-                    prop.className "mb-12 flex items-center text-base-content"
-                    prop.children [
-                        Html.h1 [
-                            prop.className (
-                                "clash-font ml-2 text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent " +
-                                "transition-all duration-300 ease-in-out whitespace-nowrap " +
-                                (if isHovered then "opacity-0 max-w-0 overflow-hidden" else "opacity-100  max-w-full")
-                            )
-                            prop.text (if props.activeItem = "Shop" then "X E" else "S W")
-
-                        ]
-                        Html.h1 [
-                            prop.className (
-                                "clash-font ml-4 text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent " +
-                                "transition-all duration-300 ease-in-out whitespace-nowrap " +
-                                (if isHovered then "opacity-100 max-w-full" else "opacity-0 max-w-0 overflow-hidden")
-                            )
-                            prop.text (if props.activeItem = "Shop" then "Xero Effort" else "Sean Wilken")
-                        ]
-                    ]
-                ]
-                Html.nav [
-                    prop.className "flex-1 space-y-1"
-                    prop.children [
-                        for item in props.items do
-                            navItem item (navIconFor item) (item = props.activeItem) isHovered props.onSelect false
-                    ]
-                ]
-                // Footer navigation
-                Html.nav [
-                    prop.className "space-y-1 mt-auto"
-                    prop.children [
-                        for foot in props.endItems do
-                            navItem foot (navIconFor foot) (foot = props.activeItem) isHovered props.onSelect true
-                    ]
-                ]
-            ]
-        ]
-        

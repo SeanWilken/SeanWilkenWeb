@@ -27,6 +27,19 @@ module Ui =
                 prop.children children
             ]
 
+        let headerTagArea tagIcon (areaName: string) =
+            Html.div [
+                prop.className "flex justify-center mb-12 md:mb-16"
+                prop.children [
+                    Html.div [
+                        prop.className "about-badge text-[0.65rem] tracking-[0.2em]"
+                        prop.children [
+                            tagIcon
+                            Html.span areaName
+                        ]
+                    ]
+                ]
+            ]
     
     module LoadMoreProductsButton =
         type Props = {
@@ -283,7 +296,7 @@ module Ui =
                                 prop.className "space-y-1"
                                 prop.children [
                                     Html.h1 [
-                                        prop.className "text-2xl md:text-4xl font-light tracking-tight text-base-content"
+                                        prop.className "cormorant-font text-2xl md:text-4xl font-light tracking-tight text-base-content"
                                         prop.text props.Title
                                     ]
                                     match props.Subtitle with
@@ -306,6 +319,201 @@ module Ui =
                         ]
                     ]
                 ]
+            ]
+
+        [<ReactComponent>]
+        let twoActionButton visibilityClass onPrimaryClick onSecondaryClick = 
+            // Actions
+            Html.div [
+                prop.className (
+                    "flex flex-col sm:flex-row gap-4 justify-center transition-all duration-1000 delay-600 transform " +
+                    visibilityClass
+                )
+                prop.children [
+                    Html.button [
+                        prop.onClick (fun _ -> onPrimaryClick())
+                        prop.className "btn btn-neutral px-8 py-4 bg-gray-900 text-white text-sm tracking-widest hover:bg-gray-800 transition-all duration-300 group rounded-none"
+                        prop.children [
+                            Html.span [
+                                prop.className "flex items-center justify-center gap-3"
+                                prop.children [
+                                    Html.span [ prop.text "CONTINUE SHOPPING" ]
+                                    Html.i [
+                                        prop.className "lucide lucide-arrow-right w-4 h-4 group-hover:translate-x-1 transition-transform"
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                    Html.button [
+                        prop.onClick (fun _ -> onSecondaryClick())
+                        prop.className "btn px-8 py-4 bg-white text-gray-900 text-sm tracking-widest border border-gray-300 hover:border-gray-900 transition-all duration-300 rounded-none"
+                        prop.text "VIEW ORDER DETAILS"
+                    ]
+                ]
+            ]
+
+        [<ReactComponent>]
+        let helpSection visibilityClass =
+            // Help section
+            Html.div [
+                prop.className (
+                    "mt-16 text-center transition-all duration-1000 delay-800 transform " +
+                    visibilityClass
+                )
+                prop.children [
+                    Html.p [
+                        prop.className "text-gray-500 text-sm mb-4"
+                        prop.text "Questions about your order?"
+                    ]
+                    Html.a [
+                        prop.href "/contact"
+                        prop.className "text-sm text-gray-900 underline hover:text-gray-600 transition-colors tracking-wide"
+                        prop.text "Contact us"
+                    ]
+                ]
+            ]
+
+        [<ReactComponent>]
+        let footer =
+            // Footer
+            Html.footer [
+                prop.className "border-t border-gray-200 bg-white mt-24"
+                prop.children [
+                    Html.div [
+                        prop.className "max-w-7xl mx-auto px-6 py-12"
+                        prop.children [
+                            Html.div [
+                                prop.className "flex justify-between items-center"
+                                prop.children [
+                                    Html.div [
+                                        prop.className "text-xs tracking-wider text-gray-400 uppercase"
+                                        prop.text "XERO EFFORT"
+                                    ]
+                                    Html.div [
+                                        prop.className "flex gap-6 text-xs tracking-wider text-gray-400"
+                                        prop.children [
+                                            Html.a [
+                                                prop.href "/terms"
+                                                prop.className "hover:text-gray-900 transition-colors"
+                                                prop.text "TERMS"
+                                            ]
+                                            Html.a [
+                                                prop.href "/privacy"
+                                                prop.className "hover:text-gray-900 transition-colors"
+                                                prop.text "PRIVACY"
+                                            ]
+                                            Html.a [
+                                                prop.href "/returns"
+                                                prop.className "hover:text-gray-900 transition-colors"
+                                                prop.text "RETURNS"
+                                            ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+
+
+    module Animations =
+        open Bindings.FramerMotion
+
+        type RevealVariant =
+            | FadeUp
+            | FadeIn
+            | ScaleUp
+            | SlideRight
+            | SlideLeft
+            | Snap
+
+        type ScrollRevealProps = {
+            Variant   : RevealVariant
+            Delay     : float
+            Threshold : float
+            Children  : ReactElement
+        }
+
+        [<ReactComponent>]
+        let ScrollReveal (props: ScrollRevealProps) =
+            let variants : obj =
+                match props.Variant with
+                | FadeUp ->
+                    box {|
+                        hidden  = {| opacity = 0.; y = 60 |}
+                        visible = {| 
+                            opacity = 1.; y = 0
+                            transition = {| duration = 0.8; delay = props.Delay; ease = "easeOut" |}
+                        |}
+                    |}
+                | FadeIn ->
+                    box {|
+                        hidden  = {| opacity = 0. |}
+                        visible = {| 
+                            opacity = 1.
+                            transition = {| duration = 1.0; delay = props.Delay; ease = "easeOut" |}
+                        |}
+                    |}
+                | ScaleUp ->
+                    box {|
+                        hidden  = {| opacity = 0.; scale = 0.9 |}
+                        visible = {| 
+                            opacity = 1.; scale = 1.
+                            transition = {| duration = 0.7; delay = props.Delay; ease = "easeOut" |}
+                        |}
+                    |}
+                | SlideRight ->
+                    box {|
+                        hidden  = {| opacity = 0.; x = -60 |}
+                        visible = {| 
+                            opacity = 1.; x = 0
+                            transition = {| duration = 0.8; delay = props.Delay; ease = "easeOut" |}
+                        |}
+                    |}
+                | SlideLeft ->
+                    box {|
+                        hidden  = {| opacity = 0.; x = 60 |}
+                        visible = {| 
+                            opacity = 1.; x = 0
+                            transition = {| duration = 0.8; delay = props.Delay; ease = "easeOut" |}
+                        |}
+                    |}
+                | Snap ->
+                    box {|
+                        hidden  = {| opacity = 0.; y = 40; scale = 0.95 |}
+                        visible = {| 
+                            opacity = 1.; y = 0; scale = 1.
+                            transition = {| duration = 0.45; delay = props.Delay; ease = "easeOut" |}
+                        |}
+                    |}
+
+            MotionDiv [
+                prop.custom ("initial", "hidden")
+                prop.custom ("whileInView", "visible")
+                prop.custom ("viewport", box {| once = true; amount = props.Threshold |})
+                prop.custom ("variants", variants)
+                prop.children [ props.Children ]
+            ]
+
+
+        type ProgressiveRevealProps = {
+            Children : ReactElement
+        }
+
+        /// Simple scroll fade/translate; no useScroll bindings required
+        [<ReactComponent>]
+        let ProgressiveReveal (props: ProgressiveRevealProps) =
+            MotionDiv [
+                prop.custom ("initial", box {| opacity = 0.; y = 80 |})
+                prop.custom ("whileInView", box {| opacity = 1.; y = 0 |})
+                prop.custom ("viewport", box {| amount = 0.4; once = false |})
+                prop.custom (
+                    "transition",
+                    box {| duration = 0.9; ease = "easeOut" |}
+                )
+                prop.children [ props.Children ]
             ]
 
 

@@ -15,8 +15,6 @@ console.log("VITE_API_BASE_URL:", process.env.VITE_API_BASE_URL);
 console.log("Proxy Target:", proxyTarget);
 console.log("===================");
 
-
-
 // https://vitejs.dev/config/
 export default defineConfig({
     envDir: "../../infrastructure",

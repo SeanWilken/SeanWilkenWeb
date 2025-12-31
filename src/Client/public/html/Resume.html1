@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sean Wilken - Resume</title>
+    <style>
+        :root {
+            --primary: #a33123; /* deep red */
+            --primary-dark: #7d261a;
+            --text-main: #333333;
+            --text-light: #f7f7f7;
+            --border-light: #dddddd;
+            --background: #ffffff;
+            --sidebar-width: 260px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, system-ui,
+            sans-serif;
+            /* background: #e5e5e5; */
+            color: var(--text-main);
+            line-height: 1.4;
+        }
+
+        .page {
+            max-width: 900px;
+            margin: 24px auto;
+            background: var(--background);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Top name bar */
+        .name-bar {
+            background: var(--primary);
+            color: #ffffff;
+            padding: 16px 32px;
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: var(--sidebar-width) 1fr;
+            min-height: 100%;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            background: var(--primary);
+            color: var(--text-light);
+            padding: 18px 18px 24px 24px;
+            font-size: 13px;
+            height: 100%;
+        }
+
+        .sidebar-section {
+            margin-bottom: 22px;
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-bottom: 4px;
+        }
+
+        .sidebar p,
+        .sidebar li {
+            font-size: 12px;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            margin-top: 4px;
+            padding-left: 0;
+        }
+
+        .sidebar li + li {
+            margin-top: 4px;
+        }
+
+        .icon-line {
+            display: flex;
+            align-items: baseline;
+            gap: 6px;
+            margin-bottom: 4px;
+        }
+
+        .icon-line span.icon {
+            font-size: 12px;
+            width: 14px;
+            text-align: center;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .sidebar .bullet-list {
+            margin-top: 6px;
+        }
+
+        .sidebar .bullet-list li {
+            position: relative;
+            padding-left: 12px;
+        }
+
+        .sidebar .bullet-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+        }
+
+        .skills-group-title {
+            font-weight: 600;
+            margin-top: 6px;
+        }
+
+        /* Main column */
+        .main {
+            padding: 20px 30px 28px 26px;
+            font-size: 13px;
+        }
+
+        .section {
+            margin-bottom: 14px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--primary-dark);
+            letter-spacing: 0.12em;
+            border-bottom: 1px solid var(--border-light);
+            padding-bottom: 4px;
+            margin-bottom: 8px;
+        }
+
+        .summary-text {
+            font-size: 13px;
+        }
+
+        .job {
+            margin-bottom: 8px;
+        }
+
+        .job-header-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .job-title {
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--primary-dark);
+        }
+
+        .job-company {
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        .job-dates {
+            font-size: 12px;
+            color: #555555;
+        }
+
+        .job-location {
+            font-size: 12px;
+            color: #555555;
+        }
+
+        .job-bullets {
+            margin-top: 4px;
+            padding-left: 18px;
+        }
+
+        .job-bullets li {
+            margin-bottom: 3px;
+        }
+
+        .education-item {
+            margin-bottom: 8px;
+        }
+
+        .education-title {
+            font-weight: 600;
+        }
+
+        .education-meta {
+            font-size: 12px;
+            color: #555555;
+        }
+
+        @page {
+            size: letter;
+            margin: 0.35in;
+        }
+
+        /* height: 100% !important; */
+        /* shrink everything slightly so it fits on one page */
+        /* you can tweak this: 0.90–0.95 */
+        @media print {
+            html,
+            body {
+                margin: 0 !important;
+                padding: 0 !important;
+                zoom: 0.88; 
+                /* transform: scale(.90); */
+            }
+
+            .page {
+                max-width: none !important;
+                /* height: 100vh !important; */
+                width: 100% !important;
+                margin: 0 !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+                
+            .sidebar {
+                height: 1285px !important;
+            }
+            /* 
+
+            .main {
+                height: 100% !important;
+            } */
+
+
+        }
+    </style>
+  </head>
+  <body>
+      <div class="page">
+          <div class="name-bar">SEAN WILKEN</div>
+      <div class="content">
+        <!-- LEFT SIDEBAR -->
+        <aside class="sidebar">
+          <!-- Contact -->
+          <div class="sidebar-section">
+            <div class="sidebar-title">Contact</div>
+            <div class="icon-line">
+              <span class="icon">📞</span>
+              <span>+1 (845) 313-1631</span>
+            </div>
+            <div class="icon-line">
+              <span class="icon">✉️</span>
+              <span>sean.d.wilken@gmail.com</span>
+            </div>
+            <div class="icon-line">
+              <span class="icon">📍</span>
+              <span>Warwick, USA 10990</span>
+            </div>
+            <div class="icon-line">
+              <span class="icon">📍</span>
+              <span>Orange, USA 92869</span>
+            </div>
+          </div>
+
+          <!-- Websites -->
+          <div class="sidebar-section">
+            <div class="sidebar-title">Websites, Portfolios, Profiles</div>
+            <ul>
+              <li>
+                <a href="https://linkedin.com/in/sean-wilken" target="_blank"
+                  >https://linkedin.com/in/sean-wilken</a
+                >
+              </li>
+              <li>
+                <a href="https://www.seanwilken.com" target="_blank"
+                  >https://www.seanwilken.com</a
+                >
+              </li>
+            </ul>
+          </div>
+
+          <!-- Accomplishments -->
+          <div class="sidebar-section">
+            <div class="sidebar-title">Accomplishments</div>
+            <ul class="bullet-list">
+              <li>
+                Achieved national trauma-registry submission accreditation by
+                engineering a custom XSD schema validator and rules engine for
+                accurate, compliant medical data.
+              </li>
+              <li>
+                Built AI-powered form-analysis and medical-record review agents
+                that extract key clinical insights and assign patients to
+                appropriate cohorts for improved care coordination.
+              </li>
+              <li>
+                Enabled small businesses to streamline operations by delivering
+                automation pipelines, custom applications, and AI-integrated
+                tools that reduce manual work and accelerate growth.
+              </li>
+            </ul>
+          </div>
+
+          <!-- Skills -->
+          <div class="sidebar-section">
+            <div class="sidebar-title">Skills</div>
+
+            <div class="skills-group">
+              <div class="skills-group-title">Programming Languages</div>
+              <p>F#, C#, TypeScript, JavaScript, Rust, Python, SQL</p>
+            </div>
+
+            <div class="skills-group">
+              <div class="skills-group-title">Frameworks & Libraries</div>
+              <p>
+                .NET Core / ASP.NET Core, React, Next.js, Node.js, Fable,
+                Elmish, Redux, MobX
+              </p>
+            </div>
+
+            <div class="skills-group">
+              <div class="skills-group-title">
+                Cloud, DevOps & Infrastructure
+              </div>
+              <p>
+                Azure, DigitalOcean, Docker, Kubernetes, GitHub Actions, GitLab
+                CI, Nginx, Redis, Elasticsearch, Microsoft Fabric, Grafana,
+                Metabase
+              </p>
+            </div>
+
+            <div class="skills-group">
+              <div class="skills-group-title">APIs & Integrations</div>
+              <p>
+                RESTful API design & development, SOAP & REST web services,
+                third-party API integration, microservices architecture
+              </p>
+            </div>
+
+            <div class="skills-group">
+              <div class="skills-group-title">
+                Software Engineering Strengths
+              </div>
+              <p>
+                Functional programming (F# specialization), AI system design &
+                automation tooling, secure coding practices, CI/CD pipelines,
+                full-stack architecture, quality assurance & debugging
+              </p>
+            </div>
+
+            <div class="skills-group">
+              <div class="skills-group-title">Product & Collaboration</div>
+              <p>
+                Agile & Scrum methodologies, requirements gathering & project
+                planning, technical documentation, team leadership &
+                cross-functional collaboration, Git version control, responsive
+                & progressive web app design (PWA)
+              </p>
+            </div>
+          </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="main">
+          <!-- Summary -->
+          <section class="section">
+            <div class="section-title">Professional Summary</div>
+            <p class="summary-text">
+              Full Stack Developer with 10+ years of experience designing
+              scalable systems across healthcare, e-commerce, and emerging
+              technologies. Highly effective in team collaboration, adaptable to
+              evolving project needs, and committed to delivering high-quality,
+              impactful results. Specialized in functional programming (F#,
+              Rust) and in building AI-driven and automation-focused solutions.
+              Creator of production healthcare platforms used across multiple
+              states. Actively develops custom automation tools, AI
+              integrations, and LLM-powered workflows that streamline business
+              operations and enhance productivity.
+            </p>
+          </section>
+
+          <!-- Work History -->
+          <section class="section">
+            <div class="section-title">Work History</div>
+
+            <!-- Juniper -->
+            <div class="job">
+              <div class="job-header-line">
+                <div>
+                  <div class="job-title">
+                    Senior Software Engineer (Contract)
+                  </div>
+                  <div class="job-company">Juniper Health Solutions</div>
+                </div>
+                <div class="job-dates">July 2025 – December 2025 · Remote</div>
+              </div>
+              <ul class="job-bullets">
+                <li>
+                  Built and maintained a suite of F# applications powering
+                  statewide and national trauma-registry submissions for
+                  hospital systems.
+                </li>
+                <li>
+                  Designed and implemented the full submission and validation
+                  pipeline (ITDX, NTDS, TQIP), including schema-driven
+                  validation, XML generation, and automated error mapping.
+                </li>
+                <li>
+                  Delivered major performance improvements across ingestion,
+                  transformation, and large-volume batch processing workflows.
+                </li>
+                <li>
+                  Implemented indexed searching, optimized data-retrieval paths,
+                  and facility-specific UI/data overrides for different hospital
+                  partners.
+                </li>
+                <li>
+                  Built REST API endpoints for submission orchestration,
+                  validation, status tracking, and downstream integrations.
+                </li>
+                <li>
+                  Integrated with external APIs for validation, registry
+                  workflows, and automated reporting while collaborating with
+                  clinical and technical stakeholders to ensure compliance with
+                  evolving standards.
+                </li>
+              </ul>
+            </div>
+
+            <!-- Antidote AI -->
+            <div class="job">
+              <div class="job-header-line">
+                <div>
+                  <div class="job-title">Full Stack Developer (Co-Founder)</div>
+                  <div class="job-company">Antidote AI · Orange, CA</div>
+                </div>
+                <div class="job-dates">January 2021 – Current</div>
+              </div>
+              <ul class="job-bullets">
+                <li>
+                  Partnered with healthcare systems and medical professionals to
+                  build AI-driven diagnostic and workflow automation tools.
+                </li>
+                <li>
+                  Developed dynamic forms, telehealth workflows, and secure data
+                  pipelines that reduced manual coordination by ~40%.
+                </li>
+                <li>
+                  Led architecture decisions using F#, TypeScript, and
+                  cloud-native systems; mentored engineers and ensured
+                  high-quality, scalable code.
+                </li>
+                <li>
+                  Created custom automation tools, AI integrations, and LLM
+                  workflows to streamline clinical and operational processes.
+                </li>
+              </ul>
+            </div>
+
+            <!-- RemindifyAI -->
+            <div class="job">
+              <div class="job-header-line">
+                <div>
+                  <div class="job-title">Full Stack Developer</div>
+                  <div class="job-company">RemindifyAI · Orange, CA</div>
+                </div>
+                <div class="job-dates">August 2025 – December 2025</div>
+              </div>
+              <ul class="job-bullets">
+                <li>
+                  Developed an interactive web portal with analytics dashboards
+                  for managing reminder text messages and personalized user
+                  updates.
+                </li>
+                <li>
+                  Integrated with an existing leads spreadsheet to create a
+                  dynamic, reactive pipeline that automatically engages new
+                  sign-ups and manages trial-to-paid transitions.
+                </li>
+                <li>
+                  Implemented payment reminder scheduling and engagement
+                  workflows triggered as users approached the end of trial
+                  periods.
+                </li>
+                <li>
+                  Connected the platform to AI/LLM services to power intelligent
+                  messaging, personalized automations, and high-efficiency
+                  operational workflows.
+                </li>
+              </ul>
+            </div>
+
+            <!-- Scullyleather -->
+            <div class="job">
+              <div class="job-header-line">
+                <div>
+                  <div class="job-title">Contract Web Developer</div>
+                  <div class="job-company">Scullyleather · Oxnard, CA</div>
+                </div>
+                <div class="job-dates">January 2017 – December 2019</div>
+              </div>
+              <ul class="job-bullets">
+                <li>
+                  Upgraded a Magento e-commerce platform with custom components
+                  and management features tailored to operational needs.
+                </li>
+                <li>
+                  Integrated warehouse and inventory systems for automated
+                  product synchronization and real-time stock visibility.
+                </li>
+                <li>
+                  Authored deployment and disaster-recovery playbooks and
+                  improved CI/CD reliability for long-term operational
+                  stability.
+                </li>
+              </ul>
+            </div>
+
+            <!-- Supotsu -->
+            <div class="job">
+              <div class="job-header-line">
+                <div>
+                  <div class="job-title">Full Stack Software Developer</div>
+                  <div class="job-company">Supotsu · Orange, CA</div>
+                </div>
+                <div class="job-dates">March 2018 – September 2019</div>
+              </div>
+              <ul class="job-bullets">
+                <li>
+                  Engineered a real-time sports betting system for deployment
+                  in-home and at kiosks, integrating backend services with live
+                  sports data feeds.
+                </li>
+                <li>
+                  Designed interactive 3D prototypes to align stakeholders and
+                  guide product direction.
+                </li>
+                <li>
+                  Optimized performance to maintain smooth user interactions
+                  under active load conditions.
+                </li>
+              </ul>
+            </div>
+
+            <!-- RepSpark -->
+            <div class="job">
+              <div class="job-header-line">
+                <div>
+                  <div class="job-title">Full Stack Web Developer</div>
+                  <div class="job-company">RepSpark · Costa Mesa, CA</div>
+                </div>
+                <div class="job-dates">July 2016 – March 2018</div>
+              </div>
+              <ul class="job-bullets">
+                <li>
+                  Developed enterprise retail integrations, rule-based pricing
+                  engines, and core platform features for large product
+                  catalogs.
+                </li>
+                <li>
+                  Improved CI/CD reliability and frontend performance, enhancing
+                  overall user experience on web platforms.
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <!-- Education -->
+          <section class="section">
+            <div class="section-title">Education</div>
+            <div class="education-item">
+              <div class="education-title">
+                Associate of Applied Science, Computer Science
+              </div>
+              <div class="education-meta">SUNY Orange · January 2014</div>
+              <div class="education-meta">Dean’s List, Honor Roll</div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </body>
+</html>

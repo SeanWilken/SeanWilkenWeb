@@ -54,17 +54,26 @@ if (Test-Path $EnvFile) {
     Write-Host "WARNING: No .env file found at $EnvFile"
 }
 
-# 3) Start the server (dotnet watch or run) on port 5000 in a separate window
-$ServerProj = Join-Path $Root "src/Server/Server.fsproj"
-if (-not (Test-Path $ServerProj)) {
+# 3) Start the server (dotnet watch) on port 5000 in a separate window
+$ServerDir = Join-Path $Root "src/Server"
+if (-not (Test-Path $ServerDir)) {
     Write-Host ""
-    Write-Host "ERROR: Could not find server project at $ServerProj" -ForegroundColor Red
+    Write-Host "ERROR: Could not find server directory at $ServerDir" -ForegroundColor Red
     exit 1
 }
 
 Write-Host ""
 Write-Host "Starting dotnet watch for the server on http://localhost:5000 ..."
 
+Start-Process `
+    -FilePath "dotnet" `
+    -WorkingDirectory $ServerDir `
+    -ArgumentList @(
+        "watch"
+        "run"
+        "--urls"
+        "http://localhost:5000"
+    )
 
 # 4) Start the client dev server (Vite/Fable) in this window
 $ClientDir = Join-Path $Root "src/Client"
@@ -75,9 +84,15 @@ if (-not (Test-Path $ClientDir)) {
 }
 
 Write-Host ""
-Write-Host "Starting client dev server (pnpm dev) on http://localhost:8080 ..."
+Write-Host "Starting client dev server (pnpm dev) ..."
 Write-Host "Press Ctrl+C in this window to stop the client."
 Write-Host "Stop the server window separately when you are done."
 Write-Host ""
 
-dotnet run
+Push-Location $ClientDir
+pnpm install
+dotnet fable watch -o output -s --run "pnpm exec vite"
+Pop-Location
+
+Push-Location $Root
+Pop-Location
