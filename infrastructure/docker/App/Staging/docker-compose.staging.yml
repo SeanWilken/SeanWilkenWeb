@@ -1,0 +1,53 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: ../../../../
+      dockerfile: infrastructure/docker/App/Dockerfile.app
+      args:
+        APP_ENV: "Staging"
+        VITE_STRIPE_API_PK_TEST: ${VITE_STRIPE_API_PK_TEST}
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        SERVER_PROXY_PORT: ${SERVER_PROXY_PORT}
+    image: seanwilkenweb-app:staging
+    depends_on:
+      - mongodb
+    environment:
+      ASPNETCORE_ENVIRONMENT: "Staging"
+
+      # Stripe
+      STRIPE_API_PK_TEST: ${STRIPE_API_PK_TEST}
+      STRIPE_API_SK_TEST: ${STRIPE_API_SK_TEST}
+
+      # Printful
+      PRINTFUL_API_KEY: ${PRINTFUL_API_KEY}
+      PRINTFUL_OAUTH_KEY: ${PRINTFUL_OAUTH_KEY}
+      PRINTFUL_STORE_ID: ${PRINTFUL_STORE_ID}
+
+      # DB
+      DATABASE_URL: ${DATABASE_URL}
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+
+      # Optional: if your server or client reads these at runtime too
+      VITE_STRIPE_API_PK_TEST: ${VITE_STRIPE_API_PK_TEST}
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+      SERVER_PROXY_PORT: ${SERVER_PROXY_PORT}
+
+    ports:
+      - "8080:5000"
+
+  mongodb:
+    image: mongo:7
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "27017:27017"
+    volumes:
+      - ../../../scripts/mongo:/docker-entrypoint-initdb.d
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

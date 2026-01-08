@@ -1,14 +1,38 @@
 namespace Client.Components.Shop
 
 open Feliz
-open Fable.Core
 open System
 open Shared.Api.Checkout
-open Client.Domain.Store.OrderHistory
 open Elmish
+open Feliz.UseDeferred
 
 module OrderHistory =
-    open Feliz.UseDeferred
+
+    type Model = {
+        Email: string
+        OrderId: string
+        IsSearching: bool
+        Orders: Deferred<OrderSummary list>
+        Error: string option
+    }
+
+    type Msg =
+        | SetEmail of string
+        | SetOrderId of string
+        | SearchOrders
+        | OrdersLoaded of OrderLookupResponse
+        | SearchFailed of string
+        | ClearResults
+
+    let initModel () : Model =
+        {
+            Email = ""
+            OrderId = ""
+            IsSearching = false
+            Orders = Deferred.HasNotStartedYet
+            Error = None
+        }
+
 
     let statusToColor = 
         function
@@ -21,8 +45,6 @@ module OrderHistory =
         | Cancelled -> "text-red-500"
         | Refunded -> "text-orange-500"
         | Other _ -> "text-info-500" // ?
-
-
 
     let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         match msg with

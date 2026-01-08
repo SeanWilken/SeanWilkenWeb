@@ -9,6 +9,7 @@
     },
     "dependencies": {
         "@stripe/stripe-js": "^8.6.0",
+        "color-namer": "^1.4.0",
         "culori": "^4.0.2",
         "framer-motion": "^12.23.26",
         "node-fetch": "^3.3.2",

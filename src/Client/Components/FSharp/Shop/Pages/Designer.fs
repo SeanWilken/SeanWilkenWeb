@@ -1,18 +1,334 @@
 namespace Client.Components.Shop
 
+open System
 open Feliz
 open Elmish
 open Client.Components.Shop.Common.Ui
 open Shared.PrintfulCommon.PrintfulCatalog
-open Client.Domain.Store.ProductDesigner
 open Bindings.LucideIcon
 open Feliz.UseDeferred
+open Shared.PrintfulCommon
 
 module Designer =
-    open Client.Domain.Store.ProductDesigner.Designs
-    open Shared.PrintfulCommon
-    open Client.Domain.Store.ProductDesigner.DesignerOptions
-    open Client.Domain.Store.ProductDesigner.ProductOptions
+    [<AutoOpen>]
+    module DesignerOptions =
+
+        type DesignSize =
+            | Small
+            | Medium
+            | Large
+
+        type VerticalAlign = Top | Center | Bottom
+        type TransformMode = ModePosition | ModeRotate | ModeScale
+
+    [<AutoOpen>]
+    module ProductOptions =
+
+        // Color and Size ?
+
+        type DesignTechnique =
+            | DTG
+            | Embroidery
+            | Digital
+            | Knitting
+            | Sublimation
+            | Other of string
+
+            member this.ToPrintfulTechnique() =
+                match this with
+                | DTG         -> "dtg"
+                | Embroidery  -> "embroidery"
+                | Digital     -> "digital"
+                | Knitting    -> "knitting"
+                | Sublimation -> "sublimation"
+                | Other t     -> t
+
+        // ------------------------
+        // Top-level asset/image
+        // ------------------------
+
+        type AssetId = Guid
+
+        /// A reusable artwork asset (library or upload)
+        type ImageAsset = {
+            Id            : AssetId
+            Name          : string
+            ImageUrl      : string
+            Tagline       : string option
+            TechniqueHint : DesignTechnique option
+            WidthPx  : int option
+            HeightPx : int option
+        }
+
+    [<AutoOpen>]
+    module Designs =
+
+        open DesignerOptions
+
+        // ------------------------
+        // Placed instance
+        // ------------------------
+
+        /// One *use* of an ImageAsset on a specific product (front, back, etc.)
+        type DesignOptions = {
+            /// Distinguishes multiple uses of the *same* asset (front + back, etc.)
+            InstanceId   : Guid
+            Asset        : ImageAsset
+            HitArea      : DesignHitArea
+            Size         : DesignSize
+            Technique    : DesignTechnique
+            Position     : PrintfulPosition option
+            VerticalAlign : VerticalAlign option
+            LayerOptions : PrintfulLayerOption list
+        }
+
+        type Placement =
+            | Front
+            | Back
+            | LargeBack
+            | LeftSleeve
+            | RightSleeve
+            | OutsideLabel
+
+        module Defaults =
+
+            /// “Promote” a raw ImageAsset into a first DesignOptions with defaults
+            let toPlaced (hitArea: DesignHitArea) (size: DesignSize) (asset: ImageAsset) : DesignOptions =
+                {
+                    InstanceId   = Guid.NewGuid()
+                    Asset        = asset
+                    HitArea      = hitArea
+                    Size         = size
+                    Technique    = asset.TechniqueHint |> Option.defaultValue DTG
+                    Position     = None
+                    VerticalAlign= None
+                    LayerOptions = []
+                }
+
+            let all : ImageAsset list = [
+                {
+                    Id           = Guid.NewGuid()
+                    Name         = "Bowing Bubbles"
+                    ImageUrl     = "./../img/artwork/bowing-bubbles.jpg"
+                    Tagline      = Some "Sweet as chewed gum."
+                    TechniqueHint = None
+                    WidthPx  = None
+                    HeightPx = None
+                }
+                {
+                    Id           = Guid.NewGuid()
+                    Name         = "Caution: Very Hot"
+                    ImageUrl     = "./../img/artwork/caution-very-hot.jpg"
+                    Tagline      = Some "Handle with xero effort."
+                    TechniqueHint = None
+                    WidthPx  = None
+                    HeightPx = None
+                }
+                {
+                    Id           = Guid.NewGuid()
+                    Name         = "Misfortune"
+                    ImageUrl     = "./../img/artwork/misfortune.png"
+                    Tagline      = Some "It was always somewhere in the cards."
+                    TechniqueHint = None
+                    WidthPx  = None
+                    HeightPx = None
+                }
+                {
+                    Id           = Guid.NewGuid()
+                    Name         = "Out for Blood"
+                    ImageUrl     = "./../img/artwork/out-for-blood.png"
+                    Tagline      = Some "Always thirsty."
+                    TechniqueHint = None
+                    WidthPx  = None
+                    HeightPx = None
+                }
+            ]
+
+        /// Helper to go from a PlacedDesign to a PrintfulPlacement + Layer
+        module ToPrintful =
+
+            let private sizeToRelativeBox = function
+                // these are “relative” sizes (0.0–1.0 of print area); you can refine later
+                | Small  -> 0.4
+                | Medium -> 0.7
+                | Large  -> 1.0
+
+            /// Given a product’s print-area dimensions (inches), derive a rough position box
+            let autoCenterPosition (areaWidth: float) (areaHeight: float) (size: DesignSize) : PrintfulPosition =
+                let scale  = sizeToRelativeBox size
+                let width  = areaWidth * scale
+                let height = areaHeight * scale
+                {
+                    Width  = width
+                    Height = height
+                    Left   = (areaWidth  - width)  / 2.0
+                    Top    = (areaHeight - height) / 2.0
+                }
+
+            /// Convert a single DesignOptions into a PrintfulPlacement
+            let toPlacementAndLayer
+                (printAreaWidth : float)
+                (printAreaHeight: float)
+                (pd: DesignOptions)
+                : PrintfulPlacement =
+
+                let position =
+                    pd.Position
+                    |> Option.defaultWith (fun () -> autoCenterPosition printAreaWidth printAreaHeight pd.Size)
+
+                {
+                    Placement = pd.HitArea.ToPrintfulPlacement()
+                    Technique = pd.Technique.ToPrintfulTechnique()
+                    Layers    = [
+                        {
+                            Type         = "file"
+                            Url          = pd.Asset.ImageUrl
+                            LayerOptions = pd.LayerOptions
+                            Position     = Some position
+                        }
+                    ]
+                }
+
+    type StepDesigner =
+        | SelectBaseProduct
+        | SelectVariants
+        | ProductDesigner
+        | ReviewDesign
+
+    type Transform = {
+        Pos      : PrintfulPosition
+        Rotation : float
+    }
+
+    type DesignLayer = {
+        Id        : string
+        Name      : string
+        Technique : ProductOptions.DesignTechnique
+        ActivePlacement : Placement
+        // store transforms per placement so switching tabs doesn’t destroy work
+        ByPlacement : Map<Placement, Transform>
+    }
+
+    type NormRect = { X: float; Y: float; W: float; H: float } // 0..1 in preview space
+
+    type Msg =
+
+        | BackToDropLanding
+        | LoadProducts
+        | ProductsLoaded of Shared.PrintfulStoreDomain.CatalogProductResponse.CatalogProductsResponse
+        | LoadFailed of string
+        | ViewProduct of CatalogProduct
+
+        | GoToStep of StepDesigner
+        | SelectBase of CatalogProduct
+        | SelectColor of string
+        | SelectSize of string
+
+        // image-level selection
+        | AddAsset    of ImageAsset
+        | RemoveAsset of AssetId
+
+        | DesignerSearchChanged of string
+        | DesignerSortChanged of string * string
+        | DesignerFiltersChanged of Filters
+        | DesignerPageChanged of PagingInfoDTO
+
+        | SelectActiveLayer of int
+        | SetPlacement of layerIdx:int * placement:Placement
+
+        // placement-level edits
+        | SetActivePlaced of int
+        | UpdatePlacedPlacement of index:int * DesignHitArea
+        | UpdatePlacedSize      of index:int * DesignSize
+        | UpdatePlacedTechnique  of index:int * DesignTechnique
+        | UpdatePlacedPosition  of index:int * PrintfulPosition option
+        | UpdatePlacedVerticalAlign of index:int * VerticalAlign
+        | SetTransformMode of TransformMode
+
+        | AddToCart of quantity:int
+
+
+    type Model = {
+        Products             : Deferred<CatalogProduct list>
+        Paging               : PagingInfoDTO
+        Query                : Filters
+        SearchTerm           : string
+
+        CurrentStep          : StepDesigner
+        SelectedProduct      : CatalogProduct option
+        SelectedVariantSize  : string option
+        SelectedVariantColor : string option
+
+        // NEW
+        SelectedVariantId   : int option
+        AvailableAssets      : ImageAsset list  // library/mock list
+        SelectedAssets       : ImageAsset list  // “added designs” in the Add Designs step
+        DesignOptions        : DesignOptions list
+        ActivePlacedIndex    : int option
+        TransformMode     : TransformMode
+        Placements           : PlacementOption list
+    }
+
+    // ADD DEFERRED!!!!
+    let initialModel () = {
+        Products = Deferred.HasNotStartedYet
+        Paging = emptyPaging
+        Query = defaultFilters
+        SearchTerm = ""
+        CurrentStep = SelectBaseProduct
+        SelectedProduct = None
+        SelectedVariantSize = None
+        SelectedVariantColor = None
+        SelectedVariantId = None
+        AvailableAssets = Defaults.all
+        SelectedAssets = []
+        DesignOptions = []
+        ActivePlacedIndex = None
+        TransformMode = ModePosition
+        Placements = [
+            {
+                Label   = "Front"
+                HitArea = DesignHitArea.Front
+            }
+            {
+                Label   = "Back"
+                HitArea = DesignHitArea.Back
+            }
+            {
+                Label   = "Pocket"
+                HitArea = DesignHitArea.Pocket
+            }
+            {
+                Label   = "Left Sleeve"
+                HitArea = DesignHitArea.LeftSleeve
+            }
+            {
+                Label   = "Right Sleeve"
+                HitArea = DesignHitArea.RightSleeve
+            }
+            {
+                Label   = "Left Leg"
+                HitArea = DesignHitArea.LeftLeg
+            }
+            {
+                Label   = "Right Leg"
+                HitArea = DesignHitArea.RightLeg
+            }
+            {
+                Label   = "Left Half"
+                HitArea = DesignHitArea.LeftHalf
+            }
+            {
+                Label   = "Right Half"
+                HitArea = DesignHitArea.RightHalf
+            }
+            {
+                Label   = "Center"
+                HitArea = DesignHitArea.Center
+            }
+        ]
+    }
+
 
     let private stepOrder : StepDesigner list =
         [ SelectBaseProduct; SelectVariants; ProductDesigner; ReviewDesign ]
@@ -48,6 +364,7 @@ module Designer =
         | DesignHitArea.LeftHalf   -> "Left Half"
         | DesignHitArea.RightHalf  -> "Right Half"
         | DesignHitArea.Center     -> "Center"
+        | DesignHitArea.OutsideLabel     -> "Outside Label"
         | DesignHitArea.Custom s   -> s
     
     let private printfulPositionLabel (p: PrintfulPosition) =
@@ -150,6 +467,11 @@ module Designer =
 
     let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         match msg with
+        // ?????
+        | UpdatePlacedPosition (layerInx, placement) -> model, Cmd.none
+        | SetPlacement (layerInx, placement) -> model, Cmd.none
+        | SelectActiveLayer layer -> { model with ActivePlacedIndex = Some layer }, Cmd.none
+        // ?????
         | GoToStep step ->
             { model with CurrentStep = step }, Cmd.none
         | SelectBase catalogProduct ->

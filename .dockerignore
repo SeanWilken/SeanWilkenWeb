@@ -1,3 +1,4 @@
+# Node / pnpm stuff
 node_modules
 **/node_modules
 pnpm-store
@@ -5,5 +6,36 @@ pnpm-store
 **/.pnpm
 **/.cache
 
-src/Client/Client.fsproj
-src/Shared/Shared.fsproj
+# .NET build artifacts
+bin
+obj
+**/bin
+**/obj
+
+# Fable / Vite / SAFE output
+output
+fable_modules
+**/fable_modules
+
+# Git & editor cruft
+.git
+.gitignore
+.gitattributes
+.github
+.vscode
+.idea
+*.user
+*.suo
+
+# Tests (if you don't need them in the image)
+tests
+
+# Local deployment / infra scripts that aren't needed inside the container
+deploy
+infrastructure/docker/App/Development
+infrastructure/docker/App/Staging
+infrastructure/docker/App/Production
+
+# OS junk
+.DS_Store
+Thumbs.db

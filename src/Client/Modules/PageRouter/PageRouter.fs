@@ -7,159 +7,200 @@ open Shared
 open Elmish.UrlParser
 open Elmish.Navigation
 open Client.Domain
-open Client.Domain.SharedPage
-open Client.Domain.Store
+open Components.FSharp.Portfolio.CodeGallery
 open Shared.StoreProductViewer
-
+open Components.FSharp
+open Components.FSharp.Services.Landing
+open Client.Domain.WebAppModels
+open SharedViewModule.WebAppView
+open Client.Components.Shop
 
 let toPath =
     function
     | Some About -> "/about"
     | Some Contact -> "/contact"
-    | Some ( Portfolio ( Code ( code ) ) ) -> 
+    | Some ( Portfolio PortfolioSection.PortfolioLanding ) -> "/projects/"
+    | Some ( Portfolio ( PortfolioSection.SourceCode section ) ) -> 
+        match section with
+        | GoalRoll -> "/projects/source/goalRoll" 
+        | TileTap -> "/projects/source/tileSmash" 
+        | TileSort -> "/projects/source/tileSort"
+        | PivotPoint -> "/projects/source/pivotPoint"
+        | SynthNeverSets -> "/projects/source/synthNeverSets"
+        | Animations -> "/projects/source/animations"
+        | CodeLanding -> "/projects/source/"
+    | Some ( Portfolio ( Code code ) ) -> 
         match code with
-        | GoalRoll -> "/portfolio-goalRoll" 
-        | TileTap -> "/portfolio-tileSmash" 
-        | TileSort -> "/portfolio-tileSort"
-        | PivotPoint -> "/portfolio-pivotPoint"
-        | CodeSection.CodeLanding -> "/portfolio-code"
-    | Some ( Portfolio Design ) -> "/portfolio-design"
-    | Some ( Portfolio _ )
-    | Some ( Portfolio PortfolioSection.PortfolioLanding ) -> "/portfolio"
-    | Some ( Services section ) -> section.toUrlString
+        | GoalRoll -> "/projects/code/goalRoll" 
+        | TileTap -> "/projects/code/tileSmash" 
+        | TileSort -> "/projects/code/tileSort"
+        | PivotPoint -> "/projects/code/pivotPoint"
+        | SynthNeverSets -> "/projects/code/synthNeverSets"
+        | Animations -> "/projects/code/animations"
+        | CodeLanding -> "/projects/code/"
+    | Some ( Portfolio ( Design area ) ) -> 
+        match area with
+        | DesignGallery -> "/projects/designs/" 
+        | DesignViewer id -> $"/projects/design/{id}" 
     | Some Resume -> "/resume"
+    | Some ( Services section ) -> section.toUrlString
+    | Some (Shop ShopLanding) -> "/shop/"
+    | Some (Shop CollectionBrowser) -> "/shop/collection"
+    | Some (Shop ProductDesigner) -> "/shop/designer"
+    | Some (Shop (ProductViewer (ProductKey.Template id) )) -> $"/shop/template/{id}"
+    | Some (Shop (ProductViewer (ProductKey.Sync id ) )) -> $"/shop/sync/{id}"
+    | Some (Shop (ProductViewer (ProductKey.Catalog id ) )) -> $"/shop/catalog/{id}"
+    | Some (Shop Cart) -> "/shop/cart"
+    | Some (Shop Checkout) -> "/shop/checkout"
+    | Some (Shop OrderHistory) -> "/shop/orders"
+    | Some (Shop NotFound) -> "/notFound"
     | Some Welcome -> "/welcome"
-    | Some (Shop Store.ShopSection.ShopLanding) -> "/shop/drop"
-    | Some (Shop (Store.ShopSection.CollectionBrowser _)) -> "/shop/collection"
-    | Some (Shop (Store.ShopSection.ProductDesigner _)) -> "/shop/designer"
-    | Some (Shop (Store.ShopSection.ProductViewer { Key = ProductKey.Template _ })) -> "/shop/template" // $"/shop/product/template/{id}"
-    | Some (Shop (Store.ShopSection.ProductViewer { Key = ProductKey.Catalog _ })) -> $"/shop/catalog" // $"/shop/product/catalog/{id}"
-    | Some (Shop (Store.ShopSection.ProductViewer { Key = ProductKey.Sync _ })) -> $"/shop/sync" // $"/shop/product/catalog/{id}"
-    | Some (Shop Store.ShopSection.Cart) -> "/shop/cart"
-    | Some (Shop (Store.ShopSection.OrderHistory _)) -> "/shop/orders"
-    | Some (Shop Store.ShopSection.Checkout) -> "/shop/checkout"
-    // | Some (Shop Store.ShopSection.Contact) -> "/shop/contact"
-    // | Some (Shop Store.ShopSection.Social) -> "/shop/social"
-    | Some (Shop Store.ShopSection.NotFound) -> "/notFound"
-    | None -> "/"
+    | None -> "/welcome"
 
-let shopParser : Parser<Store.ShopSection->Page,_> =
+let int64Parser : Parser<int64 -> 'a, 'a> =
+    custom "INT64" (fun str ->
+        match System.Int64.TryParse(str) with
+        | true, v -> Ok v
+        | _ -> Error "Invalid int64"
+    )
+
+let shopParser : Parser<ShopSection -> Page, _> =
     oneOf [
-        map Store.ShopSection.ShopLanding (s "drop")
+        map ShopLanding (s "")
 
         map
-            (Store.ShopSection.ProductViewer (
-                ProductViewer.initModel
-                    (Shared.StoreProductViewer.ProductKey.Catalog 0)
-                    None
-                    Shared.StoreProductViewer.ReturnTo.BackToDesignerBaseSelect
-            ))
-            // (fun catalogId ->
-            //     Store.ShopSection.ProductViewer (
-            //         ProductViewer.initModel
-            //             (Shared.StoreProductViewer.ProductKey.Catalog catalogId)
-            //             None
-            //             Shared.StoreProductViewer.ReturnTo.BackToDesignerBaseSelect
-            //     )
-            // )
-            // (s "product" </> s "catalog") // </> i32)
-            (s "catalog") // </> i32)
+            (fun catalogId -> ProductViewer (Catalog catalogId))
+            (s "catalog" </> i32)
+
         map
-            (Store.ShopSection.ProductViewer (
-                ProductViewer.initModel
-                    (Shared.StoreProductViewer.ProductKey.Template 0)
-                    None
-                    Shared.StoreProductViewer.ReturnTo.BackToCollection
-            ))
-            // (fun templateId ->
-            // )
-            // (s "product" </> s "template") // </> i32)
-            ( s "template") // </> i32)
-        map (Store.ShopSection.CollectionBrowser  (Collection.initModel ()) ) (s "collection")
-        map (Store.ShopSection.ProductDesigner  (ProductDesigner.initialModel ()) ) (s "designer")
-        map Store.ShopSection.Cart (s "cart")
-        map (Store.ShopSection.OrderHistory (OrderHistory.initModel())) (s "orders")
-        map Store.ShopSection.Checkout (s "checkout")
+            (fun templateId -> ProductViewer (Template templateId))
+            (s "template" </> i32)
+
+        map
+            (fun syncId -> ProductViewer (Sync syncId))
+            (s "sync" </> int64Parser)
+
+        map CollectionBrowser (s "collection")
+        map ProductDesigner (s "designer")
+        map Cart (s "cart")
+        map OrderHistory (s "orders")
+        map Checkout (s "checkout")
     ]
 
-// let codeGalleryParser : Parser<PortfolioSection->Page,_> =
-//     oneOf [
-//         map CodeSection.CodeLanding (s "drop")
-//         map CodeSection.GoalRoll (s "goalRoll")
-//         // map Store.ShopSection.ShopTypeSelector (s "select")
-//         map CodeSection.TileSort (s "tileSort")
-//         map CodeSection.TileTap (s "tileSmash")
-//         map CodeSection.PivotPoint (s "portfolio-pivotPoint")
-//     ]
+let codeGalleryParser : Parser<CodeSection->PortfolioSection,_> =
+    oneOf [
+        map CodeLanding (s "")
+        map GoalRoll (s "goalRoll")
+        map TileSort (s "tileSort")
+        map TileTap (s "tileSmash")
+        map PivotPoint (s "pivotPoint")
+        map SynthNeverSets (s "synthNeverSets")
+        map Animations (s "animations")
+    ]
+
+let sourceCodeViewerParser : Parser<CodeSection->PortfolioSection,_> =
+    oneOf [
+        map CodeLanding (s "")
+        map GoalRoll (s "goalRoll")
+        map TileSort (s "tileSort")
+        map TileTap (s "tileSmash")
+        map PivotPoint (s "pivotPoint")
+        map SynthNeverSets (s "synthNeverSets")
+        map Animations (s "animations")
+    ]
+
+let designParser : Parser<DesignSection->PortfolioSection,_> =
+    oneOf [
+        map DesignGallery (s "")
+        map DesignViewer (s "design" </> i32 )
+    ]
+
+let portfolioParser : Parser<PortfolioSection->Page,_> =
+    oneOf [
+        map PortfolioLanding (s "")
+        map (fun cs -> SourceCode cs) (s "source" </> sourceCodeViewerParser)
+        map (fun cs -> Code cs) (s "code" </> codeGalleryParser)
+        map (fun ds -> Design ds) (s "designs" </> designParser)
+    ]
+
+let servicesParser : Parser<ProfessionalServicesView->Page,_> =
+    oneOf [
+        map ProfessionalServicesView.ServicesLanding (s "")
+        map AI (s "ai-services")
+        map Automation (s "automation-services")
+        map Development (s "development-services")
+        map Integration (s "integration-services")
+        map SalesPlatform (s "sales-services")
+        map Website (s "web-services")
+    ]
 
 let pageParser : Parser<Page -> Page,_> =
     oneOf [
         map Page.About (s "about")
         map Page.Contact (s "contact")
-        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.AI) (s "ai-services")
-        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Automation) (s "automation-services")
-        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Development) (s "development-services")
-        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Integration) (s "integration-services")
-        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.SalesPlatform) (s "sales-services")
-        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.ServicesLanding) (s "services")
-        map (Page.Services SharedWebAppViewSections.ProfessionalServicesView.Website) (s "web-services")
-        map (Page.Portfolio PortfolioSection.PortfolioLanding) (s "portfolio")
-        map (Page.Portfolio (Code CodeSection.CodeLanding)) (s "portfolio-code")
-        // map Page.Portfolio (PortfolioSection.Code (s "portfolio-code" </> codeGalleryParser))
-        map (Page.Portfolio Design) (s "portfolio-design")
-        map (Page.Portfolio (Code CodeSection.GoalRoll)) (s "pivotPoint")
-        map (Page.Portfolio (Code CodeSection.GoalRoll)) (s "goalRoll")
-        map (Page.Portfolio (Code CodeSection.TileSort)) (s "tileSort")
-        map (Page.Portfolio (Code CodeSection.TileTap)) (s "tileSmash")
-        map (Page.Portfolio (Code CodeSection.PivotPoint)) (s "tileSmash")
         map Page.Resume (s "resume")
         map Page.Welcome (s "welcome")
+        map Page.Portfolio (s "projects" </> portfolioParser)
         map Page.Shop (s "shop" </> shopParser)
+        map Page.Services (s "services" </> servicesParser)
     ]
 
-let urlParser location = 
-    // printfn "url is: %A" location
-    parsePath pageParser location
+let urlParser location = parsePath pageParser location
 
-let urlUpdate (result: SharedPage.Page option) (model: SharedWebAppModels.WebAppModel) : SharedWebAppModels.WebAppModel * Cmd<SharedWebAppModels.WebAppMsg> =
+let navCmd page = Navigation.newUrl (toPath (Some page))
+
+let urlUpdate (result: Page option) (model: WebAppModels.WebAppModel) : WebAppModels.WebAppModel * Cmd<WebAppMsg> =
     match result with
-    | Some SharedPage.Page.About ->
-        { model with CurrentAreaModel = SharedWebAppModels.About SharedAboutSection.getInitialModel },
-        Navigation.newUrl (toPath (Some About))
-    | Some SharedPage.Page.Contact ->
-        { model with CurrentAreaModel = SharedWebAppModels.Contact },
-        Navigation.newUrl (toPath (Some Contact)) 
-    | Some (SharedPage.Page.Portfolio (SharedPage.Code SharedPage.CodeSection.CodeLanding)) ->
-        { model with CurrentAreaModel = SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery SharedCodeGallery.CodeGallery) },
-        Navigation.newUrl (toPath (Some (Portfolio (Code CodeSection.CodeLanding)))) 
-    | Some (SharedPage.Page.Portfolio (SharedPage.Code SharedPage.CodeSection.GoalRoll)) ->
-        { model with CurrentAreaModel = SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery (SharedCodeGallery.Model.GoalRoll SharedGoalRoll.initModel)) },
-        Navigation.newUrl (toPath (Some (Portfolio (Code CodeSection.GoalRoll)))) 
-    | Some (SharedPage.Page.Portfolio (SharedPage.Code SharedPage.CodeSection.TileSort)) ->
-        { model with CurrentAreaModel = SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery (SharedCodeGallery.Model.TileSort SharedTileSort.initModel)) },
-        Navigation.newUrl (toPath (Some (Portfolio (Code CodeSection.TileSort)))) 
-    | Some (SharedPage.Page.Portfolio (SharedPage.Code SharedPage.CodeSection.TileTap)) ->
-        { model with CurrentAreaModel = SharedWebAppModels.Portfolio (SharedPortfolioGallery.CodeGallery (SharedCodeGallery.Model.TileTap SharedTileTap.initModel)) },
-        Navigation.newUrl (toPath (Some (Portfolio (Code CodeSection.TileTap))))
-    | Some (SharedPage.Page.Portfolio SharedPage.Design) ->
-        { model with CurrentAreaModel = SharedWebAppModels.Portfolio (SharedPortfolioGallery.DesignGallery SharedDesignGallery.getInitialModel) },
-        Navigation.newUrl (toPath (Some (Portfolio Design)))
-    | Some (SharedPage.Page.Portfolio _) ->
-        { model with CurrentAreaModel = SharedWebAppModels.Portfolio SharedPortfolioGallery.PortfolioGallery },
-        Navigation.newUrl (toPath (Some (Portfolio PortfolioSection.PortfolioLanding)))
-    | Some (SharedPage.Page.Services section) ->
-        { model with CurrentAreaModel = SharedWebAppModels.Services (SharedServices.getInitialModel section) },
-        Navigation.newUrl (toPath (Some (Services section)))
-    | Some SharedPage.Page.Resume ->
-        { model with CurrentAreaModel = SharedWebAppModels.Resume },
-        Navigation.newUrl (toPath (Some Resume))
-    | Some (SharedPage.Page.Shop area) ->
+    | Some About ->
+        { model with CurrentAreaModel = WebAppModels.About About.getInitialModel },
+        Cmd.none
+    | Some Contact ->
+        { model with CurrentAreaModel = WebAppModels.Contact },
+        Cmd.none
+    | Some (Portfolio (Code CodeLanding)) ->
+        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.CodeGallery CodeGallery) },
+        Cmd.none 
+    | Some (Portfolio (Code GoalRoll)) ->
+        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.CodeGallery ( Model.GoalRoll Portfolio.Games.GoalRoll.initModel)) },
+        Cmd.none
+    | Some (Portfolio (Code TileSort)) ->
+        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.CodeGallery ( Model.TileSort Portfolio.Games.TileSort.initModel)) },
+        Cmd.none
+    | Some (Portfolio (Code TileTap)) ->
+        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.CodeGallery ( Model.TileTap Portfolio.Games.TileTap.initModel)) },
+        Cmd.none
+    | Some (Portfolio (Code SynthNeverSets)) ->
+        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.CodeGallery Model.SynthNeverSets) },
+        Cmd.none
+    | Some (Portfolio (Code Animations)) ->
+        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.CodeGallery Model.Animations) },
+        Cmd.none
+    | Some (Portfolio (Design DesignGallery)) ->
+        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.DesignGallery Portfolio.ArtGallery.getInitialModel) },
+        Cmd.none
+    | Some (Portfolio _) ->
+        { model with CurrentAreaModel = WebAppModels.Portfolio PortfolioLanding.Model.PortfolioGallery },
+        Cmd.none
+    | Some (Services section) ->
+        { model with CurrentAreaModel = WebAppModels.Services (getInitialModel section) },
+        Cmd.none
+    | Some Resume ->
+        { model with CurrentAreaModel = WebAppModels.Resume },
+        Cmd.none
+    | Some (Shop area) ->
+        let initCmd =
+            match area with
+            | ProductViewer _ -> Cmd.ofMsg (ShopMsg (Shop.ShopMsg.ShopProduct Product.Msg.LoadDetails))
+            | ProductDesigner -> Cmd.ofMsg (ShopMsg (Shop.ShopMsg.ShopDesignerMsg Designer.Msg.LoadProducts))
+            | CollectionBrowser -> Cmd.ofMsg (ShopMsg (Shop.ShopMsg.ShopCollectionMsg Collection.Msg.LoadMore))
+            | _ -> Cmd.none
         match model.CurrentAreaModel with
-        | SharedWebAppModels.Shop shop ->
-            { model with CurrentAreaModel = SharedWebAppModels.Shop { shop with Section = area } }
-        | _ -> { model with CurrentAreaModel = SharedWebAppModels.Shop (Store.getInitialModel area)  }
-        , Navigation.newUrl (toPath (Some (Shop area)))
+        | WebAppModels.Shop shop ->
+            { model with CurrentAreaModel = WebAppModels.Shop { shop with Section = Shop.shopSectionToSectionModel area } }
+        | _ -> 
+            { model with CurrentAreaModel = WebAppModels.Shop (Shop.getInitialModel area)  }
+        , initCmd
     | None
-    | Some SharedPage.Page.Welcome ->
-        { model with CurrentAreaModel = SharedWebAppModels.Welcome },
-        Navigation.newUrl (toPath (Some Welcome))
+    | Some Welcome ->
+        { model with CurrentAreaModel = WebAppModels.Welcome },
+        Cmd.none

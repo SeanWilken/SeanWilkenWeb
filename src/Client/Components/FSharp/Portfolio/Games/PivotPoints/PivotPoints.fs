@@ -1,21 +1,82 @@
 module Components.FSharp.Portfolio.Games.PivotPoints
 
-open Client.Domain
-open GridGame
 open Elmish
 open Browser
 open Feliz
 open SharedViewModule.SharedMicroGames
 open Bindings.LucideIcon
+open Client.GameDomain
+open Client.GameDomain.GridGame
     
 // - Extras:
 // speeds up like snake as more are picked up
 // certain coins have certain effects (?) // turns to blocker // speed up round // reverse roll direction // etc..(?)
 
+type PivotDirection =
+    | Ascend
+    | Descend
+
+type Msg =
+    // Game State
+    | GameLoopTick
+    | SetGameState of RoundState
+    | SetDispatchPointer of float
+    // Arrow Movement
+    | MoveArrow // will be called on certain game ticks to move the balls position
+    | PivotArrow of PivotDirection // pivot to either ascend or descend
+    // round messages
+    | Ignore // I really don't like this, how to assign NO message..need separate funcs
+    | ResetRound // resets the board and player round details
+    | EndRound // you crashed and will be brought to game over screen
+    | ExitGameLoop // Call to ensure no window intervals running when game is exited
+    | QuitGame // Leave this game and return to the code gallery
+
+type LaneOrientation =
+    | LaneRow
+    | LaneColumn
+
+type Model = {
+    GameBoard : GridBoard // the playing game board
+    BoardOrientation: LaneOrientation
+    GameState : RoundState
+    DispatchPointer: float
+    GameClock: int
+    RollInterval: int
+    BallDirection: MovementDirection // direction of ball's momentum
+    BallPosition: int // position of the ball currently
+    CoinPosition: int // position of the coin to collect
+    CoinsCollected: int // # of coins obtained
+}
+
+let demoGameBoard = {
+    GridPositions = [
+        Blocker; Blank; Blank; Blank; Blank; Blocker; Blank; Blank;
+        Blank; Blocker; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blocker; Blank;
+        Blank; Blocker; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blocker; Blank; Goal; Blank; Blank; Blank;
+        Blank; Blank; Blocker; Blank; Blank; Blank; Blank; Blank;
+        Ball; Blank; Blank; Blank; Blank; Blocker; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blocker;
+    ] }
+
+let initModel = {
+    GameBoard = demoGameBoard
+    GameState = Paused
+    BoardOrientation = LaneColumn
+    GameClock = 0
+    RollInterval = 0
+    DispatchPointer = 0.0
+    BallDirection = Right
+    BallPosition = 11
+    CoinPosition = 37
+    CoinsCollected = 0
+}
+
 
 type LaneDetails = {
     Style : Feliz.IStyleAttribute list
-    Message : SharedPivotPoint.Msg
+    Message : Msg
 }
 // content descriptions
 let pivotPointsDescriptions = [
@@ -29,25 +90,25 @@ let pivotPointsDescriptions = [
     // "- The more points you get, the faster the movement interval scale gets." // - Need to implement
 ]
 
-let modelPivotPointRoundDetails ( model : SharedPivotPoint.Model ) =
+let modelPivotPointRoundDetails ( model : Model ) =
     [
         "You collected " + string model.CoinsCollected + " coins."
         "You lasted " + string ( SharedViewModule.gameTickClock model.GameClock ) + " seconds."
     ]
 
 let controlList = [ 
-    "Settings", (SharedPivotPoint.SetGameState (RoundState.Settings)) 
+    "Settings", (SetGameState (RoundState.Settings)) 
 ]
 
-let ascendLane = Some { Style = [ style.color "#801515" ]; Message = SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Ascend }
-let descendLane = Some { Style = [ style.color "#143054" ]; Message = SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Descend }
+let ascendLane = Some { Style = [ style.color "#801515" ]; Message = PivotArrow Ascend }
+let descendLane = Some { Style = [ style.color "#143054" ]; Message = PivotArrow Descend }
 let floorLane = [ None; ascendLane; ascendLane; ascendLane; ascendLane; ascendLane; ascendLane; descendLane; ]
 let ceilingLane = [ ascendLane; descendLane; descendLane; descendLane; descendLane; descendLane; descendLane; None ]
 
 // Update functions ---------
 
 // shared between goal roll and pivot points...
-let moveArrowForward ( model : SharedPivotPoint.Model) =
+let moveArrowForward ( model : Model) =
     let gameBoard = model.GameBoard
     let piecePositionIndex = RollableGridGameHelpers.getPiecePositionIndex gameBoard Ball
     if piecePositionIndex = -1
@@ -57,14 +118,14 @@ let moveArrowForward ( model : SharedPivotPoint.Model) =
 // GAME LOOP FUNCTIONS
 
 // Time drives main game state, as things happen in intervals contained within the main loop
-let startGameLoop ( model : SharedPivotPoint.Model ) dispatch =
+let startGameLoop ( model : Model ) dispatch =
     if model.DispatchPointer = 0.0 && model.GameState = Paused
         then
-            window.setInterval((fun _ -> dispatch (SharedPivotPoint.GameLoopTick)), 250)
-            |> fun loopFloat -> dispatch (SharedPivotPoint.SetDispatchPointer loopFloat)
+            window.setInterval((fun _ -> dispatch (GameLoopTick)), 250)
+            |> fun loopFloat -> dispatch (SetDispatchPointer loopFloat)
         else
             SharedViewModule.stopGameLoop model.DispatchPointer
-            dispatch ( SharedPivotPoint.SetDispatchPointer 0.0 )
+            dispatch ( SetDispatchPointer 0.0 )
 
 // COINS
 let coinSpawnPosition ( gridBoard : GridBoard ) =
@@ -76,18 +137,18 @@ let coinSpawnPosition ( gridBoard : GridBoard ) =
         ]
     List.filter ( fun x -> ( x <> -1 ) ) ( validPositions )
     |> fun availablePositions -> 
-        availablePositions.Item(SharedTileSort.randomIndex availablePositions.Length)
+        availablePositions.Item(randomIndex availablePositions.Length)
 
 //----------------
 
 // Lifecycle -------------
 
-let init(): SharedPivotPoint.Model * Cmd<SharedPivotPoint.Msg> =
-    SharedPivotPoint.initModel, Cmd.none
+let init(): Model * Cmd<Msg> =
+    initModel, Cmd.none
 
-let update msg ( model : SharedPivotPoint.Model ) : SharedPivotPoint.Model * Cmd<SharedPivotPoint.Msg> = 
+let update msg ( model : Model ) : Model * Cmd<Msg> = 
     match msg with
-    | SharedPivotPoint.GameLoopTick ->
+    | GameLoopTick ->
         let coinPoints = 
             match getObjectPositionIndex model.GameBoard Goal with
             | Some x -> 0
@@ -102,52 +163,52 @@ let update msg ( model : SharedPivotPoint.Model ) : SharedPivotPoint.Model * Cmd
         let tickedClock = model.GameClock + 1
         let rollInterval = model.RollInterval + 1
         if rollInterval > 2
-            then { model with GameBoard = gridWithCoinUpdate; RollInterval = 0; GameClock = tickedClock; CoinsCollected = model.CoinsCollected + coinPoints }, Cmd.ofMsg SharedPivotPoint.MoveArrow
+            then { model with GameBoard = gridWithCoinUpdate; RollInterval = 0; GameClock = tickedClock; CoinsCollected = model.CoinsCollected + coinPoints }, Cmd.ofMsg MoveArrow
             else { model with GameBoard = gridWithCoinUpdate; RollInterval = rollInterval; GameClock = tickedClock; CoinsCollected = model.CoinsCollected + coinPoints }, Cmd.none
-    | SharedPivotPoint.SetDispatchPointer pointer ->
+    | SetDispatchPointer pointer ->
         if model.GameState = Won 
-            then SharedPivotPoint.initModel, Cmd.none
+            then initModel, Cmd.none
             else
                 if pointer <> 0.0 then Playing else Paused
                 |> fun gameRoundState -> { model with GameState = gameRoundState; DispatchPointer = pointer }, Cmd.none
-    | SharedPivotPoint.SetGameState gameState ->
+    | SetGameState gameState ->
         if gameState <> Playing && model.DispatchPointer <> 0.0 
             then 
                 SharedViewModule.stopGameLoop model.DispatchPointer
                 { model with DispatchPointer = 0.0; GameState = gameState; }, Cmd.none
             else
                 { model with GameState = gameState }, Cmd.none
-    | SharedPivotPoint.PivotArrow pivotDirection ->
+    | PivotArrow pivotDirection ->
         match model.BallDirection with
         | MovementDirection.Up
         | MovementDirection.Down ->
             match pivotDirection with
-            | SharedPivotPoint.Ascend ->
-                { model with BallDirection = MovementDirection.Right; BoardOrientation = SharedPivotPoint.LaneOrientation.LaneRow }, Cmd.none
-            | SharedPivotPoint.Descend ->
-                { model with BallDirection = MovementDirection.Left; BoardOrientation = SharedPivotPoint.LaneOrientation.LaneRow }, Cmd.none
+            | Ascend ->
+                { model with BallDirection = MovementDirection.Right; BoardOrientation = LaneOrientation.LaneRow }, Cmd.none
+            | Descend ->
+                { model with BallDirection = MovementDirection.Left; BoardOrientation = LaneOrientation.LaneRow }, Cmd.none
         | MovementDirection.Left
         | MovementDirection.Right ->
             match pivotDirection with
-            | SharedPivotPoint.Ascend ->
-                { model with BallDirection = Down; BoardOrientation = SharedPivotPoint.LaneOrientation.LaneColumn }, Cmd.none
-            | SharedPivotPoint.Descend ->
-                { model with BallDirection = Up; BoardOrientation = SharedPivotPoint.LaneOrientation.LaneColumn }, Cmd.none
-    | SharedPivotPoint.MoveArrow ->
+            | Ascend ->
+                { model with BallDirection = Down; BoardOrientation = LaneOrientation.LaneColumn }, Cmd.none
+            | Descend ->
+                { model with BallDirection = Up; BoardOrientation = LaneOrientation.LaneColumn }, Cmd.none
+    | MoveArrow ->
         let movedArrowGrid = moveArrowForward model
         if movedArrowGrid = model.GameBoard
-            then model, Cmd.ofMsg SharedPivotPoint.EndRound
+            then model, Cmd.ofMsg EndRound
             else { model with GameBoard = movedArrowGrid }, Cmd.none
-    | SharedPivotPoint.ResetRound ->
+    | ResetRound ->
         if (model.DispatchPointer <> 0.0) then SharedViewModule.stopGameLoop(model.DispatchPointer)
-        SharedPivotPoint.initModel, Cmd.none
-    | SharedPivotPoint.EndRound ->
+        initModel, Cmd.none
+    | EndRound ->
         SharedViewModule.stopGameLoop model.DispatchPointer
-        { model with GameBoard = SharedPivotPoint.demoGameBoard; DispatchPointer = 0.0; GameState = Won }, Cmd.none
-    | SharedPivotPoint.ExitGameLoop ->
+        { model with GameBoard = demoGameBoard; DispatchPointer = 0.0; GameState = Won }, Cmd.none
+    | ExitGameLoop ->
         if (model.DispatchPointer <> 0.0) then SharedViewModule.stopGameLoop(model.DispatchPointer)
         model, Cmd.none
-    | SharedPivotPoint.QuitGame ->
+    | QuitGame ->
         if (model.DispatchPointer <> 0.0) then SharedViewModule.stopGameLoop(model.DispatchPointer)
         model, Cmd.none
     | _ -> model, Cmd.none
@@ -155,86 +216,20 @@ let update msg ( model : SharedPivotPoint.Model ) : SharedPivotPoint.Model * Cmd
 // --------------------------
 
 // VIEW FUNCTIONS 
-let roundStateToggleString (model: SharedPivotPoint.Model) =
+let roundStateToggleString (model: Model) =
     match model.GameState with
     | Won | Settings -> "Play"
     | _ when model.DispatchPointer <> 0.0 -> "Pause"
     | _ when model.GameClock <> 0 -> "Resume"
     | _ -> "Start"
 
-let roundStateToggle (model: SharedPivotPoint.Model) dispatch =
+let roundStateToggle (model: Model) dispatch =
     let toggleStr = roundStateToggleString model
     Html.button [
         prop.className "modalControls text-white hover:text-green-400"
         prop.onClick (fun _ -> startGameLoop model dispatch |> ignore)
         prop.text toggleStr
     ]
-
-// let rulesAndSettingsGameControls (model: SharedPivotPoint.Model) dispatch =
-//     let toggleStr = roundStateToggleString model
-//     Html.div [
-//         prop.className "space-y-4 text-center"
-//         prop.children [
-//             Html.button [
-//                 prop.className "modalControls text-lg text-white hover:text-blue-400"
-//                 prop.text $"{toggleStr} Round"
-//                 prop.onClick (fun _ -> startGameLoop model dispatch |> ignore)
-//             ]
-//             Html.button [
-//                 prop.className "modalControls text-lg text-white hover:text-red-400"
-//                 prop.text "Restart Round"
-//                 prop.onClick (fun _ -> SharedPivotPoint.ResetRound |> dispatch)
-//             ]
-//         ]
-//     ]
-
-// let modalGameSettingsView model dispatch =
-//     Html.div [
-//         prop.className "modalAltContent text-center"
-//         prop.children [ rulesAndSettingsGameControls model dispatch ]
-//     ]
-
-// let gameRulesAndSettingsView model dispatch =
-//     Html.div [
-//         SharedViewModule.modalInstructionContent pivotPointsDescriptions
-//         modalGameSettingsView model dispatch
-//     ]
-
-// let gameContentViewControls model controlList dispatch =
-//     Html.div [
-//         prop.className "pt-4 flex flex-wrap gap-4 justify-center items-center"
-//         prop.children (
-//             [ roundStateToggle model dispatch ] @
-//             [
-//                 for (controlTitle: string, controlMsg) in controlList ->
-//                     Html.button [
-//                         prop.className "modalControls text-white text-lg font-semibold hover:text-green-400"
-//                         prop.text controlTitle
-//                         prop.onClick (fun _ -> dispatch controlMsg)
-//                     ]
-//             ]
-//         )
-//     ]
-
-// let pivotPointTileView rollDirection position style message dispatch =
-//     let iconPath =
-//         match position with
-//         | Ball -> SharedViewModule.GamePieceIcons.directionArrowImage rollDirection
-//         | Blocker -> SharedViewModule.GamePieceIcons.blocker
-//         | Goal -> SharedViewModule.GamePieceIcons.goalFlag
-//         | _ -> SharedViewModule.GamePieceIcons.empty
-
-//     Html.div [
-//         prop.className "w-10 h-10 flex items-center justify-center rounded shadow cursor-pointer bg-gray-800"
-//         prop.style style
-//         prop.onClick (fun _ -> message |> dispatch)
-//         prop.children [ Html.div [ prop.text iconPath; prop.className "w-6 h-6" ] ]
-//     ]
-
-// let parseLaneDetails (details: LaneDetails option) =
-//     match details with
-//     | Some d -> d.Style, d.Message
-//     | None -> [], SharedPivotPoint.Ignore
 
 type LaneHighlight =
     | NoHighlight
@@ -285,14 +280,8 @@ let private pivotTileStyle (highlight: LaneHighlight) : IStyleAttribute list =
         | None -> style.custom("animation", "none")
     ]
 
-// let private pivotIcon (rollDirection: Client.Domain.GridGame.MovementDirection) (position: LaneObject) =
-//     match position with
-//     | Ball -> SharedViewModule.GamePieceIcons.directionArrowImage rollDirection
-//     | Blocker -> SharedViewModule.GamePieceIcons.blocker
-//     | Goal -> SharedViewModule.GamePieceIcons.goalFlag
-//     | _ -> SharedViewModule.GamePieceIcons.empty
 
-let private pivotTileContent (rollDirection: Client.Domain.GridGame.MovementDirection) (position: LaneObject) =
+let private pivotTileContent (rollDirection: MovementDirection) (position: LaneObject) =
     match position with
     | Blocker ->
         [
@@ -412,11 +401,11 @@ let private pivotTileContent (rollDirection: Client.Domain.GridGame.MovementDire
         []
 
 let pivotPointTileView
-    (rollDirection: Client.Domain.GridGame.MovementDirection)
+    (rollDirection: MovementDirection)
     (position: LaneObject)
     (highlight: LaneHighlight)
-    (message: SharedPivotPoint.Msg)
-    (dispatch: SharedPivotPoint.Msg -> unit) =
+    (message: Msg)
+    (dispatch: Msg -> unit) =
 
     let sizePx = 64
 
@@ -445,18 +434,18 @@ let pivotPointTileView
         ]
     ]
 
-let parseLaneDetails (details: LaneDetails option) : LaneHighlight * SharedPivotPoint.Msg =
+let parseLaneDetails (details: LaneDetails option) : LaneHighlight * Msg =
     match details with
     | Some d ->
         match d.Message with
-        | SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Ascend ->
+        | PivotArrow Ascend ->
             HighlightAscend, d.Message
-        | SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Descend ->
+        | PivotArrow Descend ->
             HighlightDescend, d.Message
         | _ ->
             NoHighlight, d.Message
     | None ->
-        NoHighlight, SharedPivotPoint.Ignore
+        NoHighlight, Ignore
 
 
 let pivotPointsLaneCreator isRow rollDirection laneDetail rowPositions dispatch =
@@ -482,8 +471,8 @@ let pivotPointsLaneCreator isRow rollDirection laneDetail rowPositions dispatch 
 
 let laneStyleCenterPositions ceiling position =
     [ for i in 0 .. ceiling - 1 ->
-        if i < position then Some { Style = [ style.backgroundColor "#801515" ]; Message = SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Descend }
-        elif i > position then Some { Style = [ style.backgroundColor "#143054" ]; Message = SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Ascend }
+        if i < position then Some { Style = [ style.backgroundColor "#801515" ]; Message = PivotArrow Descend }
+        elif i > position then Some { Style = [ style.backgroundColor "#143054" ]; Message = PivotArrow Ascend }
         else None ]
 
 let laneStyleCreator ballLaneIndex ceiling =
@@ -498,7 +487,7 @@ let findBallLaneIndex (gridLanes: LaneObject list list) =
     |> List.tryHead
     |> Option.defaultValue -1
 
-let laneView isRow (model: SharedPivotPoint.Model) (board: list<list<LaneObject>>) (laneStyles: list<LaneDetails option>) ceiling dispatch =
+let laneView isRow (model: Model) (board: list<list<LaneObject>>) (laneStyles: list<LaneDetails option>) ceiling dispatch =
     Html.div [
         prop.className (if isRow then "flex flex-col justify-center items-center" else "flex flex-row justify-center items-center")
         prop.children [
@@ -507,7 +496,7 @@ let laneView isRow (model: SharedPivotPoint.Model) (board: list<list<LaneObject>
         ]
     ]
 
-let pivotPointsBoardView (model: SharedPivotPoint.Model) dispatch =
+let pivotPointsBoardView (model: Model) dispatch =
     let ceiling = 8
     let gridBoard = model.GameBoard
 
@@ -526,10 +515,10 @@ let pivotPointsBoardView (model: SharedPivotPoint.Model) dispatch =
 
 
 [<ReactComponent>]
-let view (model: SharedPivotPoint.Model) (dispatch: SharedPivotPoint.Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
+let view (model: Model) (dispatch: Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
     let (showInfo, setShowInfo) = React.useState(false)
 
-    let checkIfDirectionHorizontal (model: SharedPivotPoint.Model) =
+    let checkIfDirectionHorizontal (model: Model) =
         match model.BallDirection with
         | Up | Down -> false
         | Left | Right -> true
@@ -546,8 +535,8 @@ let view (model: SharedPivotPoint.Model) (dispatch: SharedPivotPoint.Msg -> unit
         | Won ->
             Some (
                 WinOverlay model.CoinsCollected
-                    (fun () -> dispatch SharedPivotPoint.ResetRound)
-                    (Some (fun () -> dispatch SharedPivotPoint.ResetRound))
+                    (fun () -> dispatch ResetRound)
+                    (Some (fun () -> dispatch ResetRound))
             )
         | _ -> None
 
@@ -587,13 +576,13 @@ let view (model: SharedPivotPoint.Model) (dispatch: SharedPivotPoint.Msg -> unit
                             dpadState 
                             (fun dir ->
                                 match dir with
-                                | Up | Left -> dispatch (SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Descend)
-                                | Down | Right -> dispatch (SharedPivotPoint.PivotArrow SharedPivotPoint.PivotDirection.Ascend)
+                                | Up | Left -> dispatch (PivotArrow Descend)
+                                | Down | Right -> dispatch (PivotArrow Ascend)
                             )
                     ControlsPanel [
                         ControlButton "INFO" Cyan true (fun () -> setShowInfo(not showInfo)) (Some (LucideIcon.Info "w-4 h-4"))
                         ControlButton toggleString Purple (true) (fun () -> startGameLoop model dispatch |> ignore ) (Some (LucideIcon.RotateCcw "w-4 h-4"))
-                        ControlButton "RESTART" Red true (fun () -> dispatch SharedPivotPoint.ResetRound) None
+                        ControlButton "RESTART" Red true (fun () -> dispatch ResetRound) None
                     ]
                 ]
         Board = BoardPanel ( pivotPointsBoardView model dispatch )

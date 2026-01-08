@@ -5,7 +5,6 @@ open Feliz
 open Fable.Core.JsInterop
 open Browser.Dom
 open Browser
-open Client.Domain
 open Bindings.LucideIcon
 
 let galleryPieces = [
@@ -15,7 +14,7 @@ let galleryPieces = [
     // "Kcuf Em", "Kcuf me? F!#% you."
     // "BackStabber", "Never saw them comin'."
     "Caution: Very Hot", "jpg", "Ya' might get burnt..."
-    // "Models", "I work with them for a living..."
+    // "Models", "jpg", "I work with them for a living..."
     // "Storm", "And with a thundering roar, she sang"
     // "Forever Burning", "Till death do us part."
     // "Space Tag", "Catch me round the solar system."
@@ -35,11 +34,21 @@ let getInitialLikes () =
 let saveLikes (likes: Set<string>) =
     localStorage.setItem(likeKey, String.concat "," likes)
 
-let init () = SharedDesignGallery.getInitialModel, Cmd.none
+type Msg =
+    | BackToPortfolio
+    | SetCurrentPieceIndex of int
 
-let update (msg: SharedDesignGallery.Msg) (model: SharedDesignGallery.Model) =
+type Model = {
+    CurrentPieceIndex: int option
+}
+
+let getInitialModel = { CurrentPieceIndex = None }
+
+let init () = getInitialModel, Cmd.none
+
+let update (msg: Msg) (model: Model) =
     match msg with
-    | Client.Domain.SharedDesignGallery.BackToPortfolio -> model, Cmd.none
+    | BackToPortfolio -> model, Cmd.none
     | _ -> model, Cmd.none
 
 [<ReactComponent>]
@@ -52,7 +61,7 @@ let artCard (title: string, extension: string, description: string, isLiked: boo
         prop.children [
             Html.figure [
                 Html.img [
-                    prop.src ($"./img/artwork/{fileName}.{extension}")
+                    prop.src ($"../../img/artwork/{fileName}.{extension}")
                     prop.alt title
                     prop.className "w-full h-64 object-cover rounded-t"
                 ]
@@ -83,6 +92,59 @@ let artCard (title: string, extension: string, description: string, isLiked: boo
         ]
     ]
 
+type RightHeaderIcon = {
+    icon: ReactElement
+    label: string
+    externalLink: string option
+    externalAlt: string option
+}
+
+type GalleryHeaderProps = {
+    onClose: unit -> unit
+    rightIcon: RightHeaderIcon option
+}
+
+// Gallery header controls with close and external link buttons
+let galleryHeaderControls (props: GalleryHeaderProps) =
+    Html.div [
+        prop.className "flex items-center justify-between mb-8"
+        prop.children [
+            // Back button
+            Html.button [
+                prop.className "btn btn-ghost btn-sm gap-2 px-2"
+                prop.custom ("data-tip", "Back")
+                prop.onClick (fun _ -> props.onClose())
+                prop.children [
+                    LucideIcon.ChevronLeft "w-5 h-5"
+                    Html.span [
+                        prop.className "hidden sm:inline text-sm"
+                        prop.text "Back to portfolio"
+                    ]
+                ]
+            ]
+
+            // Right icon (Github / Instagram)
+            match props.rightIcon with
+            | Some icon ->
+                Html.a [
+                    match icon.externalLink with
+                    | Some href -> prop.href href
+                    | None -> ()
+                    prop.target "_blank"
+                    prop.className "btn btn-ghost btn-sm gap-2 hover:bg-base-200"
+                    prop.title (icon.externalAlt |> Option.defaultValue icon.label)
+                    prop.children [
+                        icon.icon
+                        Html.span [
+                            prop.className "sm:inline text-sm"
+                            prop.text icon.label
+                        ]
+                    ]
+                ]
+            | None -> Html.div [] // keeps flex spacing happy
+        ]
+    ]
+
 [<ReactComponent>]
 let ArtGalleryGrid () =
     let likes, setLikes = React.useState(getInitialLikes ())
@@ -110,13 +172,13 @@ let ArtGalleryGrid () =
     ]
 
 [<ReactComponent>]
-let view (model: SharedDesignGallery.Model) (dispatch: SharedDesignGallery.Msg -> unit) =
+let view (model: Model) (dispatch: Msg -> unit) =
     Html.section [
         prop.className "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-8"
         prop.children [
 
-            SharedViewModule.galleryHeaderControls {
-                onClose = fun () -> SharedDesignGallery.BackToPortfolio |> dispatch
+            galleryHeaderControls {
+                onClose = fun () -> BackToPortfolio |> dispatch
                 rightIcon = Some {
                     icon = LucideIcon.Instagram "w-5 h-5"
                     label = "Instagram"

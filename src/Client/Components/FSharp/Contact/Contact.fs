@@ -1,7 +1,6 @@
 module Components.FSharp.Contact
 
 open Feliz
-open Fable.React
 open Bindings.LucideIcon
 
 [<ReactComponent>]

@@ -1,19 +1,18 @@
 module Components.FSharp.Welcome
 
 open Feliz
-open Client.Domain
-open SharedWelcome
 open Bindings.LucideIcon
-open Client.Domain.SharedWebAppModels
-open Client.Domain.SharedWebAppViewSections
-open Components.Layout
 open Components.Layout.LayoutElements
+open SharedViewModule
 
 // ---------- Types ----------
 
+type Msg =
+    | SwitchSection of WebAppView.AppView
+
 type ExploreTileProps = {
     ImgSrc      : string
-    Section     : AppView
+    Section     : WebAppView.AppView
     Description : string
     Dispatch    : Msg -> unit
 }
@@ -24,7 +23,7 @@ type WelcomeProps = {| dispatch: Msg -> unit |}
 
 [<ReactComponent>]
 let ExploreTile (props: ExploreTileProps) =
-    let title = appSectionStringTitle props.Section
+    let title = WebAppView.appSectionStringTitle props.Section
 
     Html.div [
         // scroll-fade classes hook into the IntersectionObserver CSS from your mockup
@@ -91,7 +90,7 @@ let WelcomeHero (props: WelcomeProps) =
                                 prop.text "Explore Work"
                                 // Send them into the Explore section – About is a good “first stop”
                                 prop.onClick (fun _ ->
-                                    props.dispatch (SwitchSection PortfolioAppLandingView)
+                                    props.dispatch (SwitchSection WebAppView.AppView.PortfolioAppLandingView)
                                 )
                             ]
                         ]
@@ -130,42 +129,42 @@ let ExploreSection (props: WelcomeProps) =
 
                             ExploreTile {
                                 ImgSrc      = "./img/ales-nesetril-unsplash-dev.jpg"
-                                Section     = AboutAppView
+                                Section     = WebAppView.AppView.AboutAppView
                                 Description = "About: Learn more about the site and its purpose."
                                 Dispatch    = props.dispatch
                             }
 
                             ExploreTile {
                                 ImgSrc      = "./img/ian-schneider-services-unsplash.jpg"
-                                Section     = ProfessionalServicesAppView ProfessionalServicesView.ServicesLanding
+                                Section     = WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.ServicesLanding
                                 Description = "Services: Learn more about what you can expect of me."
                                 Dispatch    = props.dispatch
                             }
 
                             ExploreTile {
                                 ImgSrc      = "./img/walkator-unsplash-code.jpg"
-                                Section     = PortfolioAppCodeView
+                                Section     = WebAppView.AppView.PortfolioAppCodeView
                                 Description = "Code: Check out some mini games or code gists."
                                 Dispatch    = props.dispatch
                             }
 
                             ExploreTile {
                                 ImgSrc      = "./img/nikola-duza-unsplash-shop.jpg"
-                                Section     = PortfolioAppDesignView
+                                Section     = WebAppView.AppView.PortfolioAppDesignView
                                 Description = "Designs: Check out some drawings I've done recently."
                                 Dispatch    = props.dispatch
                             }
 
                             ExploreTile {
                                 ImgSrc      = "./img/joao-ferrao-resume-unsplash.jpg"
-                                Section     = ResumeAppView
+                                Section     = WebAppView.AppView.ResumeAppView
                                 Description = "Resume: See what I've been up to professionally."
                                 Dispatch    = props.dispatch
                             }
 
                             ExploreTile {
                                 ImgSrc      = "./img/jakub-zerdzicki-unsplash-contact.jpg"
-                                Section     = ContactAppView
+                                Section     = WebAppView.AppView.ContactAppView
                                 Description = "Contact: Let's hear it already!"
                                 Dispatch    = props.dispatch
                             }
@@ -192,28 +191,28 @@ let ServicesSection (props: WelcomeProps) =
                         Title = "🛠️ Services 🛠️"
                         Items = [
                             // WEBSITE
-                            { Heading = "Web Development"; Icon = "🌐"; Description = "Building responsive and performant web applications."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Website) |> props.dispatch }
-                            { Heading = "UI/UX Design";   Icon = "🎨"; Description = "Designing clear, user-friendly interfaces and flows."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Website)       |> props.dispatch }
-                            { Heading = "E-Commerce Sites"; Icon = "🛒"; Description = "Online stores and product pages that actually convert."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Website)    |> props.dispatch }
+                            { Heading = "Web Development"; Icon = "🌐"; Description = "Building responsive and performant web applications."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Website) |> props.dispatch }
+                            { Heading = "UI/UX Design";   Icon = "🎨"; Description = "Designing clear, user-friendly interfaces and flows."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Website) |> props.dispatch }
+                            { Heading = "E-Commerce Sites"; Icon = "🛒"; Description = "Online stores and product pages that actually convert."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Website) |> props.dispatch }
 
                             // SALES PLATFORM
-                            { Heading = "Sales & CRM Platforms"; Icon = "📈"; Description = "CRM, pipelines, and automations that support your sales motion."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView SalesPlatform) |> props.dispatch }
+                            { Heading = "Sales & CRM Platforms"; Icon = "📈"; Description = "CRM, pipelines, and automations that support your sales motion."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.SalesPlatform) |> props.dispatch }
 
                             // AI
-                            { Heading = "AI Solutions"; Icon = "🤖"; Description = "AI agents and workflows embedded into your existing tools."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView AI) |> props.dispatch }
-                            { Heading = "LLM Training & Tuning"; Icon = "📚"; Description = "Training and tuning LLMs around your data and processes."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView AI) |> props.dispatch }
+                            { Heading = "AI Solutions"; Icon = "🤖"; Description = "AI agents and workflows embedded into your existing tools."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.AI) |> props.dispatch }
+                            { Heading = "LLM Training & Tuning"; Icon = "📚"; Description = "Training and tuning LLMs around your data and processes."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.AI) |> props.dispatch }
 
                             // AUTOMATION
-                            { Heading = "Automation & Workflows"; Icon = "⚙️"; Description = "Automating multi-step business processes across systems."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Automation) |> props.dispatch }
+                            { Heading = "Automation & Workflows"; Icon = "⚙️"; Description = "Automating multi-step business processes across systems."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Automation) |> props.dispatch }
 
                             // INTEGRATION
-                            { Heading = "Software Integration"; Icon = "🔗"; Description = "Connecting CRMs, ERPs, EMRs, and other core systems."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Integration) |> props.dispatch }
-                            { Heading = "API Development";      Icon = "🔃"; Description = "Designing and implementing robust APIs for your platform."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Integration) |> props.dispatch }
+                            { Heading = "Software Integration"; Icon = "🔗"; Description = "Connecting CRMs, ERPs, EMRs, and other core systems."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Integration) |> props.dispatch }
+                            { Heading = "API Development";      Icon = "🔃"; Description = "Designing and implementing robust APIs for your platform."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Integration) |> props.dispatch }
 
                             // DEVELOPMENT / PLATFORM
-                            { Heading = "Cloud & Platform Delivery"; Icon = "☁️"; Description = "Deploying and running your applications in the cloud."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Development) |> props.dispatch }
-                            { Heading = "Analytics & Reporting";      Icon = "📊"; Description = "Dashboards and reporting for your product or operations."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Development) |> props.dispatch }
-                            { Heading = "Performance & Security";     Icon = "⚡"; Description = "Hardening, profiling, and tuning existing applications."; NavigateTo = fun _ -> SwitchSection(ProfessionalServicesAppView Development) |> props.dispatch }
+                            { Heading = "Cloud & Platform Delivery"; Icon = "☁️"; Description = "Deploying and running your applications in the cloud."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Development) |> props.dispatch }
+                            { Heading = "Analytics & Reporting";      Icon = "📊"; Description = "Dashboards and reporting for your product or operations."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Development) |> props.dispatch }
+                            { Heading = "Performance & Security";     Icon = "⚡"; Description = "Hardening, profiling, and tuning existing applications."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Development) |> props.dispatch }
                         ]
                     }
                 ]

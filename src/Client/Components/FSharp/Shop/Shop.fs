@@ -1,23 +1,359 @@
 module Components.FSharp.Shop
 
+open System
 open Elmish
 open Feliz
-open Client.Domain.Store
-open Client.Domain
-open Client.Domain.Store.Checkout
 open Client.Components.Shop
 open Client.Components.Shop.Common
 open Client.Components.Shop.Common.Checkout
 open Client.Components.Shop.Collection
 open Client.Components.Shop.ShopHero
-open Client.Domain.Store.PrintfulMapping
 open Shared.Store.Cart
 open Shared
 open Shared.Store
 open Shared.Api.Checkout
 open Bindings.Stripe.StripePayment
+open Feliz.UseDeferred
+open Shared.StoreProductViewer
+open Client.Components.Shop.Designer
+open Client.Components.Shop.Checkout
 
-let updateCheckoutModelWithCheckoutPreviewResponse model (draftResponse: CreateDraftOrderResponse) : Model =
+module PrintfulMapping =
+
+    let mapDesignToPlacement (d: Designs.DesignOptions) : PrintfulPlacement =
+        {
+            Placement = d.HitArea.ToPrintfulPlacement()
+            Technique = d.Technique.ToPrintfulTechnique()
+            Layers = [
+                {
+                    Type = "file"
+                    Url = d.Asset.ImageUrl
+                    Position = d.Position
+                    LayerOptions = []
+                }
+            ]
+        }
+
+    let sizeToDefaultPosition =
+        function
+        | Small  -> { Width = 3.0; Height = 3.0; Left = 0.0; Top = 0.0 }
+        | Medium -> { Width = 6.0; Height = 6.0; Left = 0.0; Top = 0.0 }
+        | Large  -> { Width = 10.0; Height = 10.0; Left = 0.0; Top = 0.0 }
+
+    let toPrintfulPlacements (placed: DesignOptions list) : PrintfulPlacement list =
+        placed
+        |> List.groupBy (fun d -> d.HitArea, d.Technique)
+        |> List.map (fun ((hitArea, tech), ds) ->
+            {
+                Placement = hitArea.ToPrintfulPlacement()
+                Technique = tech.ToPrintfulTechnique()
+                Layers =
+                    ds
+                    |> List.map (fun d ->
+                        {
+                            Type = "file"
+                            Url = d.Asset.ImageUrl
+                            LayerOptions = d.LayerOptions
+                            Position = d.Position |> Option.orElse (Some (sizeToDefaultPosition d.Size))
+                        }
+                    )
+            }
+        )
+
+    let toCustomCartDU
+        (qty   : int)
+        (model : Designer.Model)
+        : CartLineItem option =
+
+        match model.SelectedVariantId,
+            model.SelectedProduct,
+            model.DesignOptions with
+
+        // must have a variant, a base product, and at least one placed design
+        | None, _, _ -> None
+        | _, None, _ -> None
+        | _, _, []   -> None
+
+        | Some variantId, Some product, placedDesigns ->
+
+            // 1. Build Printful placements from the placed designs
+            let placements : PrintfulPlacement list =
+                placedDesigns |> toPrintfulPlacements
+
+            // 2. Preview image from the selected product
+            let previewImage =
+
+                product.thumbnailURL
+                |> function
+                    | null | "" -> None
+                    | url       -> Some url
+
+            // 3. Size + color from the designer selections
+            let size =
+                model.SelectedVariantSize
+                |> Option.defaultValue ""
+
+            // For now we’ll treat the selected color string as the "name",
+            // and assume we *might* also use it as a hex code.
+            let colorName, colorCodeOpt =
+                match model.SelectedVariantColor with
+                | None
+                | Some "" ->
+                    "Default", None
+                | Some c ->
+                    // naive heuristic: if it looks like a hex code, use it as both
+                    if c.StartsWith("#") then c, Some c
+                    else c, None
+
+            // 4. Price — placeholder for now until you wire real pricing
+            let unitPrice : decimal =
+                // TODO: plug in a real price, from product/variant pricing
+                45.0m
+
+            // 5. Build the rich CartItem record (your commented-out type)
+            let baseItem : CartItem =
+                {
+                    VariantId         = variantId
+                    Placements        = placements
+                    PreviewImage      = previewImage
+
+                    CatalogProductId  = product.id
+                    CatalogVariantId  = variantId
+                    Name              = product.name
+                    ThumbnailUrl      = product.thumbnailURL
+
+                    Size              = size
+                    ColorName         = colorName
+                    ColorCodeOpt      = colorCodeOpt
+
+                    Quantity          = qty
+                    UnitPrice         = unitPrice
+                    IsCustomDesign    = true
+                }
+
+            // 6. Wrap it in the DU
+            Some (CartLineItem.Custom baseItem)
+    let toTemplateCartDU
+        (qty   : int)
+        (model : Designer.Model)
+        : CartLineItem option =
+
+        match model.SelectedVariantId,
+            model.SelectedProduct,
+            model.DesignOptions with
+
+        // must have a variant, a base product, and at least one placed design
+        | None, _, _ -> None
+        | _, None, _ -> None
+        | _, _, []   -> None
+
+        | Some variantId, Some product, placedDesigns ->
+
+            // 1. Build Printful placements from the placed designs
+            let placements : PrintfulPlacement list =
+                placedDesigns |> toPrintfulPlacements
+
+            // 2. Preview image from the selected product
+            let previewImage =
+                product.thumbnailURL
+                |> function
+                    | null | "" -> None
+                    | url       -> Some url
+
+            // 3. Size + color from the designer selections
+            let size =
+                model.SelectedVariantSize
+                |> Option.defaultValue ""
+
+            // For now we’ll treat the selected color string as the "name",
+            // and assume we *might* also use it as a hex code.
+            let colorName, colorCodeOpt =
+                match model.SelectedVariantColor with
+                | None
+                | Some "" ->
+                    "Default", None
+                | Some c ->
+                    // naive heuristic: if it looks like a hex code, use it as both
+                    if c.StartsWith("#") then c, Some c
+                    else c, None
+
+            // 4. Price — placeholder for now until you wire real pricing
+            let unitPrice : decimal =
+                // TODO: plug in a real price, from product/variant pricing
+                45.0m
+
+            // 5. Build the rich CartItem record (your commented-out type)
+            let baseItem : TemplateCartItem =
+                {
+                    VariantId = variantId
+                    Quantity  = qty
+                    TemplateId = 0
+                    CatalogProductId = product.id
+                    Name             = product.name
+                    Size             = size
+                    ColorName        = colorName
+                    ColorCodeOpt     = colorCodeOpt
+                    UnitPrice        = unitPrice
+                    PreviewImage     = Some product.thumbnailURL
+                }
+
+
+            // 6. Wrap it in the DU
+            Some (CartLineItem.Template baseItem)
+
+
+    let tryMakeSyncCartItem (qty:int) (details: SyncProduct.SyncProduct) (selectedVariantId:int64) : SyncCartItem option =
+        details.Variants
+        |> List.tryFind (fun v -> v.Id = selectedVariantId)
+        |> Option.map (fun v ->
+            {
+                SyncProductId = v.Id
+                SyncVariantId = v.VariantId
+                ExternalId = Some v.ExternalId
+                CatalogVariantId = Some v.VariantProductVariantId
+                Quantity      = qty
+                Name          = v.Name |> Option.defaultValue details.Name
+                ThumbnailUrl  = v.PreviewUrl |> Option.orElse v.ImageUrl |> Option.defaultValue ""
+                // details.ThumbnailUrl
+                Size          = v.Size |> Option.defaultValue ""
+                ColorName     = v.Color |> Option.defaultValue ""
+                ColorCodeOpt  = None // v.ColorCode
+                UnitPrice     = v.RetailPrice |> Option.defaultValue 0m
+                Currency      = v.Currency |> Option.defaultValue "USD"
+            }
+        )
+
+
+    let toSyncCartDU
+        (qty   : int)
+        (model : Product.Model)
+        : CartLineItem option =
+            match model.Details with
+            | Deferred.Resolved details ->
+                tryMakeSyncCartItem qty details.product (model.SelectedVariantId |> Option.defaultValue 0)
+                |> Option.map (fun syncItem -> CartLineItem.Sync syncItem)
+            | _ -> None
+
+
+type ShopSectionModel =
+
+    | ShopLanding // this is is a welcome page
+    | ProductDesigner of Designer.Model // build your own, should be able to control whether or not we allow the user to upload their own images.
+    | CollectionBrowser of Collection.Model
+    | ProductViewer of Product.Model
+    | Cart
+    | Checkout
+    | OrderHistory of OrderHistory.Model
+    | NotFound
+
+    // | Social
+    // | Contact
+
+type ShopLandingMsg =
+    | SwitchSection of ShopSectionModel
+
+type Tab =
+    | Hero
+    | Collection
+    | Designer
+    | Cart
+    | History
+    | Checkout
+
+open Shared.Store.Cart
+open Bindings.Stripe.StripePayment
+
+type ShopMsg =
+
+    | NavigateTo of ShopSectionModel
+    // Landing / Drop Hero
+    | ShopLanding of ShopLandingMsg
+    // Product Collection
+    | ShopCollectionMsg of Collection.Msg
+    // Product Designer
+    | ShopDesignerMsg of Designer.Msg
+    // Product Browser
+    | ShopProduct of Product.Msg
+    // Order History
+    | ShopOrderHistory of OrderHistory.Msg
+
+    // Cart
+    | AddCartItem      of CartLineItem
+    | RemoveCartItem   of CartLineItem
+    | UpdateCartQty    of CartLineItem * int
+
+    // Checkout
+    | CheckoutMsg of Checkout.Msg
+    // Checkout → Checkout Preview (Step 1)
+    | BeginCheckoutFromCart
+    | CreatedDraftOrder  of Shared.Api.Checkout.CreateDraftOrderResponse
+    | CheckoutDraftFailed  of string
+
+    // Payment Session (Step 3)
+    | LoadStripe
+    | StripeLoaded of IStripe
+    | StripeFailed of exn
+
+    // | PaymentSuccess of string * string
+    // | PaymentFailure of string
+
+type StripeState = {
+    Stripe: IStripe option
+    Elements: IElements option
+    CardElement: IStripeElement option
+    PaymentClientSecret: string option
+    PaymentIntentId: string option
+    PaymentStatus: string
+    IsLoadingPayment: bool
+    PaymentError: string option
+}
+
+let initStripe clientSecret intentId =
+    {
+        Stripe = None
+        Elements = None
+        CardElement = None
+        PaymentClientSecret = Some clientSecret
+        PaymentIntentId = Some intentId
+        PaymentStatus = "Not started"
+        IsLoadingPayment = false
+        PaymentError = None
+    }
+
+
+
+type Model = {
+    Section: ShopSectionModel
+    Cart: CartState
+    // PayPalOrderReference: string option
+    Checkout: Checkout.Model option
+    Stripe: StripeState option
+    Error: string option
+}
+
+let shopSectionToSectionModel (section: SharedViewModule.WebAppView.ShopSection) =
+    match section with
+    | SharedViewModule.WebAppView.ShopSection.Cart  -> ShopSectionModel.Cart
+    | SharedViewModule.WebAppView.ShopSection.Checkout -> ShopSectionModel.Checkout
+    | SharedViewModule.WebAppView.ShopSection.CollectionBrowser -> CollectionBrowser Collection.initModel
+    | SharedViewModule.WebAppView.ShopSection.ProductDesigner -> ProductDesigner (Designer.initialModel())
+    | SharedViewModule.WebAppView.ShopSection.ProductViewer id -> ShopSectionModel.ProductViewer (Product.initModel id None ReturnTo.BackToCollection)
+    | SharedViewModule.WebAppView.ShopSection.OrderHistory -> OrderHistory (OrderHistory.initModel())
+    | SharedViewModule.WebAppView.ShopSection.NotFound
+    | SharedViewModule.WebAppView.ShopSection.ShopLanding -> ShopSectionModel.ShopLanding
+
+let getInitialModel shopSection =
+    {
+        Section = shopSectionToSectionModel shopSection
+        Cart = emptyCart
+        Stripe = None
+        Checkout = None
+        Error = None
+    }
+
+
+
+let updateCheckoutModelWithCheckoutPreviewResponse (model: Checkout.Model) (draftResponse: CreateDraftOrderResponse) : Checkout.Model =
     match draftResponse with
     | CreatedTemp tempDraft ->
         { model with
@@ -75,7 +411,7 @@ let updateCheckoutModelWithCheckoutPreviewResponse model (draftResponse: CreateD
             Error          = None
         }
 
-let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
+let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
     printfn $"SHOP UPDATE MSG: {msg}"
     match msg with
 
@@ -94,10 +430,10 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
 
     | BeginCheckoutFromCart ->
         match model.Checkout with
-        | None -> Checkout.Iniitializers.initCheckoutModel model.Cart
+        | None -> Checkout.Checkout.initCheckoutModel model.Cart
         | Some checkoutModel -> checkoutModel
         |> fun mdl ->
-                { model with Section = ShopSection.Checkout; Checkout = Some mdl }, Cmd.none
+                { model with Section = ShopSectionModel.Checkout; Checkout = Some mdl }, Cmd.none
 
     | CreatedDraftOrder response ->
         let chkoutModel =
@@ -125,7 +461,7 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
         model,
         Cmd.OfPromise.either
             loadStripe
-            Env.stripePublishableKey
+            SharedViewModule.Env.stripePublishableKey
             StripeLoaded
             StripeFailed
     
@@ -143,13 +479,13 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
                     Checkout = Some { chkout with Stripe = Some stripe  } 
                     Stripe = Some stripeMdl
                 },
-                Cmd.ofMsg (CheckoutMsg (SetStep Payment))
+                Cmd.ofMsg (CheckoutMsg (Checkout.SetStep Checkout.Payment))
         | None -> model, Cmd.none
 
     | CheckoutMsg subMsg ->
         let additionalCmd =
             match subMsg with
-            | SubmitShipping ->
+            | Checkout.Msg.SubmitShipping ->
                 match model.Checkout with
                 | None -> Cmd.none
                 | Some mdl ->          
@@ -182,11 +518,11 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
             | _ -> Cmd.none
 
         match model.Checkout with
-        | None -> Checkout.Iniitializers.initCheckoutModel model.Cart
+        | None -> Checkout.Checkout.initCheckoutModel model.Cart
         | Some checkoutModel -> checkoutModel
         |> Checkout.Checkout.update subMsg
         |> fun (mdl, cmd) ->    
-            { model with Section = ShopSection.Checkout; Checkout = Some mdl },
+            { model with Section = ShopSectionModel.Checkout; Checkout = Some mdl },
             Cmd.batch [
                 additionalCmd
                 Cmd.map CheckoutMsg cmd
@@ -198,11 +534,11 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
             let productDesignerMdl, cmd' = Designer.update subMsg pd
             let cmd =
                 match subMsg with
-                | ProductDesigner.BackToDropLanding ->
-                    Cmd.ofMsg (NavigateTo ShopSection.ShopLanding)
+                | Designer.BackToDropLanding ->
+                    Cmd.ofMsg (NavigateTo ShopSectionModel.ShopLanding)
 
-                | ProductDesigner.AddToCart qty ->
-                    match productDesignerMdl |> toCustomCartDU qty with
+                | Designer.AddToCart qty ->
+                    match productDesignerMdl |> PrintfulMapping.toCustomCartDU qty with
                     | Some cartItem ->  Cmd.ofMsg (ShopMsg.AddCartItem (cartItem))
                     | None -> Cmd.none
                 | _ ->
@@ -210,8 +546,8 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
 
             { model with Section = ProductDesigner productDesignerMdl }, cmd
         | _ -> 
-            { model with Section = ProductDesigner (ProductDesigner.initialModel()) },
-            Cmd.map ShopDesignerMsg (Cmd.ofMsg ProductDesigner.LoadProducts)
+            { model with Section = ProductDesigner (Designer.initialModel()) },
+            Cmd.map ShopDesignerMsg (Cmd.ofMsg Designer.LoadProducts)
 
     | ShopCollectionMsg subMsg ->
         match model.Section with
@@ -221,12 +557,20 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
                 | Collection.ViewSyncProduct sp ->
                     let seed = Shared.StoreProductViewer.ProductSeed.SeedSync sp
                     let pvModel, _ =
-                        Product.initFromSeed
-                            seed
-                            Shared.StoreProductViewer.ReturnTo.BackToCollection
-                    { model with Section = ProductViewer pvModel }, Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
+                        Product.initFromSeed seed Shared.StoreProductViewer.ReturnTo.BackToCollection
+
+                    // Don't set Section here. Navigate instead.
+                    model, Cmd.ofMsg (NavigateTo (ProductViewer pvModel))
+
+                    // let seed = Shared.StoreProductViewer.ProductSeed.SeedSync sp
+                    // let pvModel, _ =
+                    //     Product.initFromSeed
+                    //         seed
+                    //         Shared.StoreProductViewer.ReturnTo.BackToCollection
+                    // { model with Section = ProductViewer pvModel }, 
+                    // Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
                 | _ ->
-                    State.update subMsg cb
+                    Collection.update subMsg cb
                     |> fun (m, cmd) -> 
                         { model with Section = CollectionBrowser m }, 
                         cmd |> Cmd.map ShopCollectionMsg
@@ -234,7 +578,7 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
 
         | ProductViewer _ -> model, Cmd.none
         | _ ->
-            let landingModel, msg = State.init None            
+            let landingModel, msg = init None            
             { model with Section = CollectionBrowser landingModel },
             Cmd.map ShopCollectionMsg msg
 
@@ -243,13 +587,13 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
         | ProductViewer pv ->
             let viewMdl, cmd' = 
                 match subMsg with
-                | ProductViewer.GoBack ->
-                    let initCB = Collection.initModel ()
+                | Product.GoBack ->
+                    let initCB = Collection.initModel
                     model, Cmd.ofMsg (NavigateTo (CollectionBrowser initCB))
-                | ProductViewer.PrimaryAction ->
+                | Product.PrimaryAction ->
                     match pv.Details, pv.SelectedVariantId with
                     | UseDeferred.Deferred.Resolved d, Some evid ->
-                        match tryMakeSyncCartItem 1 d.product evid with
+                        match PrintfulMapping.tryMakeSyncCartItem 1 d.product evid with
                         | Some item -> model, Cmd.ofMsg (ShopMsg.AddCartItem (CartLineItem.Sync item))
                         | None      -> model, Cmd.none
                     | _ ->
@@ -262,7 +606,7 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
             viewMdl, cmd'
         | _ ->
             let landingModel = 
-                ProductViewer.initModel 
+                Product.initModel 
                     (Shared.StoreProductViewer.ProductKey.Template 0)
                     None
                     Shared.StoreProductViewer.ReturnTo.BackToCollection    
@@ -289,42 +633,44 @@ let update (msg: ShopMsg) (model: Store.Model) : Store.Model * Cmd<ShopMsg> =
     | NavigateTo section ->
         // need to do url here?
         match section with
-        | ShopSection.CollectionBrowser cb ->
+        | CollectionBrowser cb ->
             // fresh designer state
-            let model' = { model with Section = ShopSection.CollectionBrowser cb }
+            let model' = { model with Section = CollectionBrowser cb }
             // immediately ask the designer to load products
-            model', Cmd.ofMsg (ShopCollectionMsg Collection.LoadMore)
-        | ShopSection.ProductDesigner pd ->
+            model', Cmd.none 
+            // Cmd.ofMsg (ShopCollectionMsg Collection.LoadMore)
+        | ProductDesigner pd ->
             // fresh designer state
-            let model' = { model with Section = ShopSection.ProductDesigner pd }
+            let model' = { model with Section = ProductDesigner pd }
             // immediately ask the designer to load products
-            model', Cmd.ofMsg (ShopDesignerMsg ProductDesigner.Msg.LoadProducts)
-        | ShopSection.ProductViewer pv ->
-            let model' = { model with Section = ShopSection.ProductViewer pv }
-            model', Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
+            // Cmd.ofMsg (ShopDesignerMsg ProductDesigner.Msg.LoadProducts)
+            model', Cmd.none 
+        | ProductViewer pv ->
+            let model' =  { model with Section = ProductViewer pv }
+            
+            model', Cmd.none 
+            // Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
         | _ ->
             { model with Section = section }, Cmd.none
 
 let tabToSection tab =
     match tab with
-    | Hero -> ShopSection.ShopLanding
-    | Collection -> ShopSection.CollectionBrowser (Collection.initModel())
-    | Designer -> ShopSection.ProductDesigner (ProductDesigner.initialModel())
-    | Product -> ShopSection.ProductViewer (ProductViewer.initModel (StoreProductViewer.ProductKey.Template 0) None StoreProductViewer.ReturnTo.BackToCollection )
-    | Cart  -> ShopSection.Cart
-    | Checkout -> ShopSection.Checkout
-    | History -> ShopSection.OrderHistory (OrderHistory.initModel())
+    | Hero -> ShopSectionModel.ShopLanding
+    | Collection -> ShopSectionModel.CollectionBrowser Collection.initModel
+    | Designer -> ShopSectionModel.ProductDesigner (Designer.initialModel())
+    | Cart  -> ShopSectionModel.Cart
+    | Checkout -> ShopSectionModel.Checkout
+    | History -> ShopSectionModel.OrderHistory (OrderHistory.initModel())
 
 let sectionToTab section =
     match section with
-    | ShopSection.ShopLanding -> Hero
+    | ShopSectionModel.ShopLanding -> Hero
     | CollectionBrowser _ -> Collection
-    | ProductViewer _ -> Product
     | ProductDesigner _ -> Designer
-    | ShopSection.Cart -> Cart
-    | ShopSection.Checkout -> Checkout
-    | ShopSection.OrderHistory _ -> History
-    | NotFound -> Hero
+    | ShopSectionModel.Cart -> Cart
+    | ShopSectionModel.Checkout -> Checkout
+    | ShopSectionModel.OrderHistory _ -> History
+    | _ -> Hero
 
 type NavItemDisplay =
     | TextItem of string
@@ -357,7 +703,7 @@ let iconGlyph (icon: ReactElement) (count: int option) =
 module Shop =
 
     [<ReactComponent>]
-    let View model (dispatch: Store.ShopMsg -> unit) =
+    let View model (dispatch: ShopMsg -> unit) =
         let tab = sectionToTab model.Section
 
         let cartItems = model.Cart.Items
@@ -419,9 +765,6 @@ module Shop =
                                     tabBtn cartItems Hero (TextItem "Xero")
                                     tabBtn cartItems Collection (TextItem "collection")
                                     // tabBtn Designer   "designer"
-                                    match model.Section with
-                                    | ProductViewer _ -> tabBtn cartItems Product (TextItem "product")
-                                    | _ -> ()
                                 ]
                             ]
                             Html.div [
@@ -436,7 +779,7 @@ module Shop =
 
                 // Active body
                 match model.Section with
-                | ShopSection.ShopLanding ->                    
+                | ShopSectionModel.ShopLanding ->                    
                     Html.div [
                         Hero.View {
                             OnShopCollection = fun () -> dispatch (ShopMsg.NavigateTo (tabToSection Collection))
@@ -458,7 +801,7 @@ module Shop =
                 | ProductViewer pv ->
                     Product.View pv (ShopProduct >> dispatch)
 
-                | ShopSection.Cart ->
+                | ShopSectionModel.Cart ->
                     Cart.Cart.View 
                         {
                             Cart = model.Cart
@@ -468,10 +811,10 @@ module Shop =
                             OnCheckout         = fun _ -> dispatch BeginCheckoutFromCart
                         }
 
-                | ShopSection.Checkout ->
+                | ShopSectionModel.Checkout ->
                     Checkout.View.Checkout 
                         (match model.Checkout with
-                        | None -> Checkout.Iniitializers.initCheckoutModel model.Cart
+                        | None -> Checkout.initCheckoutModel model.Cart
                         | Some cmdl -> cmdl)
                         (CheckoutMsg >> dispatch)
 
@@ -481,5 +824,5 @@ module Shop =
         ]
 
 [<ReactComponent>]
-let ShopView (model: Store.Model) (dispatch: Store.ShopMsg -> unit) =
+let ShopView (model: Model) (dispatch: ShopMsg -> unit) =
     Shop.View model dispatch

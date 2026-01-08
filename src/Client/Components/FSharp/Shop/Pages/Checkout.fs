@@ -4,12 +4,99 @@ open Feliz
 open Client.Components.Shop.Common
 open Shared.Store.Cart
 open Shared.Store.Checkout
-open Client.Domain.Store.Checkout
 open Elmish
 open Bindings.Stripe.StripePayment
 open Fable.Core.JsInterop
+open Shared.Store
+open Shared.Api.Checkout
+open Bindings.Stripe.StripePayment
 
-module Iniitializers =
+
+module Checkout =
+    type CheckoutStep =
+        | Shipping
+        | Payment
+        | Review
+
+    type ShippingInfo = {
+        Email     : string
+        FirstName : string
+        LastName  : string
+        Address   : string
+        Apartment : string
+        City      : string
+        State     : string
+        ZipCode   : string
+        Country   : string
+        Phone     : string
+    }
+    // we need shipping validation here....
+
+    //
+    type PaymentMethod =
+        | Stripe
+        // | ApplePay
+        // | GooglePay
+
+    type Field =
+        | Email
+        | FirstName
+        | LastName
+        | Address
+        | Apartment
+        | City
+        | State
+        | ZipCode
+        | Phone
+
+    type Model = {
+        Step            : CheckoutStep
+
+        CustomerShippingInfo    : ShippingInfo
+
+        // SelectedShippingMethod  : ShippingOption option   // still used locally for UI
+        // ShippingOptions : Shared.Api.Checkout.ShippingOption list
+
+        // From server preview:
+        PreviewTotals   : PreviewTotals option
+        CheckoutPreviewLines : CheckoutPreviewLine list
+        // QuoteTotals: QuoteTotals list option
+
+        PaymentMethod   : PaymentMethod
+
+        Cart : CartState
+
+        // From server payment session:
+        Stripe : IStripe option
+        StripeSessionId    : string option
+        StripeClientSecret : string option
+        PrintfulDraftId    : string option
+
+        IsBusy         : bool
+        Error          : string option
+
+        OrderConfirmation          : ConfirmOrderResponse option
+    }
+
+    type Msg =
+        | UpdateShippingField of Field * string
+        | SelectPaymentMethod of PaymentMethod
+        | SubmitShipping
+
+        // | SubmitCardPayment of IStripeElement
+        
+        // | PaymentSetupFailed of string
+        
+        | SubmitPayment of IElements
+        | SubmitCompleted of Result<IElements * obj, exn>
+        | ConfirmCompleted of Result<ConfirmPaymentResult, exn>
+        | ConfirmationSuccess of ConfirmOrderResponse
+        | ConfirmationFailed of exn
+        
+        | PaymentFailed of string
+        
+        | SetStep of CheckoutStep
+        | BackToCart
 
     let initialShippingInfo : ShippingInfo = {
         Email     = ""
@@ -40,75 +127,71 @@ module Iniitializers =
         OrderConfirmation = None
     }
 
-module Helpers =
+    module Helpers =
 
-    let computeSubtotal (items: CartLineItem list) : decimal =
-        items
-        |> List.sumBy (fun i -> 
-            match i with
-            | CartLineItem.Sync s -> s.UnitPrice * decimal s.Quantity
-            | CartLineItem.Custom c -> c.UnitPrice * decimal c.Quantity
-            | CartLineItem.Template t -> t.UnitPrice * decimal t.Quantity
-        )
+        let computeSubtotal (items: CartLineItem list) : decimal =
+            items
+            |> List.sumBy (fun i -> 
+                match i with
+                | CartLineItem.Sync s -> s.UnitPrice * decimal s.Quantity
+                | CartLineItem.Custom c -> c.UnitPrice * decimal c.Quantity
+                | CartLineItem.Template t -> t.UnitPrice * decimal t.Quantity
+            )
 
-module Checkout =
-    open Fable.Core.JS
+    module Handlers =
 
-    let paymentHandler model stripePaymentId status =
-        printfn $"STATUS FROM PAYMENT: {status}"
-        Cmd.OfAsync.either
-            Client.Api.checkoutApi.ConfirmOrder
-            {
-                CustomerInfo = {
-                    FirstName = model.CustomerShippingInfo.FirstName
-                    LastName = model.CustomerShippingInfo.LastName
-                    Email = model.CustomerShippingInfo.Email
-                    Phone = None
+        let paymentHandler model stripePaymentId status =
+            Cmd.OfAsync.either
+                Client.Api.checkoutApi.ConfirmOrder
+                {
+                    CustomerInfo = {
+                        FirstName = model.CustomerShippingInfo.FirstName
+                        LastName = model.CustomerShippingInfo.LastName
+                        Email = model.CustomerShippingInfo.Email
+                        Phone = None
+                    }
+                    StripeConfirmation = stripePaymentId
+                    OrderDraftId = model.PrintfulDraftId |> Option.defaultValue ""
+                    IsSuccess =
+                        status = "success"
                 }
-                StripeConfirmation = stripePaymentId
-                OrderDraftId = model.PrintfulDraftId |> Option.defaultValue ""
-                IsSuccess =
-                    status = "success"
-            }
-            ConfirmationSuccess
-            ConfirmationFailed
+                ConfirmationSuccess
+                ConfirmationFailed
 
-    // let confirmCardCmd (stripe: IStripe) clientSecret confirmParams =
-    //     Cmd.OfPromise.either
-    //         (fun (cs, cp) -> stripe.confirmCardPayment(cs, cp))
-    //         (clientSecret, confirmParams)
-    //         (fun res ->
-    //             match res.error with
-    //             | Some err ->
-    //                 PaymentFailed (defaultArg err.message err.``type``)
-    //             | None ->
-    //                 match res.paymentIntent with
-    //                 | None -> PaymentFailed "No payment intent returned."
-    //                 | Some pi -> PaymentSucceeded (pi.id, pi.status))
-    //         (fun ex -> PaymentFailed ex.Message)
+        // let confirmCardCmd (stripe: IStripe) clientSecret confirmParams =
+        //     Cmd.OfPromise.either
+        //         (fun (cs, cp) -> stripe.confirmCardPayment(cs, cp))
+        //         (clientSecret, confirmParams)
+        //         (fun res ->
+        //             match res.error with
+        //             | Some err ->
+        //                 PaymentFailed (defaultArg err.message err.``type``)
+        //             | None ->
+        //                 match res.paymentIntent with
+        //                 | None -> PaymentFailed "No payment intent returned."
+        //                 | Some pi -> PaymentSucceeded (pi.id, pi.status))
+        //         (fun ex -> PaymentFailed ex.Message)
 
-    let submitPayment (elements: IElements) =
-        Cmd.OfPromise.either
-            (fun (el: IElements) -> el.submit())
-            elements
-            (fun submitResult -> SubmitCompleted (Ok (elements, submitResult)))
-            (fun ex -> SubmitCompleted (Error ex))
-   
-    let confirmPaymentPromise (stripe: IStripe) clientSecret (elements: IElements) =
-        let params =
-            createObj [
-                "elements" ==> elements
-                "clientSecret" ==> clientSecret
-                // "confirmParams" ==> createObj [ "return_url" ==> "http://localhost:8080/shop/cart" ]
-                "redirect" ==> "if_required"
-            ] |> unbox
-        Cmd.OfPromise.either
-            stripe.confirmPayment 
-            params
-            (fun x -> ConfirmCompleted (Ok x))
-            (fun e -> ConfirmationFailed e)
-
-
+        let submitPayment (elements: IElements) =
+            Cmd.OfPromise.either
+                (fun (el: IElements) -> el.submit())
+                elements
+                (fun submitResult -> SubmitCompleted (Ok (elements, submitResult)))
+                (fun ex -> SubmitCompleted (Error ex))
+    
+        let confirmPaymentPromise (stripe: IStripe) clientSecret (elements: IElements) =
+            let objParams =
+                createObj [
+                    "elements" ==> elements
+                    "clientSecret" ==> clientSecret
+                    // "confirmParams" ==> createObj [ "return_url" ==> "http://localhost:8080/shop/cart" ]
+                    "redirect" ==> "if_required"
+                ] |> unbox
+            Cmd.OfPromise.either
+                stripe.confirmPayment 
+                objParams
+                (fun x -> ConfirmCompleted (Ok x))
+                (fun e -> ConfirmationFailed e)
 
     let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         match msg with
@@ -147,7 +230,7 @@ module Checkout =
 
         | SubmitPayment ce ->
             model,
-            submitPayment ce
+            Handlers.submitPayment ce
 
         | SubmitCompleted (Error ex) ->
             { model with Error = Some ex.Message }, Cmd.none
@@ -157,7 +240,7 @@ module Checkout =
             | Some strp, None ->
                 // proceed to confirm
                 model,
-                confirmPaymentPromise 
+                Handlers.confirmPaymentPromise 
                     strp
                     model.StripeClientSecret
                     elements
@@ -176,7 +259,7 @@ module Checkout =
             | Ok resp when resp.error.IsSome -> {model with Error = resp.error.Value.message }, Cmd.none
             | Ok resp when resp.paymentIntent.IsSome ->
                 model,
-                paymentHandler model resp.paymentIntent.Value.id resp.paymentIntent.Value.status
+                Handlers.paymentHandler model resp.paymentIntent.Value.id resp.paymentIntent.Value.status
             | _ -> model, Cmd.none
 
         | ConfirmationFailed err ->
@@ -189,6 +272,7 @@ module Checkout =
 
 
 module View =
+    open Checkout
 
     let private labelStep (step: CheckoutStep) =
         match step with

@@ -1,10 +1,9 @@
 module Components.Layout.PageLayout
 
 open Feliz
-open Client.Domain
-open SharedWebAppModels
-open SharedWebAppViewSections
+open Client.Domain.WebAppModels
 open Components.Layout.UnifiedNavigation
+open SharedViewModule.WebAppView
 
 type PageLayoutProps = {| 
     children: ReactElement
@@ -22,23 +21,22 @@ let PageLayout (props: PageLayoutProps) =
         fun _ ->
             setActiveItem (
                 match props.model.CurrentAreaModel with
-                | Welcome     -> "Home"
-                | About _     -> "About"
-                | Portfolio _ -> "Projects"
-                | Resume      -> "Resume"
-                | Services _  -> "Services"
-                | Contact     -> "Contact"
-                | Shop _      -> "Shop"
-                | Landing     -> ""
-                | Help        -> "Help"
-                | Settings    -> "Settings"
+                | Model.Welcome     -> "Home"
+                | Model.About _     -> "About"
+                | Model.Portfolio _ -> "Projects"
+                | Model.Resume      -> "Resume"
+                | Model.Services _  -> "Services"
+                | Model.Contact     -> "Contact"
+                | Model.Shop _      -> "Shop"
+                | Model.Help        -> "Help"
+                | Model.Settings    -> "Settings"
             )
         , [| box props.model.CurrentAreaModel |]
     )
 
     let isShopBrand =
         match props.model.CurrentAreaModel with
-        | Shop _ -> true
+        | Model.Shop _ -> true
         | _      -> false
 
     let handleNavSelect (item: string) =

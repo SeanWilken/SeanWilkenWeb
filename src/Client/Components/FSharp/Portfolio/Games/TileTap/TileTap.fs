@@ -1,14 +1,12 @@
 module Components.FSharp.Portfolio.Games.TileTap
 
 open System
-open Client.Domain
-open GridGame
 open Elmish
-open Fable.React
 open Feliz
 open Browser
-open SharedTileTap
 open Bindings.LucideIcon
+open Client.GameDomain.GridGame
+open SharedViewModule.SharedMicroGames
 
 (*
 
@@ -18,14 +16,181 @@ open Bindings.LucideIcon
 // store this on the model?
 // let roundDifficultySpawnInterval difficulty =
 //     match difficulty with
-//     | SharedTileTap.TileTapDifficulty.Simple -> 6
-//     | SharedTileTap.TileTapDifficulty.Easy -> 4
-//     | SharedTileTap.TileTapDifficulty.Intermediate -> 2
-//     | SharedTileTap.TileTapDifficulty.Hard -> 1
+//     | TileTapDifficulty.Simple -> 6
+//     | TileTapDifficulty.Easy -> 4
+//     | TileTapDifficulty.Intermediate -> 2
+//     | TileTapDifficulty.Hard -> 1
 
 *)
 
 // *********************************
+
+
+type TileTapDifficulty =
+    | Simple
+    | Easy
+    | Medium
+    | Hard
+
+// KINDA USELESS IMPLEMENTATION CURRENTLY,
+// NEEDS MORE TWEAKS
+type TileTapGameMode =
+    | Survival
+    | TimeAttack
+(*
+    Simple:
+        - Mistakes are ignored.
+        - 30 Second Round Timer
+    Easy:
+        - 5 Mistake Limit
+        - 30 Second Round Timer
+    Medium:
+        - 3 Mistake Limit
+        - 30 Second Round Timer
+    Hard (Survival):
+        - Go until you fail
+        - No Mistakes, insta-fail
+        - No Round Timer
+*)
+
+// function to determine the model based on difficulty
+    // Simple -> model with AllowableMistakes = -1, timer = 30
+    // Easy -> model with mistakes = 5, timer = 30
+    // Medium -> model with mistakes = 3, timer = 30
+    // Hard -> model with mistakes = 1, timer = -1
+    // Time Attack (?) -> Hearts (-1 mistake), Clocks (slow down or speed up), Bomb (insta-fail)
+
+// RoundConditions ->
+    // AllowableRoundMistakes ->
+        // ARM < 0 = Ignore Mistakes
+        // ARM > 0 = Mistakes allowed up to ARM
+            // RoundMistakes >= ARM then RoundEnd
+    // RoundTimer ->
+        // RT < 0 = Ignore Timer, play until ARM reached
+        // RT > 0 = Timer value in seconds, checks against ( GameClock ticks / 4 )
+            // RoundTimer < ( GameClock / 4 ) then RoundEnd
+
+type TileTapRoundDetails = {
+    RoundMistakes: int // How many mistakes were made that Round
+    TilesSpawned: int // Current # of tiles spawned on the board
+    TilesSmashed: int // # of tiles destroyed by the player
+    RoundScore: int // Score of tiles destroyed within Round
+    GameClock: int
+}
+
+let emptyTileTapRoundDetails = {
+    RoundMistakes = 0
+    TilesSpawned = 0
+    TilesSmashed = 0
+    RoundScore = 0
+    GameClock = 0
+}
+
+
+type Msg =
+    // GAME LOOP
+    | SetGameState of RoundState
+    | ChangeGameMode of TileTapGameMode
+    | ChangeDifficulty of TileTapDifficulty
+    | SetDispatchPointer of float // stores float pointer to dispatch setInterval loop
+    | GameLoopTick // batches commands to check the lifetime and spawn new tiles
+    // GRID TILES
+    | CheckGridboardTiles // command to go through and check for expired tiles
+    | SpawnNewActiveTile // places a new tile on the board
+    | DestroyTile of TapTile // removes the tile (in a way that the player intended / made an effort)
+    | ExpireTile of TapTile // remove the tile (in a way that the player missed the time interval)
+    | Mistake of int
+    // ROUND STATE
+    | EndRound // FURTHER DEFINE THE REASON FOR ROUND ENDING
+    | ResetRound
+    | ExitGameLoop // stops the setInterval loop from running while not within this sub-module.
+    | QuitGame // returns control to the parent, exiting to gallery
+
+
+type Model = {
+    TileTapGridBoard: GridBoard // grid board that will contain the various tiles
+    LastSpawnInterval: int // Cooldown of new Tile being placed into the GameGrid
+    GameMode: TileTapGameMode
+    GameState: RoundState
+    DispatchPointer: float // the float pointer to the GameLoop's dispatch
+    RoundTimer: int // Max allowable seconds for this Round on GameClock
+    AllowableRoundMistakes: int // max # of mistakes allowed before the round is considered 'lost' and will end
+    // RoundTileLifeTime: int // How many GameTicks the tile will live for // tie into Value?
+    CurrentRoundDetails: TileTapRoundDetails
+    CompletedRoundDetails: TileTapRoundDetails
+    Difficulty: TileTapDifficulty // current difficulty of the game
+}
+
+let levelCeiling = 1
+let gridDimension = 8
+let generateEmptyTileTapGrid gridDimension =
+    { GridPositions = [
+            for i in 0 .. ((gridDimension * gridDimension) - 1) do
+                Blank
+        ]
+    }
+
+let initModel = {
+    TileTapGridBoard = generateEmptyTileTapGrid gridDimension
+    LastSpawnInterval = 2
+    GameMode = Survival
+    GameState = Paused
+    DispatchPointer = 0.0
+    RoundTimer = 30
+    AllowableRoundMistakes = 5
+    Difficulty = Simple
+    // RoundTileLifeTime = 15 (just under 4 seconds)
+    CurrentRoundDetails = emptyTileTapRoundDetails
+    CompletedRoundDetails = emptyTileTapRoundDetails
+}
+
+let init(): Model * Cmd<Msg> =
+    initModel, Cmd.none
+
+// doesn't fucking work, pissing me the fuck off
+let endRound model =
+    { model with
+        TileTapGridBoard = generateEmptyTileTapGrid gridDimension
+        GameState = Won
+        DispatchPointer = 0.0
+        CurrentRoundDetails = emptyTileTapRoundDetails
+        CompletedRoundDetails = model.CurrentRoundDetails
+    }
+
+let resetRound model =
+    { model with
+        TileTapGridBoard = generateEmptyTileTapGrid gridDimension
+        LastSpawnInterval = 2
+        GameState = Paused
+        DispatchPointer = 0.0
+        CurrentRoundDetails = emptyTileTapRoundDetails
+    }
+
+// When ChangeDifficulty Msg is dispatched,
+// returns model with different round parameters
+// based on requested TileTapDifficulty
+let updateSurvivalModeDifficulty  ( model : Model ) ( difficulty : TileTapDifficulty ) =
+    match difficulty with
+    | Simple -> { model with Difficulty = difficulty; RoundTimer = 30; AllowableRoundMistakes = 10 }
+    | Easy -> { model with Difficulty = difficulty; RoundTimer = 60; AllowableRoundMistakes = 5 }
+    | Medium -> { model with Difficulty = difficulty; RoundTimer = -1; AllowableRoundMistakes = 3 }
+    | Hard -> { model with Difficulty = difficulty; RoundTimer = -1; AllowableRoundMistakes = 1 }
+
+let updateTimeAttackModeDifficulty  ( model : Model ) ( difficulty : TileTapDifficulty ) =
+    match difficulty with
+    | Simple -> { model with Difficulty = difficulty; RoundTimer = 90; AllowableRoundMistakes = -1 }
+    | Easy -> { model with RoundTimer = 60; AllowableRoundMistakes = -1 }
+    | Medium -> { model with RoundTimer = 45; AllowableRoundMistakes = -1 }
+    | Hard -> { model with RoundTimer = 30; AllowableRoundMistakes = -1 }
+
+// When ChangeDifficulty Msg is dispatched,
+// returns model with different round parameters
+// based on requested TileTapDifficulty
+let updateModelGameMode  ( model : Model ) ( mode : TileTapGameMode ) =
+    match mode with
+    | Survival -> { model with GameMode = Survival; RoundTimer = 30; AllowableRoundMistakes = 10 } // Timer will last as long as you will
+    | TimeAttack -> { model with GameMode = TimeAttack; RoundTimer = 30; AllowableRoundMistakes = -1 }
+
 
 // Module Content & Helpers -
 
@@ -37,13 +202,6 @@ let tileTapDescriptions = [
     "- Tap a Heart to take away 1 mistake."
     "- Make it until the round timer ends."
     "- Hard mode: 1 mistake ends it all, unlimited time."
-]
-
-
-let modelTileTapRoundDetails ( model : SharedTileTap.Model ) = [
-    ( modelValueAsString "Round Score: " model.CompletedRoundDetails.RoundScore )
-    "Round Timer: " + ( SharedViewModule.gameTickClock model.CompletedRoundDetails.GameClock ) + modelValueAsString " / " model.RoundTimer
-    modelValueAsString "Round Mistakes: " model.CompletedRoundDetails.RoundMistakes + modelValueAsString " / " model.AllowableRoundMistakes
 ]
 
 // ********************************
@@ -61,8 +219,8 @@ let tileSpawnPosition activeTilePositionList =
     // if there are available positions, select one randomly
     |> fun availablePositions -> 
         if not ( availablePositions.IsEmpty ) 
-            then availablePositions.[SharedTileSort.randomIndex availablePositions.Length] 
-            else ( SharedTileSort.randomIndex ( allGridPositions.Length - 1 ) )
+            then availablePositions.[randomIndex availablePositions.Length] 
+            else ( randomIndex ( allGridPositions.Length - 1 ) )
 
 // Given a max ceiling int value,
 let randomValue ceiling =
@@ -142,8 +300,8 @@ let calculateTilePointValue ( tile : TapTile )=
     | Major -> 5 * tile.LifeTime
     | _ -> 0
 
-let gameModeRoundMistake ( model : SharedTileTap.Model ) ( mistakeValue : int ) : ( SharedTileTap.Model * Cmd<Msg> )=
-    if model.GameMode = SharedTileTap.TileTapGameMode.Survival
+let gameModeRoundMistake ( model : Model ) ( mistakeValue : int ) : ( Model * Cmd<Msg> )=
+    if model.GameMode = TileTapGameMode.Survival
         then 
             let totalRoundMistakes = if model.CurrentRoundDetails.RoundMistakes + mistakeValue < 0 then 0 else model.CurrentRoundDetails.RoundMistakes + mistakeValue
             printfn "%i" totalRoundMistakes
@@ -159,15 +317,11 @@ let gameModeRoundMistake ( model : SharedTileTap.Model ) ( mistakeValue : int ) 
                 CurrentRoundDetails = { model.CurrentRoundDetails with RoundMistakes = model.CurrentRoundDetails.RoundMistakes + 1; GameClock = currentTimeExpired } 
             }, com
 
-// Initialize the modules model
-// No command dispatched currently
-let init(): SharedTileTap.Model * Cmd<Msg> =
-    SharedTileTap.initModel, Cmd.none
 
 // Handles the various different messages that
 // can be dispatched throughout the use and
 // interaction of this module
-let update msg ( model : SharedTileTap.Model ) =
+let update msg ( model : Model ) =
     match msg with
     // 'Tick' Interval in which the module operates.
     // this is dispatched through the browser windows setInterval function
@@ -195,11 +349,11 @@ let update msg ( model : SharedTileTap.Model ) =
         { model with GameState = gameState; DispatchPointer = 0.0 }, Cmd.none
     // Change Round Parameters based on requested difficulty
     | ChangeGameMode gameMode ->
-        SharedTileTap.updateModelGameMode model gameMode, Cmd.ofMsg ResetRound
+        updateModelGameMode model gameMode, Cmd.ofMsg ResetRound
     | ChangeDifficulty difficulty ->
-        if model.GameMode = SharedTileTap.TileTapGameMode.Survival
-            then SharedTileTap.updateSurvivalModeDifficulty model difficulty, Cmd.ofMsg ResetRound
-            else SharedTileTap.updateTimeAttackModeDifficulty model difficulty, Cmd.ofMsg ResetRound
+        if model.GameMode = TileTapGameMode.Survival
+            then updateSurvivalModeDifficulty model difficulty, Cmd.ofMsg ResetRound
+            else updateTimeAttackModeDifficulty model difficulty, Cmd.ofMsg ResetRound
     // If there hasn't been a new tile placed onto the Gridboard
     // but the interval is matched or exceeded, generate the Gridboard with a new tile added
     // otherwise increment the LastSpawnInterval by one
@@ -277,12 +431,12 @@ let update msg ( model : SharedTileTap.Model ) =
     // Round has finished, cleanup the intervalTimer
     | EndRound -> 
         if (model.DispatchPointer <> 0.0) then SharedViewModule.stopGameLoop(model.DispatchPointer)
-        SharedTileTap.endRound model, Cmd.none
+        endRound model, Cmd.none
     // Resets the values for a round aside 
     // from it's difficulty parameters
     | ResetRound ->
         if (model.DispatchPointer <> 0.0) then SharedViewModule.stopGameLoop(model.DispatchPointer)
-        SharedTileTap.resetRound model, Cmd.none
+        resetRound model, Cmd.none
     // Stops the setInterval dispatch loop when the game is exited
     | ExitGameLoop -> 
         if (model.DispatchPointer <> 0.0) then SharedViewModule.stopGameLoop(model.DispatchPointer)
@@ -296,10 +450,6 @@ let update msg ( model : SharedTileTap.Model ) =
 
 // CONTENT --------
 
-open Shared
-open SharedTileTap
-open Feliz
-open SharedViewModule.SharedMicroGames
 
 
 let private tapTileBase (sizePx: int) : IStyleAttribute list =
@@ -465,7 +615,7 @@ let tileTapRowCreator (rowPositions: LaneObject list) (dispatch: Msg -> unit) =
     ]
 
 let tileTapBoardView (gridPositions: GridBoard) (dispatch: Msg -> unit) =
-    let board = GridGame.getPositionsAsRows gridPositions 8
+    let board = getPositionsAsRows gridPositions 8
     Html.div [
         prop.className "flex flex-col"
         prop.children [ for row in board -> tileTapRowCreator row dispatch ]
@@ -485,7 +635,7 @@ let tileTapBoardView (gridPositions: GridBoard) (dispatch: Msg -> unit) =
 // Currently hacked around the Elmish dispatch loop
 
 // Time drives main game state, as things happen in intervals contained within the main loop
-let startGameLoop ( model : SharedTileTap.Model ) dispatch =
+let startGameLoop ( model : Model ) dispatch =
     if model.DispatchPointer = 0.0 && model.GameState = Paused
         then
             window.setInterval((fun _ -> dispatch (GameLoopTick)), 250)
@@ -494,7 +644,7 @@ let startGameLoop ( model : SharedTileTap.Model ) dispatch =
             window.clearInterval(model.DispatchPointer)
             dispatch ( SetDispatchPointer 0.0 )
 
-let roundStateToggleString ( model : SharedTileTap.Model ) = 
+let roundStateToggleString ( model : Model ) = 
     if model.GameState = Won || model.GameState = Settings
         then "PLAY"
         elif ( model.DispatchPointer <> 0.0 ) then "PAUSE" 
@@ -503,7 +653,7 @@ let roundStateToggleString ( model : SharedTileTap.Model ) =
 let difficulties = [ Simple; Easy; Medium; Hard ]
 
 [<ReactComponent>]
-let view (model: SharedTileTap.Model) (dispatch: SharedTileTap.Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
+let view (model: Model) (dispatch: Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
 
     let overlay : ReactElement option =
         match model.GameState with

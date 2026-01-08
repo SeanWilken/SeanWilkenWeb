@@ -2,13 +2,69 @@ namespace Client.Components.Shop
 
 open Feliz
 open Client.Components.Shop.Common.Ui
-open Client.Domain.Store.ProductViewer
 open Feliz.UseDeferred
 open Elmish
 open Shared.StoreProductViewer
+open TSXUtilities
 
 module Product =
 
+    type Model =
+        {
+            Key                 : ProductKey
+            Seed                : ProductSeed option
+            ReturnTo            : ReturnTo
+            // Details             : Deferred<GetDetailsResponse>
+            Details             : Deferred<SyncProduct.SyncProductDetailsResponse>
+            SelectedColor       : string option
+            SelectedSize        : string option
+            SelectedImage        : string option
+            SelectedVariantId   : int64 option
+        }
+
+    type Msg =
+        // | InitWith of key:ProductKey * seed:ProductSeed option * returnTo:ReturnTo
+        | LoadDetails
+        | GotDetails of SyncProduct.SyncProductDetailsResponse
+        | FailedDetails of exn
+
+        | SelectColor of string
+        | SelectSize  of string
+        | SelectVariant of int64
+        | SelectImage of string
+
+        // “primary CTA”
+        | PrimaryAction
+
+        // navigation hooks
+        | GoBack
+
+    let keyFromSeed = function
+        | SeedCatalog p  -> Catalog p.id
+        | SeedSync p  -> Sync p.Id
+        | SeedTemplate t -> Template t.id
+
+    let initModel (key: ProductKey) (seed: ProductSeed option) (returnTo: ReturnTo) : Model =
+        {
+            Key               = key
+            Seed              = seed
+            ReturnTo          = returnTo
+            Details           = Deferred.HasNotStartedYet
+            SelectedColor     = None
+            SelectedSize      = None
+            SelectedImage      = None
+            SelectedVariantId = None }
+
+    let detailsReq (m: Model) : Shared.Api.Printful.SyncProduct.GetSyncProductDetailsRequest =
+        {
+            selectedColor  = m.SelectedColor
+            selectedSize   = m.SelectedSize
+            syncProductId =
+                match m.Key with
+                | Catalog id -> id
+                | Sync id -> int id
+                | Template id -> id
+        }
 
     let initFromSeed (seed: ProductSeed) (returnTo: ReturnTo) : Model * Cmd<Msg> =
         let model = {
@@ -21,8 +77,6 @@ module Product =
             SelectedSize = None
             SelectedImage = None
         }
-
-        // kick off detail fetch immediately
         model, Cmd.ofMsg LoadDetails
 
     let private distinctBy (f: 'a -> 'b) (xs: 'a list) =
@@ -89,9 +143,9 @@ module Product =
 
     let update (msg: Msg) (model: Model) : Model * Cmd<Msg> =
         match msg with
-        | InitWith (key, seed, returnTo) ->
-            initModel key seed returnTo
-            , Cmd.ofMsg LoadDetails
+        // | InitWith (key, seed, returnTo) ->
+        //     initModel key seed returnTo
+        //     , Cmd.ofMsg LoadDetails
 
         | LoadDetails ->
             let m1 = { model with Details = Deferred.InProgress }
@@ -343,14 +397,12 @@ module Product =
                                         Html.div [
                                             prop.className "flex flex-wrap gap-3"
                                             prop.children [
-                                                for (name, codeOpt) in colors do
-                                                    printfn $"SELECTED COLOR: {props.SelectedColor}"
-                                                    printfn $"COLOR: {name}"
-
-                                                    let isSelected = props.SelectedColor = Some name
+                                                for (colorName, _) in colors do
+                                                    let isSelected = props.SelectedColor = Some colorName
+                                                    printfn $"COLOR NAME: {colorName}"
                                                     Html.button [
-                                                        prop.key name
-                                                        prop.title name
+                                                        prop.key colorName
+                                                        prop.title colorName
                                                         prop.className (
                                                             Common.Ui.tw [
                                                                 "w-10 h-10 rounded-full border transition-all"
@@ -359,11 +411,22 @@ module Product =
                                                             ]
                                                         )
                                                         prop.style [
-                                                            match codeOpt with
-                                                            | Some hex -> style.backgroundColor hex
-                                                            | None -> style.backgroundColor "#999999"
+                                                            match resolvePrintfulColor colorName with
+                                                            | [| single |] -> style.backgroundColor single
+                                                            | colors ->
+                                                                // build gradient
+                                                                let stops =
+                                                                    colors
+                                                                    |> Array.mapi (fun i hex ->
+                                                                        let start = (i * 100) / colors.Length
+                                                                        let stop  = ((i + 1) * 100) / colors.Length
+                                                                        $"{hex} {start}" + "%, " + $"{hex} {stop}" + "%"
+                                                                    )
+                                                                    |> String.concat ", "
+
+                                                                style.backgroundImage $"linear-gradient(90deg, {stops})"
                                                         ]
-                                                        prop.onClick (fun _ -> dispatch (SelectColor name))
+                                                        prop.onClick (fun _ -> dispatch (SelectColor colorName))
                                                     ]
                                             ]
                                         ]

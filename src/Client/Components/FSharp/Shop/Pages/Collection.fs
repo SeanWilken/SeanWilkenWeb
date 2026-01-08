@@ -1,15 +1,39 @@
 
 
 
-namespace Client.Components.Shop.Collection
+namespace Client.Components.Shop
 
 open Elmish
 open Feliz
 open Shared
-open Client.Domain.Store.Collection
+open Feliz.UseDeferred
+open Shared.StoreProductViewer.SyncProduct
+open Shared.Api.Printful.SyncProduct
+open Client.Components.Shop.Common.Ui
 
-module State =
-    open Feliz.UseDeferred
+module Collection =
+
+    type Model = {
+        Filters    : Filters
+        Paging     : PagingInfoDTO
+        SearchTerm : string option
+        Products   : Deferred<SyncProductSummary list>
+        TotalCount : int
+        IsLoading  : bool
+        Error      : string option
+    }
+
+    type Msg =
+        | LoadMore
+        | FiltersChanged of Filters
+        | SearchChanged of string
+        | SortChanged of sortType: string * sortDir: string
+        | ApplyFilterPreset of string
+        | SaveFilterPreset of string
+        | GetSyncProducts
+        | GotSyncProducts of SyncProductsResponse
+        | FailedSyncProducts of exn
+        | ViewSyncProduct of SyncProductSummary
 
     let getAllSyncProducts (request: Api.Printful.SyncProduct.GetSyncProductsRequest) : Cmd<Msg> =
         Cmd.OfAsync.either
@@ -20,7 +44,7 @@ module State =
 
     let initModel : Model = {
         Filters    = defaultFilters
-        Paging     = PrintfulCommon.emptyPaging
+        Paging     = emptyPaging
         SearchTerm = None
         Products   = Deferred.HasNotStartedYet
         TotalCount = 0
@@ -133,15 +157,16 @@ module State =
             response.items
             |> List.iter (fun p -> printfn $"Sync Product: {p.Id} - {p.Name}")
             let products' =
-                productsOrEmpty model.Products @ response.items
+                response.items
                 |> Deferred.Resolved
+                
 
             { model with
                 Products   = products'
                 Paging     = response.paging
                 TotalCount = response.paging.total
                 IsLoading  = false
-                Error      = None
+                Error      = if response.items.IsEmpty then Some "No items found" else None
             }, Cmd.none
             
 
@@ -200,11 +225,6 @@ module State =
         | SaveFilterPreset _ ->
             model, Cmd.none
 
-module Collection =
-    open Client.Components.Shop.Common.Ui
-    open Feliz.UseDeferred
-    open Shared.StoreProductViewer.SyncProduct
-
     type Props = {
         Products       : Deferred<SyncProductSummary list>
         TotalCount     : int
@@ -239,12 +259,17 @@ module Collection =
                     // Featured block
                     let featured = 
                         props.Products
-                        |> State.productsOrEmpty
-                        |> List.tryHead
+                        |> productsOrEmpty
+                        |> fun x ->
+                            if x.IsEmpty
+                            then None
+                            else 
+                                System.Random()
+                                |> fun rnd -> System.Math.Clamp( rnd.Next x.Length , 0 , x.Length - 1 )
+                                |> fun rndFeat -> x |> List.tryItem rndFeat
 
                     match featured with
                     | Some f ->
-                        
                         Html.div [
                             prop.className "group cursor-pointer"
                             prop.onClick (fun _ -> props.OnViewProduct f)
@@ -324,7 +349,7 @@ module Collection =
                     Html.div [
                         prop.className "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-8 gap-y-12"
                         prop.children [
-                            for p in State.productsOrEmpty props.Products do
+                            for p in productsOrEmpty props.Products do
                                 Html.div [
                                     prop.key (string p.Id)
                                     prop.className "group cursor-pointer space-y-3"
@@ -398,14 +423,7 @@ module Collection =
         ]
 
     [<ReactComponent>]
-    let View (model: Model) (dispatch: Client.Domain.Store.Collection.Msg -> unit) : ReactElement =
-        React.useEffect(
-            fun _ ->
-                match model.Products with
-                | Deferred.HasNotStartedYet -> dispatch LoadMore
-                | _ -> ()
-            , [| box model.Products |]
-        ) 
+    let View (model: Model) (dispatch: Msg -> unit) : ReactElement =
         CollectionView 
             {
                 Products       = model.Products
@@ -414,7 +432,7 @@ module Collection =
                 Filters = model.Filters
                 Paging = model.Paging
                 SearchTerm = model.SearchTerm
-                CanLoadMore    = State.canLoadMore model
+                CanLoadMore    = canLoadMore model
                 OnViewProduct  = fun p -> dispatch (ViewSyncProduct p)
                 OnLoadMore     = fun _ -> LoadMore |> dispatch
             }

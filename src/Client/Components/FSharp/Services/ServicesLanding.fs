@@ -1,16 +1,37 @@
 module Components.FSharp.Services.Landing
 
 open Feliz
-open Client.Domain
-open Client.Domain.SharedServices
-open Client.Domain.SharedWebAppModels
-open Client.Domain.SharedWebAppViewSections
 open Bindings.LucideIcon
-// open Components.FSharp.Layout.MultiContent
+open SharedViewModule.WebAppView
+
+type Industry =
+    | Contractor
+    | Lawyer
+    | Doctor
+    | InsuranceAgency
+    | RealEstate
+    | Retail
+    | Restaurant
+    | SmallBusiness
+    | Other
+
+type SharedServiceSectionMsg =
+    | GoToLanding
+    | GoToSection of ProfessionalServicesView
+
+type Msg =
+    | LoadSection of AppView
+    | AISectionMsg of SharedServiceSectionMsg
+
+type Model = {
+    CurrentSection: ProfessionalServicesView
+}
+
+let getInitialModel section = { CurrentSection = section }
 
 
 [<ReactComponent>]
-let ServicesLanding (dispatch: WebAppMsg -> unit) =
+let ServicesLanding (dispatch: Msg -> unit) =
     Html.div [
         prop.children [
             
@@ -28,6 +49,20 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                     ]
                 ]
             ]
+
+
+            Html.div [
+                prop.className "hero-image mb-16 md:mb-24 rounded-2xl overflow-hidden"
+                prop.children [
+                    Html.img [
+                        prop.src ("../../img/daria-nepriakhina-planning-unsplash.jpg")
+                        prop.alt "About hero"
+                        prop.className "w-full h-80 md:h-96 object-cover"
+                    ]
+                ]
+            ]
+
+            
             Html.section [
                 prop.className "pt-28 pb-20 px-6 md:px-8 lg:px-12"
                 prop.children [
@@ -64,7 +99,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // Featured: AI Solutions
                                     Html.div [
                                         prop.className "featured-service cursor-pointer"
-                                        prop.onClick (fun e -> e.stopPropagation(); SwitchToOtherApp (ProfessionalServicesAppView AI) |> dispatch)
+                                        prop.onClick (fun e -> e.stopPropagation(); LoadSection (ProfessionalServicesAppView AI) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-4xl mb-6 opacity-60"
@@ -98,7 +133,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                             Html.button [
                                                 prop.className "cta-btn text-[0.7rem]"
                                                 prop.text "Learn More →"
-                                                prop.onClick (fun e -> e.stopPropagation(); SwitchToOtherApp (ProfessionalServicesAppView AI) |> dispatch)
+                                                prop.onClick (fun e -> e.stopPropagation(); LoadSection (ProfessionalServicesAppView AI) |> dispatch)
                                             ]
                                         ]
                                     ]
@@ -106,7 +141,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // Featured: Automation
                                     Html.div [
                                         prop.className "featured-service cursor-pointer"
-                                        prop.onClick (fun e -> e.stopPropagation(); SwitchToOtherApp (ProfessionalServicesAppView Automation) |> dispatch)
+                                        prop.onClick (fun e -> e.stopPropagation(); LoadSection (ProfessionalServicesAppView Automation) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-4xl mb-6 opacity-60"
@@ -140,7 +175,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                             Html.button [
                                                 prop.className "cta-btn text-[0.7rem]"
                                                 prop.text "Learn More →"
-                                                prop.onClick (fun e -> e.stopPropagation(); SwitchToOtherApp (ProfessionalServicesAppView Automation) |> dispatch)
+                                                prop.onClick (fun e -> e.stopPropagation(); LoadSection (ProfessionalServicesAppView Automation)|> dispatch)
                                             ]
                                         ]
                                     ]
@@ -151,13 +186,73 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                 ]
             ]
 
-            Html.div [
-                prop.className "hero-image mb-16 md:mb-24 rounded-2xl overflow-hidden"
+            // HOW I WORK
+            Html.section [
+                prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
                 prop.children [
-                    Html.img [
-                        prop.src ("./img/daria-nepriakhina-planning-unsplash.jpg")
-                        prop.alt "About hero"
-                        prop.className "w-full h-80 md:h-96 object-cover"
+                    Html.div [
+                        prop.className "max-w-6xl mx-auto"
+                        prop.children [
+                            Html.p [
+                                prop.className "section-label text-center mb-8"
+                                prop.text "APPROACH"
+                            ]
+                            Html.h2 [
+                                prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
+                                prop.text "How I Engage"
+                            ]
+
+                            Html.div [
+                                prop.className "grid lg:grid-cols-3 gap-8"
+                                prop.children [
+
+                                    let approachCard (title: string) (body: string) bullets =
+                                        Html.div [
+                                            prop.className "approach-card"
+                                            prop.children [
+                                                Html.h4 [
+                                                    prop.className "cormorant-font text-2xl font-light mb-4"
+                                                    prop.text title
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text body
+                                                ]
+                                                Html.ul [
+                                                    prop.className "space-y-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        for b in bullets do Html.li ("• " + b)
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+
+                                    approachCard
+                                        "Discovery & Design"
+                                        "We start by mapping your current process and identifying opportunities. I deliver a clear implementation plan with realistic timelines and costs."
+                                        [ 
+                                            "Current process mapping"
+                                            "Automation opportunity report"
+                                            "Prioritized roadmap" ]
+
+                                    approachCard
+                                        "Build & Iterate"
+                                        "I build in focused sprints, delivering working software every 1–2 weeks. You see progress early and often, with room to course-correct as we go."
+                                        [ 
+                                            "Workflow design & implementation"
+                                            "System integrations & data sync"
+                                            "Testing & refinement" ]
+
+                                    approachCard
+                                        "Support & Optimize"
+                                        "After launch, I provide ongoing support to ensure everything runs smoothly. We monitor performance and continuously optimize for better results."
+                                        [ 
+                                            "Ongoing tuning & monitoring"
+                                            "New workflow rollouts"
+                                            "Quarterly optimization reviews" ]
+                                ]
+                            ]
+                        ]
                     ]
                 ]
             ]
@@ -181,7 +276,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // Web Development
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView Website) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Website) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -213,7 +308,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // UI/UX Design → also Website
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView Website) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Website) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -243,7 +338,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // E-Commerce Sites → Website
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView Website) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Website) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -275,7 +370,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // Sales & CRM Platforms → SalesPlatform
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView SalesPlatform) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView SalesPlatform) |> dispatch)
 
                                         prop.children [
                                             Html.div [
@@ -306,7 +401,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // LLM Training & Tuning → AI
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView AI) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView AI) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -336,7 +431,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // Software Integration → Integration
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView Integration) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Integration) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -366,7 +461,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // API Development → Integration
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView Integration) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Integration) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -398,7 +493,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // Cloud & Platform Delivery → Development
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView Development) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Development) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -430,7 +525,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // Analytics & Reporting → Development
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView Development) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Development) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -460,7 +555,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                     // Performance & Security → Development
                                     Html.div [
                                         prop.className "service-card"
-                                        prop.onClick (fun _ -> SwitchToOtherApp (ProfessionalServicesAppView Development) |> dispatch)
+                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Development) |> dispatch)
                                         prop.children [
                                             Html.div [
                                                 prop.className "text-3xl mb-4 opacity-60"
@@ -546,77 +641,6 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                 ]
             ]
 
-            // HOW I WORK
-            Html.section [
-                prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
-                prop.children [
-                    Html.div [
-                        prop.className "max-w-6xl mx-auto"
-                        prop.children [
-                            Html.p [
-                                prop.className "section-label text-center mb-8"
-                                prop.text "APPROACH"
-                            ]
-                            Html.h2 [
-                                prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
-                                prop.text "How I Engage"
-                            ]
-
-                            Html.div [
-                                prop.className "grid lg:grid-cols-3 gap-8"
-                                prop.children [
-
-                                    let approachCard (title: string) (body: string) bullets =
-                                        Html.div [
-                                            prop.className "approach-card"
-                                            prop.children [
-                                                Html.h4 [
-                                                    prop.className "cormorant-font text-2xl font-light mb-4"
-                                                    prop.text title
-                                                ]
-                                                Html.p [
-                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                    prop.text body
-                                                ]
-                                                Html.ul [
-                                                    prop.className "space-y-2 text-xs opacity-50"
-                                                    prop.children [
-                                                        for b in bullets do Html.li ("• " + b)
-                                                    ]
-                                                ]
-                                            ]
-                                        ]
-
-                                    approachCard
-                                        "Discovery & Design"
-                                        "We start by mapping your current process and identifying opportunities. I deliver a clear implementation plan with realistic timelines and costs."
-                                        [ 
-                                            "Current process mapping"
-                                            "Automation opportunity report"
-                                            "Prioritized roadmap" ]
-
-                                    approachCard
-                                        "Build & Iterate"
-                                        "I build in focused sprints, delivering working software every 1–2 weeks. You see progress early and often, with room to course-correct as we go."
-                                        [ 
-                                            "Workflow design & implementation"
-                                            "System integrations & data sync"
-                                            "Testing & refinement" ]
-
-                                    approachCard
-                                        "Support & Optimize"
-                                        "After launch, I provide ongoing support to ensure everything runs smoothly. We monitor performance and continuously optimize for better results."
-                                        [ 
-                                            "Ongoing tuning & monitoring"
-                                            "New workflow rollouts"
-                                            "Quarterly optimization reviews" ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-
             // CTA
             Html.section [
                 prop.className "py-20 px-4 sm:px-6 lg:px-12 mb-24"
@@ -641,14 +665,14 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
                                         prop.text "Schedule a Consultation"
                                         prop.onClick (fun _ ->
                                             // adjust target view if you prefer a different contact entry
-                                            SwitchToOtherApp ContactAppView |> dispatch
+                                            LoadSection ContactAppView |> dispatch
                                         )
                                     ]
                                     Html.button [
                                         prop.className "cta-btn"
                                         prop.text "View Past Projects"
                                         prop.onClick (fun _ ->
-                                            SwitchToOtherApp PortfolioAppLandingView |> dispatch
+                                            LoadSection PortfolioAppLandingView |> dispatch
                                         )
                                     ]
                                 ]
@@ -660,7 +684,7 @@ let ServicesLanding (dispatch: WebAppMsg -> unit) =
         ]
     ]
 [<ReactComponent>]
-let View (model: Client.Domain.SharedServices.Model) (dispatch: WebAppMsg -> unit) =
+let View (model: Model) (dispatch: Msg -> unit) =
     React.useEffectOnce (fun () ->
         let el = Browser.Dom.document.getElementById("inner-main-content")
         if not (isNull el) then
@@ -699,7 +723,7 @@ let View (model: Client.Domain.SharedServices.Model) (dispatch: WebAppMsg -> uni
                                 mb-6
                             "
                             prop.onClick (fun _ ->
-                                SwitchToOtherApp (ProfessionalServicesAppView ProfessionalServicesView.ServicesLanding)
+                                LoadSection (ProfessionalServicesAppView ProfessionalServicesView.ServicesLanding)
                                 |> dispatch
                             )
                             prop.children [
@@ -721,89 +745,3 @@ let View (model: Client.Domain.SharedServices.Model) (dispatch: WebAppMsg -> uni
                 | ServicesLanding -> Html.none
         ]
     ]
-
-
-
-// open Feliz
-// open Shared
-// open Bindings.LucideIcon
-// open Client.Domain.SharedWebAppModels
-// open Client.Domain.SharedWebAppViewSections
-// open Components.FSharp.Layout.MultiContent
-
-// [<ReactComponent>]
-// let view (model: Client.Domain.SharedServices.Model) (dispatch: WebAppMsg -> unit) =
-//     React.useEffectOnce (fun () ->
-//         let el = Browser.Dom.document.getElementById("inner-main-content")
-//         if not (isNull el) 
-//         then el.scrollTop <- 0.0
-//     )
-
-//     Html.div [
-//         prop.children [
-            
-//             if not (model.CurrentSection = ServicesLanding)
-//             then
-//                 Html.button [
-//                     prop.className "
-//                         mb-10
-//                         inline-flex items-center gap-2
-//                         px-4 py-2
-//                         rounded-xl
-//                         backdrop-blur
-//                         bg-base-content/10
-//                         border border-base-content/20
-//                         text-base-content
-//                         shadow-sm
-//                         hover:shadow-md
-//                         hover:-translate-y-0.5
-//                         transition-all duration-200
-//                     "
-//                     prop.onClick (fun _ -> SwitchToOtherApp(ProfessionalServicesAppView ServicesLanding) |> dispatch)
-//                     prop.children [
-//                         Html.span [ prop.text "←" ]
-//                         Html.span [ prop.text "Back to Services" ]
-//                     ]
-//                 ]
-
-
-//             match model.CurrentSection with
-//             | ServicesLanding ->
-//                 Components.Layout.LayoutElements.SectionGrid {
-//                     Title = "🛠️ Services 🛠️"
-//                     Items = [
-//                         // WEBSITE
-//                         { Heading = "Web Development"; Icon = "🌐"; Description = "Building responsive and performant web applications."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Website) |> dispatch }
-//                         { Heading = "UI/UX Design"; Icon = "🎨"; Description = "Designing clear, user-friendly interfaces and flows."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Website) |> dispatch }
-//                         { Heading = "E-Commerce Sites"; Icon = "🛒"; Description = "Online stores and product pages that actually convert."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Website) |> dispatch }
-
-//                         // SALES PLATFORM
-//                         { Heading = "Sales & CRM Platforms"; Icon = "📈"; Description = "CRM, pipelines, and automations that support your sales motion."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView SalesPlatform) |> dispatch }
-
-//                         // AI
-//                         { Heading = "AI Solutions"; Icon = "🤖"; Description = "AI agents and workflows embedded into your existing tools."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView AI) |> dispatch }
-//                         { Heading = "LLM Training & Tuning"; Icon = "📚"; Description = "Training and tuning LLMs around your data and processes."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView AI) |> dispatch }
-
-//                         // AUTOMATION
-//                         { Heading = "Automation & Workflows"; Icon = "⚙️"; Description = "Automating multi-step business processes across systems."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Automation) |> dispatch }
-
-//                         // INTEGRATION
-//                         { Heading = "Software Integration"; Icon = "🔗"; Description = "Connecting CRMs, ERPs, EMRs, and other core systems."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Integration) |> dispatch }
-//                         { Heading = "API Development"; Icon = "🔃"; Description = "Designing and implementing robust APIs for your platform."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Integration) |> dispatch }
-
-//                         // DEVELOPMENT / PLATFORM
-//                         { Heading = "Cloud & Platform Delivery"; Icon = "☁️"; Description = "Deploying and running your applications in the cloud."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Development) |> dispatch }
-//                         { Heading = "Analytics & Reporting"; Icon = "📊"; Description = "Dashboards and reporting for your product or operations."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Development) |> dispatch }
-//                         { Heading = "Performance & Security"; Icon = "⚡"; Description = "Hardening, profiling, and tuning existing applications."; NavigateTo = fun _ -> SwitchToOtherApp(ProfessionalServicesAppView Development) |> dispatch }
-//                     ]
-//                 }
-
-//             | AI             -> Components.FSharp.Service.AiSalesPage ()
-//             | Automation     -> Components.FSharp.Service.AutomationPage ()
-//             | Integration    -> Components.FSharp.Service.IntegrationPage ()
-//             | Website        -> Components.FSharp.Service.WebsitePage ()
-//             | SalesPlatform  -> Components.FSharp.Service.SalesPlatformPage ()
-//             | Development    -> Components.FSharp.Service.EngineeringPage ()
-
-//         ]
-//     ]

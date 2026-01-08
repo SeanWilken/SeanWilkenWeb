@@ -1,32 +1,28 @@
 $ErrorActionPreference = "Stop"
 
 Write-Host ""
-Write-Host "=== Starting development stack (Mongo + ES + Server + Client) ==="
+Write-Host "=== Starting development stack (Mongo + Server + Client) ==="
 
 # Resolve paths
 $Root    = Split-Path -Parent $MyInvocation.MyCommand.Path
-$Infra   = Join-Path $Root "infrastructure"
-$EnvFile = Join-Path $Infra ".env"
-
-# 1) Start Mongo + Elasticsearch in Podman
+$Infra   = Join-Path $Root "infrastructure/docker/App/Development"
+$EnvFile = Join-Path $Infra "development.env"
 $DevCompose = Join-Path $Infra "docker-compose.dev.yml"
+
 if (-not (Test-Path $DevCompose)) {
     Write-Host "ERROR: Could not find $DevCompose" -ForegroundColor Red
     exit 1
 }
 
+# 1) Start Mongo (and anything else in dev compose) in Podman
 Write-Host ""
-Write-Host "Starting Mongo + Elasticsearch using Podman Compose..."
-Push-Location $Infra
-podman compose -f "docker-compose.dev.yml" up -d
-Pop-Location
+Write-Host "Starting Dev containers using Podman Compose..." -ForegroundColor Cyan
+podman compose -f $DevCompose --env-file $EnvFile up -d
 
 Write-Host ""
-Write-Host "Mongo and Elasticsearch should now be running."
-Write-Host "  Mongo:         mongodb://localhost:27017"
-Write-Host "  Elasticsearch: http://localhost:9200"
+Write-Host "Dev containers should now be running."
 
-# 2) Load environment variables from infrastructure/.env
+# 2) Load environment variables from development.env
 if (Test-Path $EnvFile) {
     Write-Host ""
     Write-Host "Loading environment variables from $EnvFile ..."
@@ -40,21 +36,18 @@ if (Test-Path $EnvFile) {
         $key   = $parts[0].Trim()
         $value = $parts[1].Trim()
 
-        # Optional: skip ASPNETCORE_URLS here and control it via --urls
-        if ($key -eq "ASPNETCORE_URLS") {
-            return
-        }
+        # Control URLs via --urls
+        if ($key -eq "ASPNETCORE_URLS") { return }
 
-        if ($key) {
-            Set-Item -Path "Env:$key" -Value $value
-        }
+        if ($key) { Set-Item -Path "Env:$key" -Value $value }
     }
-} else {
+}
+else {
     Write-Host ""
-    Write-Host "WARNING: No .env file found at $EnvFile"
+    Write-Host "WARNING: No env file found at $EnvFile" -ForegroundColor Yellow
 }
 
-# 3) Start the server (dotnet watch) on port 5000 in a separate window
+# 3) Start the server (dotnet watch) - track process so we can kill it on exit
 $ServerDir = Join-Path $Root "src/Server"
 if (-not (Test-Path $ServerDir)) {
     Write-Host ""
@@ -63,17 +56,13 @@ if (-not (Test-Path $ServerDir)) {
 }
 
 Write-Host ""
-Write-Host "Starting dotnet watch for the server on http://localhost:5000 ..."
+Write-Host "Starting dotnet watch for the server on http://localhost:5000 ..." -ForegroundColor Cyan
 
-Start-Process `
+$serverProc = Start-Process `
     -FilePath "dotnet" `
     -WorkingDirectory $ServerDir `
-    -ArgumentList @(
-        "watch"
-        "run"
-        "--urls"
-        "http://localhost:5000"
-    )
+    -ArgumentList @("watch", "run", "--urls", "http://localhost:5000") `
+    -PassThru
 
 # 4) Start the client dev server (Vite/Fable) in this window
 $ClientDir = Join-Path $Root "src/Client"
@@ -84,15 +73,37 @@ if (-not (Test-Path $ClientDir)) {
 }
 
 Write-Host ""
-Write-Host "Starting client dev server (pnpm dev) ..."
-Write-Host "Press Ctrl+C in this window to stop the client."
-Write-Host "Stop the server window separately when you are done."
+Write-Host "Starting client dev server (Fable + Vite) ..." -ForegroundColor Cyan
+Write-Host "Press Ctrl+C to stop client + server + dev containers." -ForegroundColor Gray
 Write-Host ""
 
 Push-Location $ClientDir
-pnpm install
-dotnet fable watch -o output -s --run "pnpm exec vite"
-Pop-Location
+try {
+    pnpm install
+    dotnet fable watch -o output -s --run "pnpm exec vite"
+}
+finally {
+    Pop-Location
 
-Push-Location $Root
-Pop-Location
+    Write-Host ""
+    Write-Host "===> Shutting down dev stack..." -ForegroundColor Yellow
+
+    # Stop the server we launched
+    if ($serverProc -and -not $serverProc.HasExited) {
+        try {
+            Stop-Process -Id $serverProc.Id -Force
+        } catch {
+            Write-Host "WARNING: Failed to stop server process: $($_.Exception.Message)" -ForegroundColor Yellow
+        }
+    }
+
+    # Stop dev containers
+    try {
+        podman compose -f $DevCompose --env-file $EnvFile down
+    } catch {
+        Write-Host "WARNING: Failed to bring dev containers down: $($_.Exception.Message)" -ForegroundColor Yellow
+    }
+
+    # Ensure we end at repo root
+    Set-Location $Root
+}

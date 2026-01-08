@@ -16,7 +16,7 @@ Program.mkProgram Index.init Index.update Index.View
 #endif
 |> Program.withReactSynchronous "wilken-website"
 // #if DEBUG
-// // |> Program.withDebugger
+// |> Program.withDebugger
 // #endif
-|> Program.toNavigable PageRouter.urlParser PageRouter.urlUpdate
+|> Program.toNavigable urlParser urlUpdate
 |> Program.run

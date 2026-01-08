@@ -3,39 +3,117 @@ module Components.FSharp.Portfolio.Games.GoalRoll
 open Elmish
 open Fable.React
 open Feliz
-open Client.Domain
-open GridGame
-open SharedGoalRoll
+open Bindings.LucideIcon
 open SharedViewModule.SharedMicroGames
+open Client.GameDomain
+open Client.GameDomain.GridGame
 
-// Content descriptions
-let goalRollDescriptions = [
-    "- Use the arrows next to the ball in order to roll it in the desired direction."
-    "- Travels in straight lines and stops when it hits a wall or blocked tile."
-    "- There must be space for the movement arrow in order to roll."
-    "- Have the ball stop on the goal to win."
-]
+// Domain:
+// ------------------------
+// LEVEL CREATION DOMAIN, PLEASE RELOCATE ME, UNSURE OF POSITION
+// SEED GENERATION???
+let Level0 = {
+    GridPositions = [
+        Blank; Blocker; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Heart; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; LaneLock; Blank;
+        Bomb; Blank; Blank; Ball; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blocker; Blank;
+        Blank; Blank; Blank; Goal; Blank; Blank; Blank; Blank;
+        Blank; Blank; LaneKey; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Heart;
+    ] }
 
-// Main controls
-let controlList = [ 
-    "Play", (SetGameState Playing)
-    "Settings", (SetGameState Settings) 
-]
+let Level1 = {
+    GridPositions = [
+        Ball; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank;Blank; Blank;Blank; Blank;Blank; Blocker;
+        Blank; Blank; Blocker; Goal; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+    ] }
 
-let gameControls = [
-    "Reset Round", ResetRound
-    "Level 0", LoadRound 0
-    "Level 1", LoadRound 1
-    "Level 2", LoadRound 2
-    "Level 3", LoadRound 3
-]
+let Level2 = {
+    GridPositions = [
+        Blank; Blank; Blank; Blank; Blank; Blank; Blocker; Blank;
+        Blocker; Goal; Blank; Blank; Blank; Blank;Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blocker;
+        Ball; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blocker; Blank; Blank; Blank; Blank; Blocker; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blocker; Blocker; Blank;
+    ] }
 
-let modelGoalRollRoundDetails (model: SharedGoalRoll.Model) = [
-    $"You completed level {model.LevelIndex}."
-    $"It took you {model.MovesMade} number of moves."
-]
+let Level3 = {
+    GridPositions = [
+        Blocker; Blocker; Blocker; Blank; Blank; Blocker; Blank; Blank;
+        Blocker; Blocker; Blank; Blank; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blocker; Blank; Blank;
+        Blank; Blocker; Blank; Blank; Blocker; Blank; Blank; Blank;
+        Blank; Blank; Blocker; Blocker; Blocker; Blank; Blank; Blank;
+        Blank; Blank; Blocker; Blocker; Blank; Blank; Blank; Blank;
+        Blank; Blank; Blank; Blank; Blank; Blocker; Goal; Blank;
+        Blocker; Blank; Blank; Blank; Blank; Ball; Blocker; Blocker;
+    ] }
+
+// --------------------------------------------------------------
+
+type Msg =
+    | SetGameState of RoundState
+    | ResetRound
+    | LoadRound of int
+    | RollBall of MovementDirection
+    | CheckSolution
+    | QuitGame
+
+type Model =
+    {
+        LevelIndex: int
+        BallPositionIndex: int
+        GoalPositionIndex: int
+        InitialGrid: GridBoard
+        CurrentGrid: GridBoard
+        GameState: RoundState
+        MovesMade: int
+    }
 
 // Helpers
+// LEVEL AND MODEL
+let loadRound roundIndex =
+    match roundIndex with
+    | 1 -> Level1
+    | 2 -> Level2
+    | 3 -> Level3
+    | _ -> Level0
+// --------------------------------------
+// SHARABLE (IF REFACTOR AND LEVELS MADE MORE GENERIC FOR LOAD)
+let getBallPositionIndex (gameGridPositions: GridBoard) =
+    getObjectPositionIndex gameGridPositions Ball
+    |> unwrapIndex
+
+let getGoalPositionIndex (gameGridPositions: GridBoard) =
+    getObjectPositionIndex gameGridPositions Goal
+    |> unwrapIndex
+
+let initModel =
+    let round = loadRound 0;
+    let initialModel = {
+        LevelIndex = 3;
+        InitialGrid = round;
+        CurrentGrid = round;
+        BallPositionIndex = getBallPositionIndex round;
+        GoalPositionIndex = getGoalPositionIndex round;
+        GameState = Playing;
+        MovesMade = 0;
+    }
+    initialModel
+
+let init () = initModel, Cmd.none
+
 let getBallRollPositionIndex pos dir =
     match dir with
     | Up -> pos - 8 | Down -> pos + 8
@@ -55,7 +133,7 @@ let gridWithoutMoveArrows g =
     { GridPositions = List.map (function MoveArrow _ -> Blank | x -> x) g.GridPositions }
 
 let gridWithMovementArrow g dir =
-    let ballIdx = SharedGoalRoll.getBallPositionIndex g
+    let ballIdx = getBallPositionIndex g
     let normBall = ballIdx + 1
     let normArrow = getNormalizedArrowPosition normBall dir
     if checkNormalizedArrowPosition normArrow dir then
@@ -81,9 +159,6 @@ let rec rollBall grid dir =
         if nextGrid = grid then grid else rollBall nextGrid dir
     else grid
 
-// STATE
-let init () = SharedGoalRoll.initModel, Cmd.none
-
 let update msg model =
     match msg, model with
     | SetGameState s, m when m.GameState = Won -> { m with GameState = s; MovesMade = 0 }, Cmd.none
@@ -92,72 +167,21 @@ let update msg model =
         let newGrid = rollBall m.CurrentGrid d
         { m with CurrentGrid = newGrid; MovesMade = m.MovesMade + 1 }, Cmd.ofMsg CheckSolution
     | LoadRound lvl, _ ->
-        let grid = SharedGoalRoll.loadRound lvl
+        let grid = loadRound lvl
         { LevelIndex = lvl; InitialGrid = grid; CurrentGrid = grid;
-          BallPositionIndex = SharedGoalRoll.getBallPositionIndex grid;
-          GoalPositionIndex = SharedGoalRoll.getGoalPositionIndex grid;
+          BallPositionIndex = getBallPositionIndex grid;
+          GoalPositionIndex = getGoalPositionIndex grid;
           GameState = Playing; MovesMade = 0 }, Cmd.none
     | ResetRound, m ->
         let grid = m.InitialGrid
-        { m with CurrentGrid = grid; BallPositionIndex = SharedGoalRoll.getBallPositionIndex grid;
+        { m with CurrentGrid = grid; BallPositionIndex = getBallPositionIndex grid;
                   GameState = Playing; MovesMade = 0 }, Cmd.none
-    | CheckSolution, m when SharedGoalRoll.getBallPositionIndex m.CurrentGrid = m.GoalPositionIndex ->
+    | CheckSolution, m when getBallPositionIndex m.CurrentGrid = m.GoalPositionIndex ->
         let grid = m.InitialGrid
-        { m with CurrentGrid = grid; BallPositionIndex = SharedGoalRoll.getBallPositionIndex grid;
+        { m with CurrentGrid = grid; BallPositionIndex = getBallPositionIndex grid;
                   GameState = Won }, Cmd.none
     | CheckSolution, m -> m, Cmd.none
     | QuitGame, m -> m, Cmd.ofMsg QuitGame
-
-// VIEW
-// let goalRollRowCreator row dispatch =
-//     Html.div [
-//         prop.className "flex justify-center items-center space-x-1 my-1"
-//         prop.children [
-//             for pos in row ->
-//                 let (cls: string, txt: string, onClick) =
-//                     match pos with
-//                     | Blocker -> "bg-gray-800", SharedViewModule.GamePieceIcons.blocker, None
-//                     | Ball -> "bg-blue-500", SharedViewModule.GamePieceIcons.ball, None
-//                     | Goal -> "bg-green-600", SharedViewModule.GamePieceIcons.goalFlag, None
-//                     | Heart -> "bg-pink-400", SharedViewModule.GamePieceIcons.heart, None
-//                     | LaneLock -> "bg-yellow-600", SharedViewModule.GamePieceIcons.lock, None
-//                     | LaneKey -> "bg-indigo-500", SharedViewModule.GamePieceIcons.key, None
-//                     | Bomb -> "bg-red-700", SharedViewModule.GamePieceIcons.bomb, None
-//                     | MoveArrow dir -> 
-//                         "bg-base-300 hover:bg-base-200 cursor-pointer",
-//                         SharedViewModule.GamePieceIcons.directionArrowImage dir,
-//                         Some (fun _ -> dispatch (RollBall dir))
-//                     | _ -> "bg-gray-900", SharedViewModule.GamePieceIcons.empty, None
-
-//                 Html.div [
-//                     prop.className ($"{cls} w-10 h-10 flex items-center justify-center rounded shadow text-sm")
-//                     prop.text txt
-//                     prop.onClick (fun _ -> match onClick with Some f -> f() | _ -> ())
-
-//                 ]
-//         ]
-//     ]
-
-// let goalRollLevelCreator model dispatch =
-//     let g = model.CurrentGrid
-//     let arrows = [Up; Down; Left; Right]
-//     let withArrows = List.fold gridWithMovementArrow g arrows
-//     let withGoal = if getGoalPositionIndex g = -1 then gridWithGoal withArrows model.GoalPositionIndex else withArrows
-//     let rows = getPositionsAsRows withGoal 8
-//     Html.div [ for row in rows -> goalRollRowCreator row dispatch ]
-
-// let goalRollModalContent model dispatch =
-//     SharedViewModule.gameModalContent (
-//         Html.div [
-//             match model.GameState with
-//             | Won ->  SharedViewModule.roundCompleteContent (modelGoalRollRoundDetails model) (fun () -> SharedGoalRoll.Msg.ResetRound |> dispatch)
-//             | _ -> 
-//                 Html.div [
-//                     prop.className "my-4"
-//                     prop.children [ goalRollLevelCreator model dispatch ]
-//                 ]
-//         ]
-//     )
 
 let getPositionsAsRows (positions: GridBoard) gridDimension =
     Seq.toList (seq { 
@@ -362,10 +386,6 @@ let goalRollLevelCreator model dispatch =
     ]
 
 
-
-open SharedViewModule.SharedMicroGames
-open Bindings.LucideIcon
-
 let private instructionLines : string list =
     [ "→ Click arrows or use WASD/Arrow keys"
       "→ Ball rolls until hitting wall/blocker"
@@ -373,7 +393,7 @@ let private instructionLines : string list =
       "→ Land on goal flag to complete"
       "→ Ctrl+Z or Undo button to step back" ]
 
-let view (model: SharedGoalRoll.Model) (dispatch: SharedGoalRoll.Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
+let view (model: Model) (dispatch: Msg -> unit) (quitMsg: 'parentMsg) (dispatchParent: 'parentMsg -> unit) =
     let (showInfo, setShowInfo) = React.useState(false)
 
     // You probably already have this logic somewhere; map it to 4 bools:

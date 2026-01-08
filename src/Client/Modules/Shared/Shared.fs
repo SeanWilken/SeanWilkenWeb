@@ -3,13 +3,110 @@ module SharedViewModule
 open Feliz
 open Browser
 open Bindings.LucideIcon
-open Client.Domain.GridGame
+open Client.GameDomain.GridGame
+
+module Env =
+    open Fable.Core
+    /// Read Vite env var: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+    [<Emit("import.meta.env.VITE_STRIPE_API_PK_TEST")>]
+    let private stripePkInternal : string = jsNative
+
+    /// Safe F# wrapper with a fallback or explicit failure
+    let stripePublishableKey : string =
+        if System.String.IsNullOrWhiteSpace stripePkInternal then
+            failwith "VITE_STRIPE_API_PK_TEST is not set in Vite env"
+        else
+            stripePkInternal
+
+
+module WebAppView =
+
+    type ProfessionalServicesView =
+        | ServicesLanding
+        | AI
+        | Automation
+        | Integration
+        | Website
+        | SalesPlatform
+        | Development
+
+            member x.toUrlString  =
+                match x with
+                | ServicesLanding -> "/services/"
+                | AI -> "/services/ai-services"
+                | Automation -> "/services/automation-services"
+                | Integration -> "/services/integration-services"
+                | Website -> "/services/web-services"
+                | SalesPlatform -> "/services/sales-services"
+                | Development -> "/services/development-services"
+            
+    type CodeSection =
+        | CodeLanding
+        | GoalRoll
+        | TileTap
+        | TileSort
+        | PivotPoint
+        | SynthNeverSets
+        | Animations
+
+    type DesignSection =
+        | DesignGallery
+        | DesignViewer of int
+
+    type PortfolioSection =
+        | PortfolioLanding
+        | Code of CodeSection
+        | SourceCode of CodeSection
+        | Design of DesignSection
+
+    type ShopSection =
+
+        | ShopLanding // this is is a welcome page
+        | ProductDesigner
+        | CollectionBrowser
+        | ProductViewer of Shared.StoreProductViewer.ProductKey
+        | Cart
+        | Checkout
+        | OrderHistory
+        | NotFound
+
+    type Page =
+        | About
+        | Contact
+        | Portfolio of PortfolioSection
+        | Services of ProfessionalServicesView
+        | Resume
+        | Shop of ShopSection
+        | Welcome
+
+
+    type AppView =
+        | AboutAppView
+        | ContactAppView
+        | ProfessionalServicesAppView of ProfessionalServicesView
+        | ShopAppView
+        | PortfolioAppLandingView
+        | PortfolioAppCodeView
+        | PortfolioAppDesignView
+        | ResumeAppView
+        | WelcomeAppView
+
+    let appSectionStringTitle appSection =
+        match appSection with
+        | AboutAppView -> "About"
+        | PortfolioAppCodeView -> "Code"
+        | ContactAppView -> "Contact"
+        | ProfessionalServicesAppView _ -> "Services"
+        | PortfolioAppDesignView -> "Design"
+        | PortfolioAppLandingView -> "Projects"
+        | ResumeAppView -> "Resume"
+        | ShopAppView -> "Shop"
+        | WelcomeAppView -> "Welcome"
+
 
 module GamePieceIcons =
-    open Client.Domain.GridGame
 
     let blocker = "🧱"
-    let ball = "⚽"
     let goalFlag = "🚩"
     let heart = "❤️"
     let lock = "🔒"
@@ -28,247 +125,9 @@ module GamePieceIcons =
         | MovementDirection.Left -> leftArrow
         | MovementDirection.Right -> rightArrow
 
-
-// Modal content wrapper for games
-let gameModalContent content =
-    Html.div [
-        prop.className "gameGridContainer"
-        prop.children [ content ]
-    ]
-
-// Modal header with close button and title
-
-let sharedModalHeader (gameTitle: string) (gameInstructions: string list) msg dispatch =
-    let (showInfo, setShowInfo) = React.useState(false)
-    Html.div [
-        prop.className "bg-base-200 shadow-md flex items-center justify-between px-6 py-4"
-        prop.children [
-
-            // Left content placeholder (e.g. breadcrumbs or icons)
-            Html.button [
-                prop.className "btn btn-square btn-ghost tooltip"
-                prop.custom("data-tip", "Close")
-                prop.onClick (fun _ -> dispatch msg)
-                prop.children [
-                    LucideIcon.X "w-6 h-6 text-base-content"
-                ]
-            ]
-
-            // Centered Title
-            Html.h1 [
-                prop.className "text-2xl font-bold text-primary text-center flex-1"
-                prop.text gameTitle
-            ]
-
-            // Right-side close button
-            Html.div [
-                prop.children [ 
-                    
-                    Html.span [
-                        prop.onClick ( fun _ -> setShowInfo(true))
-                        prop.children [
-                            LucideIcon.Info "cursor-pointer hover:text-blue-700 text-blue-500"
-                        ]
-                    ]
-                    if showInfo then
-                        Html.div [
-                            prop.className "absolute top-4 left-2 right-2 bg-base-100 border border-base-300 rounded shadow-lg p-4 w-64 z-20"
-                            prop.children [
-                                Html.h3 [ prop.className "font-bold mb-2"; prop.text "Game Rules" ]
-                                Html.ul [
-                                    for rule in gameInstructions do
-                                        Html.li [ prop.className "mb-1 text-sm"; prop.text rule ]
-                                ]
-                                Html.button [
-                                    prop.className "btn btn-xs btn-primary mt-2 w-full"
-                                    prop.onClick (fun _ -> setShowInfo(false))
-                                    prop.text "Close"
-                                ]
-                            ]
-                        ]
-                ]
-            ]
-        ]
-    ]
-
-// Renders each modal control action as a nicely styled link button
-let codeModalControlSelections (controlActions: (string * 'msg) list) (dispatch: 'msg -> unit) =
-    Html.div [
-        prop.className "flex flex-col gap-3"
-        prop.children (
-            controlActions
-            |> List.map (fun (label, msg) ->
-                Html.button [
-                    prop.className "text-primary hover:text-accent hover:underline text-lg font-medium transition-colors"
-                    prop.text label
-                    prop.onClick (fun _ -> dispatch msg)
-                ]
-            )
-        )
-    ]
-
-// Container wrapper for modal controls with consistent layout
-let codeModalControlsContent (controlList: (string * 'msg) list) (dispatch: 'msg -> unit) =
-    Html.div [
-        prop.className "modalAltContent p-6 bg-base-100 rounded-lg shadow-inner"
-        prop.children [
-            codeModalControlSelections controlList dispatch
-        ]
-    ]
-
-// Round complete content card
-let roundCompleteContent (gameStatDetails: string list) restartGame =
-    Html.div [
-        prop.className "bg-base-200 text-center rounded-xl shadow-lg p-6 text-base-content space-y-4"
-        prop.children [
-            Html.h2 [
-                prop.className "text-2xl font-bold text-success"
-                prop.text "🎉 Round Complete!"
-            ]
-            Html.div [
-                prop.className "text-lg font-semibold text-base-content/80"
-                prop.text "Stats Summary:"
-            ]
-            Html.ul [
-                prop.className "list-disc list-inside space-y-1"
-                prop.children (
-                    gameStatDetails
-                    |> List.map (fun stat ->
-                        Html.li [ prop.text stat ]
-                    )
-                )
-            ]
-            Html.button [
-                prop.className "btn btn-primary mt-4"
-                prop.onClick (fun _ -> restartGame())
-                prop.text "Restart Round"
-            ]
-        ]
-    ]
-
 let stopGameLoop (loopId: float) = window.clearInterval loopId
 
 let gameTickClock (ticks: int) = string (ticks / 4)
-
-// Game instructions content for code modal
-let modalInstructionContent instructionList =
-    Html.div [
-        prop.className "modalAltContent p-4"
-        prop.children (
-            instructionList |> List.map (fun (instr: string) -> Html.p [ prop.text instr ])
-        )
-    ]
-
-
-// Footer buttons for code modal controls
-let codeModalFooter controlList dispatch =
-    Html.div [
-        prop.className "flex flex-wrap justify-center gap-4 py-4 border-t border-base-300 bg-base-100"
-        prop.children (
-            controlList
-            |> List.map (fun (title: string, msg) ->
-                Html.button [
-                    prop.className "btn btn-sm md:btn-md btn-outline text-primary hover:btn-primary transition"
-                    prop.text title
-                    prop.onClick (fun _ -> dispatch msg)
-                ]
-            )
-        )
-    ]
-    
-// Shared
-type RightHeaderIcon = {
-    icon: ReactElement
-    label: string
-    externalLink: string option
-    externalAlt: string option
-}
-
-type GalleryHeaderProps = {
-    onClose: unit -> unit
-    rightIcon: RightHeaderIcon option
-}
-
-// Gallery header controls with close and external link buttons
-let galleryHeaderControls (props: GalleryHeaderProps) =
-    Html.div [
-        prop.className "flex items-center justify-between mb-8"
-        prop.children [
-            // Back button
-            Html.button [
-                prop.className "btn btn-ghost btn-sm gap-2 px-2"
-                prop.custom ("data-tip", "Back")
-                prop.onClick (fun _ -> props.onClose())
-                prop.children [
-                    LucideIcon.ChevronLeft "w-5 h-5"
-                    Html.span [
-                        prop.className "hidden sm:inline text-sm"
-                        prop.text "Back to portfolio"
-                    ]
-                ]
-            ]
-
-            // Right icon (Github / Instagram)
-            match props.rightIcon with
-            | Some icon ->
-                Html.a [
-                    match icon.externalLink with
-                    | Some href -> prop.href href
-                    | None -> ()
-                    prop.target "_blank"
-                    prop.className "btn btn-ghost btn-sm gap-2 hover:bg-base-200"
-                    prop.title (icon.externalAlt |> Option.defaultValue icon.label)
-                    prop.children [
-                        icon.icon
-                        Html.span [
-                            prop.className "sm:inline text-sm"
-                            prop.text icon.label
-                        ]
-                    ]
-                ]
-            | None -> Html.div [] // keeps flex spacing happy
-        ]
-    ]
-
-// Determine if viewport width is >= 900px
-let viewPortModalBreak =
-    window.innerWidth >= 900.0
-
-// Shared modal wrapper
-let sharedViewModal (isActive: bool) (header: ReactElement) (content: ReactElement) (footer: ReactElement) =
-    Html.div [
-        prop.className (if isActive then "modal modal-open" else "modal")
-        prop.children [
-            Html.div [ prop.className "modal-box" ; prop.children [ header; content; footer ] ]
-            Html.label [ prop.className "modal-backdrop"; prop.htmlFor "" ]
-        ]
-    ]
-
-// Shared split header (title + blurbs)
-let sharedSplitHeader (title: string) contentBlurb =
-    Html.div [
-        prop.className "p-4 bg-base-200 rounded-md shadow-md"
-        prop.children [
-            Html.h1 [ prop.className "text-3xl font-bold mb-2"; prop.text title ]
-            yield! contentBlurb |> List.map (fun (blurb: string) -> Html.h2 [ prop.className "text-xl"; prop.text blurb ])
-        ]
-    ]
-
-// Shared split view layout (header + two columns)
-let sharedSplitView header childLeft childRight =
-    Html.div [
-        prop.className "p-4"
-        prop.children [
-            header
-            Html.div [
-                prop.className "flex flex-row space-x-4 h-40"
-                prop.children [
-                    Html.div [ prop.className "w-1/2 overflow-auto"; prop.children [ childLeft ] ]
-                    Html.div [ prop.className "w-1/2 overflow-auto"; prop.children [ childRight ] ]
-                ]
-            ]
-        ]
-    ]
 
 
 module Query =
@@ -674,7 +533,7 @@ module SharedMicroGames =
             prop.text txt
         ]
 
-    let DPadPanel (state: DPadState) (onMove: Client.Domain.GridGame.MovementDirection -> unit) =
+    let DPadPanel (state: DPadState) (onMove: MovementDirection -> unit) =
         Html.div [
             prop.className "flex flex-col items-center gap-2"
             prop.children [
@@ -725,7 +584,7 @@ module SharedMicroGames =
             ]
         ]
 
-    let DPadInfoPanel info1Label info1Value info2Label info2Value (state: DPadState) (onMove: Client.Domain.GridGame.MovementDirection -> unit) =
+    let DPadInfoPanel info1Label info1Value info2Label info2Value (state: DPadState) (onMove: MovementDirection -> unit) =
         let enabled (canDir: bool) = canDir && not state.Disabled
 
         let statMini (label: string) (value: string) (accent: string) =
@@ -850,10 +709,6 @@ module SharedMicroGames =
             ]
         ]
 
-
-
-
-
     let private tileBaseStyle : IStyleAttribute list =
         [
             style.width 64
@@ -863,11 +718,6 @@ module SharedMicroGames =
             style.position.relative
             style.overflow.visible
         ]
-
-    /// GOAL ROLL
-    /// 
-    /// 
-    
 
     let mkTile (bg: string) (border: string) (shadow: string) (anim: string option) (children: ReactElement list) =
         Html.div [

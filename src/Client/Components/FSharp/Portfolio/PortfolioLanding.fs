@@ -2,36 +2,47 @@ module Components.FSharp.PortfolioLanding
 
 open Elmish
 open Feliz
-open Client.Domain
 open Bindings.LucideIcon
 open Components.FSharp.Portfolio
-open Feliz
 open Fable.React
 open Browser.Dom
+open SharedViewModule.WebAppView
 
-let init (): SharedPortfolioGallery.Model * Cmd<SharedWebAppModels.WebAppMsg> =
-    SharedPortfolioGallery.PortfolioGallery, Cmd.none
+type Msg =
+    | LoadSection of AppView
+    | ArtGalleryMsg of ArtGallery.Msg
+    | CodeGalleryMsg of CodeGallery.Msg
 
-let update (msg: SharedPortfolioGallery.Msg) (model: SharedPortfolioGallery.Model): SharedPortfolioGallery.Model * Cmd<SharedPortfolioGallery.Msg> =
+type Model =
+    | PortfolioGallery
+    | CodeGallery of CodeGallery.Model
+    | DesignGallery of ArtGallery.Model
+
+let getInitialModel = PortfolioGallery
+
+let init (): Model * Cmd<Msg> =
+    PortfolioGallery, Cmd.none
+
+let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg, model with
-    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppLandingView, _ ->
-        SharedPortfolioGallery.PortfolioGallery, Cmd.none
+    | LoadSection PortfolioAppLandingView, _ ->
+        PortfolioGallery, Cmd.none
 
-    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppDesignView, _ ->
-        SharedPortfolioGallery.DesignGallery (SharedDesignGallery.getInitialModel), Cmd.none
+    | LoadSection PortfolioAppDesignView, _ ->
+        DesignGallery { CurrentPieceIndex = None }, Cmd.none
 
-    | SharedPortfolioGallery.ArtGalleryMsg subMsg, SharedPortfolioGallery.DesignGallery m ->
+    | ArtGalleryMsg subMsg, DesignGallery m ->
         let updated, cmd = ArtGallery.update subMsg m
-        SharedPortfolioGallery.DesignGallery updated, Cmd.map SharedPortfolioGallery.ArtGalleryMsg cmd
+        DesignGallery updated, Cmd.map ArtGalleryMsg cmd
 
-    | SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppCodeView, _ ->
-        SharedPortfolioGallery.CodeGallery (SharedCodeGallery.getInitialModel), Cmd.none
+    | LoadSection PortfolioAppCodeView, _ ->
+        CodeGallery CodeGallery.getInitialModel, Cmd.none
 
-    | SharedPortfolioGallery.CodeGalleryMsg subMsg, SharedPortfolioGallery.CodeGallery m ->
+    | CodeGalleryMsg subMsg, CodeGallery m ->
         let updated, cmd = CodeGallery.update subMsg m
-        SharedPortfolioGallery.CodeGallery updated, Cmd.map SharedPortfolioGallery.CodeGalleryMsg cmd
+        CodeGallery updated, Cmd.map CodeGalleryMsg cmd
 
-    | _ -> SharedPortfolioGallery.PortfolioGallery, Cmd.none
+    | _ -> PortfolioGallery, Cmd.none
 
 
 type Step =
@@ -361,14 +372,14 @@ let BrowseByFocusSection (dispatch) =
                         prop.className "mt-16 grid gap-y-16 gap-x-24 md:grid-cols-2"
                         prop.children [
                             FocusTile
-                                (fun _ -> SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppCodeView |> dispatch)
+                                (fun _ -> LoadSection AppView.PortfolioAppCodeView |> dispatch)
                                 (Html.span "</>")
                                 "Code Experiments"
                                 "Interactive demos, tools, and prototypes. Play with the UI and read the source behind it."
                                 "Open-code experiments gallery →"
 
                             FocusTile
-                                (fun _ -> SharedPortfolioGallery.LoadSection SharedWebAppViewSections.AppView.PortfolioAppDesignView |> dispatch)
+                                (fun _ -> LoadSection AppView.PortfolioAppDesignView |> dispatch)
                                 (Html.span "✎")
                                 "Design & Drawings"
                                 "Visual explorations, studies, and sketches that inform how I think about UI and products."
@@ -382,9 +393,9 @@ let BrowseByFocusSection (dispatch) =
 
 
 [<ReactComponent>]
-let View (model: SharedPortfolioGallery.Model) dispatch =
+let View (model: Model) dispatch =
     match model with
-    | SharedPortfolioGallery.PortfolioGallery ->
+    | PortfolioGallery ->
         Html.div [
             // HERO SECTION
             Html.section [
@@ -517,8 +528,8 @@ let View (model: SharedPortfolioGallery.Model) dispatch =
             ]
         ]
 
-    | SharedPortfolioGallery.DesignGallery m ->
-        ArtGallery.view m (SharedPortfolioGallery.ArtGalleryMsg >> dispatch)
+    | DesignGallery m ->
+        ArtGallery.view m (ArtGalleryMsg >> dispatch)
 
-    | SharedPortfolioGallery.CodeGallery m ->
-        CodeGallery.view m (SharedPortfolioGallery.CodeGalleryMsg >> dispatch)
+    | CodeGallery m ->
+        CodeGallery.view m (CodeGalleryMsg >> dispatch)
