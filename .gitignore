@@ -13,7 +13,10 @@ output/
 packages/
 paket-files/
 node_modules/
-.env
+infrastructure/docker/App/Development/development.env
+infrastructure/docker/App/Staging/staging.env
+infrastructure/docker/App/Production/production.env
+infrastructure/.env
 release.cmd
 release.sh
 *.orig
