@@ -1,6 +1,6 @@
 $Root    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Infra   = Join-Path $Root "infrastructure/docker/App/Staging"
-$EnvFile = Join-Path $Infra "staging.env"
+$EnvFile = Join-Path $Infra ".env"
 
 Write-Host "===> Building and running staging environment with Podman Compose" -ForegroundColor Cyan
 

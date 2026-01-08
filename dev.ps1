@@ -6,7 +6,7 @@ Write-Host "=== Starting development stack (Mongo + Server + Client) ==="
 # Resolve paths
 $Root    = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Infra   = Join-Path $Root "infrastructure/docker/App/Development"
-$EnvFile = Join-Path $Infra "development.env"
+$EnvFile = Join-Path $Infra ".env"
 $DevCompose = Join-Path $Infra "docker-compose.dev.yml"
 
 if (-not (Test-Path $DevCompose)) {
