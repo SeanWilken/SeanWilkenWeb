@@ -53,14 +53,36 @@ let artworks : ArtPiece list = [
         DetailsSide = Left
     }
     {
-        Id = "bows-and-bubbles"
-        Title = "Bows & Bubbles"
-        Description = "What's poppin?"
-        Year = "2022"
+        Id = "fuming-beauty"
+        Title = "Fuming Beauty"
+        Description = "Blazing through life while it lasts."
+        Year = "2026"
         Medium = "Digital Illustration"
-        Tags = [ "Ironic" ]
-        ImageSrc = "../../img/artwork/bows-and-bubbles.jpg"
-        ShiftDirection = SlideRight
+        Tags = []
+        ImageSrc = "../../img/artwork/fuming-beauty.png"
+        ShiftDirection = Snap
+        DetailsSide = Right
+    }
+    {
+        Id = "this-is-quiet"
+        Title = "This Is Quiet"
+        Description = "A study in contradictions—the skull, surrounded by instruments of chaos and noise, declares silence..."
+        Year = "2026"
+        Medium = "Digital Illustration"
+        Tags = ["Ironic"; "Statement"; "Detailed"]
+        ImageSrc = "../../img/artwork/this-is-quiet.png"
+        ShiftDirection = FadeIn
+        DetailsSide = Right
+    }
+    {
+        Id = "roses"
+        Title = "Roses"
+        Description = "A bold pattern exploring the duality of beauty and chaos..."
+        Year = "2026"
+        Medium = "Digital Pattern Design"
+        Tags = ["Floral"; "Pattern"; "Bold"]
+        ImageSrc = "../../img/artwork/roses.png"
+        ShiftDirection = Snap
         DetailsSide = Left
     }
     {
@@ -86,25 +108,14 @@ let artworks : ArtPiece list = [
         DetailsSide = Left
     }
     {
-        Id = "this-is-quiet"
-        Title = "This Is Quiet"
-        Description = "A study in contradictions—the skull, surrounded by instruments of chaos and noise, declares silence..."
-        Year = "2026"
+        Id = "bows-and-bubbles"
+        Title = "Bows & Bubbles"
+        Description = "What's poppin?"
+        Year = "2022"
         Medium = "Digital Illustration"
-        Tags = ["Ironic"; "Statement"; "Detailed"]
-        ImageSrc = "../../img/artwork/this-is-quiet.png"
-        ShiftDirection = FadeIn
-        DetailsSide = Right
-    }
-    {
-        Id = "roses"
-        Title = "Roses"
-        Description = "A bold pattern exploring the duality of beauty and chaos..."
-        Year = "2026"
-        Medium = "Digital Pattern Design"
-        Tags = ["Floral"; "Pattern"; "Bold"]
-        ImageSrc = "../../img/artwork/roses.png"
-        ShiftDirection = Snap
+        Tags = [ "Ironic" ]
+        ImageSrc = "../../img/artwork/bows-and-bubbles.jpg"
+        ShiftDirection = SlideRight
         DetailsSide = Left
     }
     {

@@ -45,6 +45,7 @@ export const OVERRIDES: Record<string, string> = {
   lilac: "#D8BFD8",
   mauve: "#ba7273",
   pink: "#FFC0CB",
+  pepper: "#625d57",
   'light pink': "#FFDFE6",
   berry: "#8A0253",
   coral: "#FF7F50",
@@ -58,6 +59,7 @@ export const OVERRIDES: Record<string, string> = {
   'white fleck triblend': "#d9d9d9",
   'charity pink': "#ee6181",
   'baby blue': "#bac9de",
+  'flo blue': "#909cd0",
   
   // --- Grays ---
   ash: "#B2BEB5",

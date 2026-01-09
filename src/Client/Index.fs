@@ -49,6 +49,13 @@ let update ( msg: WebAppMsg ) ( model: WebAppModel ): WebAppModel * Cmd<WebAppMs
         | _ -> 
             let updatedModel, com = Shop.update msg shopModel
             { model with CurrentAreaModel = Model.Shop updatedModel }, Cmd.map ShopMsg com
+    | ServicesMsg msg, Model.Services serviceModel ->
+        match msg with
+        | Services.Landing.Msg.LoadApp appView -> model, Cmd.ofMsg (SwitchToOtherApp appView)
+        | Services.Landing.Msg.GoToSection section ->
+            let updatedModel, _ = Services.Landing.update msg serviceModel
+            { model with CurrentAreaModel = Model.Services updatedModel },
+            Cmd.ofMsg (NavigatePage ( Services section ))
 
     // PORTFOLIO PAGE
     | PortfolioMsg msg, Model.Portfolio pm ->

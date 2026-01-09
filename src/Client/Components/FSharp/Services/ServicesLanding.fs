@@ -3,6 +3,8 @@ module Components.FSharp.Services.Landing
 open Feliz
 open Bindings.LucideIcon
 open SharedViewModule.WebAppView
+open Elmish
+open Client.Components.Shop.Common.Ui.Animations
 
 type Industry =
     | Contractor
@@ -15,19 +17,21 @@ type Industry =
     | SmallBusiness
     | Other
 
-type SharedServiceSectionMsg =
-    | GoToLanding
-    | GoToSection of ProfessionalServicesView
-
 type Msg =
-    | LoadSection of AppView
-    | AISectionMsg of SharedServiceSectionMsg
-
+    | LoadApp of AppView
+    | GoToSection of ProfessionalServicesView
+    
 type Model = {
     CurrentSection: ProfessionalServicesView
 }
 
 let getInitialModel section = { CurrentSection = section }
+
+let update msg model =
+    match msg with
+    | LoadApp _ -> model, Cmd.none
+    | GoToSection section -> { model with CurrentSection = section }, Cmd.none
+
 
 
 [<ReactComponent>]
@@ -80,182 +84,189 @@ let ServicesLanding (dispatch: Msg -> unit) =
             ]
 
             // FEATURED SERVICES
-            Html.section [
-                prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
-                prop.children [
-                    Html.div [
-                        prop.className "max-w-6xl mx-auto"
+            ProgressiveReveal {
+                Children =
+                    Html.section [
+                        prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
                         prop.children [
-                            Html.p [
-                                prop.className "section-label text-center mb-12"
-                                prop.text "FEATURED OFFERINGS"
-                            ]
-
                             Html.div [
-                                prop.className "grid lg:grid-cols-2 gap-8 mb-16"
-
+                                prop.className "max-w-6xl mx-auto"
                                 prop.children [
-
-                                    // Featured: AI Solutions
-                                    Html.div [
-                                        prop.className "featured-service cursor-pointer"
-                                        prop.onClick (fun e -> e.stopPropagation(); LoadSection (ProfessionalServicesAppView AI) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-4xl mb-6 opacity-60"
-                                                prop.text "🤖"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-2xl md:text-3xl font-light mb-4"
-                                                prop.text "AI Solutions & LLM Integration"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-sm opacity-70 mb-6 leading-relaxed"
-                                                prop.text
-                                                    "Embed AI agents and workflows into your existing tools. From ChatGPT integrations to custom-trained models, I help you leverage AI where it actually makes sense—automating repetitive tasks, enhancing user experiences, and unlocking insights from your data."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 mb-6 text-xs"
-                                                prop.children [
-                                                    for tag in
-                                                        [ 
-                                                            "OpenAI / Anthropic APIs"
-                                                            "LangChain"
-                                                            "Vector Databases"
-                                                            "Fine-tuning"
-                                                            "RAG Systems" ] do
-                                                        Html.span [
-                                                            prop.className "tech-badge"
-                                                            prop.text tag
-                                                        ]
-                                                ]
-                                            ]
-                                            Html.button [
-                                                prop.className "cta-btn text-[0.7rem]"
-                                                prop.text "Learn More →"
-                                                prop.onClick (fun e -> e.stopPropagation(); LoadSection (ProfessionalServicesAppView AI) |> dispatch)
-                                            ]
-                                        ]
+                                    Html.p [
+                                        prop.className "section-label text-center mb-12"
+                                        prop.text "FEATURED OFFERINGS"
                                     ]
 
-                                    // Featured: Automation
                                     Html.div [
-                                        prop.className "featured-service cursor-pointer"
-                                        prop.onClick (fun e -> e.stopPropagation(); LoadSection (ProfessionalServicesAppView Automation) |> dispatch)
+                                        prop.className "grid lg:grid-cols-2 gap-8 mb-16"
+
                                         prop.children [
+
+                                            // Featured: AI Solutions
                                             Html.div [
-                                                prop.className "text-4xl mb-6 opacity-60"
-                                                prop.text "⚙️"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-2xl md:text-3xl font-light mb-4"
-                                                prop.text "Automation & Workflows"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-sm opacity-70 mb-6 leading-relaxed"
-                                                prop.text
-                                                    "Codify your best processes into automations so your team can focus on exceptions, not routine. I build cross-system workflows that handle everything from data sync to approval chains, reducing manual clicks by 40–70% and cutting error rates in half."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 mb-6 text-xs"
+                                                prop.className "featured-service cursor-pointer"
+                                                prop.onClick (fun e -> e.stopPropagation(); GoToSection AI |> dispatch)
                                                 prop.children [
-                                                    for tag in
-                                                        [ 
-                                                            "Zapier / Make"
-                                                            "n8n"
-                                                            "Custom APIs"
-                                                            "ETL Pipelines"
-                                                            "Event-Driven" ] do
-                                                        Html.span [
-                                                            prop.className "tech-badge"
-                                                            prop.text tag
+                                                    Html.div [
+                                                        prop.className "text-4xl mb-6 opacity-60"
+                                                        prop.text "🤖"
+                                                    ]
+                                                    Html.h3 [
+                                                        prop.className "cormorant-font text-2xl md:text-3xl font-light mb-4"
+                                                        prop.text "AI Solutions & LLM Integration"
+                                                    ]
+                                                    Html.p [
+                                                        prop.className "text-sm opacity-70 mb-6 leading-relaxed"
+                                                        prop.text
+                                                            "Embed AI agents and workflows into your existing tools. From ChatGPT integrations to custom-trained models, I help you leverage AI where it actually makes sense—automating repetitive tasks, enhancing user experiences, and unlocking insights from your data."
+                                                    ]
+                                                    Html.div [
+                                                        prop.className "flex flex-wrap gap-2 mb-6 text-xs"
+                                                        prop.children [
+                                                            for tag in
+                                                                [ 
+                                                                    "OpenAI / Anthropic APIs"
+                                                                    "LangChain"
+                                                                    "Vector Databases"
+                                                                    "Fine-tuning"
+                                                                    "RAG Systems" ] do
+                                                                Html.span [
+                                                                    prop.className "tech-badge"
+                                                                    prop.text tag
+                                                                ]
                                                         ]
+                                                    ]
+                                                    Html.button [
+                                                        prop.className "cta-btn text-[0.7rem]"
+                                                        prop.text "Learn More →"
+                                                        prop.onClick (fun e -> e.stopPropagation(); GoToSection AI |> dispatch)
+                                                    ]
                                                 ]
                                             ]
-                                            Html.button [
-                                                prop.className "cta-btn text-[0.7rem]"
-                                                prop.text "Learn More →"
-                                                prop.onClick (fun e -> e.stopPropagation(); LoadSection (ProfessionalServicesAppView Automation)|> dispatch)
-                                            ]
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
 
-            // HOW I WORK
-            Html.section [
-                prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
-                prop.children [
-                    Html.div [
-                        prop.className "max-w-6xl mx-auto"
-                        prop.children [
-                            Html.p [
-                                prop.className "section-label text-center mb-8"
-                                prop.text "APPROACH"
-                            ]
-                            Html.h2 [
-                                prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
-                                prop.text "How I Engage"
-                            ]
-
-                            Html.div [
-                                prop.className "grid lg:grid-cols-3 gap-8"
-                                prop.children [
-
-                                    let approachCard (title: string) (body: string) bullets =
-                                        Html.div [
-                                            prop.className "approach-card"
-                                            prop.children [
-                                                Html.h4 [
-                                                    prop.className "cormorant-font text-2xl font-light mb-4"
-                                                    prop.text title
-                                                ]
-                                                Html.p [
-                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                    prop.text body
-                                                ]
-                                                Html.ul [
-                                                    prop.className "space-y-2 text-xs opacity-50"
-                                                    prop.children [
-                                                        for b in bullets do Html.li ("• " + b)
+                                            // Featured: Automation
+                                            Html.div [
+                                                prop.className "featured-service cursor-pointer"
+                                                prop.onClick (fun e -> e.stopPropagation(); GoToSection Automation |> dispatch)
+                                                prop.children [
+                                                    Html.div [
+                                                        prop.className "text-4xl mb-6 opacity-60"
+                                                        prop.text "⚙️"
+                                                    ]
+                                                    Html.h3 [
+                                                        prop.className "cormorant-font text-2xl md:text-3xl font-light mb-4"
+                                                        prop.text "Automation & Workflows"
+                                                    ]
+                                                    Html.p [
+                                                        prop.className "text-sm opacity-70 mb-6 leading-relaxed"
+                                                        prop.text
+                                                            "Codify your best processes into automations so your team can focus on exceptions, not routine. I build cross-system workflows that handle everything from data sync to approval chains, reducing manual clicks by 40–70% and cutting error rates in half."
+                                                    ]
+                                                    Html.div [
+                                                        prop.className "flex flex-wrap gap-2 mb-6 text-xs"
+                                                        prop.children [
+                                                            for tag in
+                                                                [ 
+                                                                    "Zapier / Make"
+                                                                    "n8n"
+                                                                    "Custom APIs"
+                                                                    "ETL Pipelines"
+                                                                    "Event-Driven" ] do
+                                                                Html.span [
+                                                                    prop.className "tech-badge"
+                                                                    prop.text tag
+                                                                ]
+                                                        ]
+                                                    ]
+                                                    Html.button [
+                                                        prop.className "cta-btn text-[0.7rem]"
+                                                        prop.text "Learn More →"
+                                                        prop.onClick (fun e -> e.stopPropagation(); GoToSection Automation |> dispatch)
                                                     ]
                                                 ]
                                             ]
                                         ]
-
-                                    approachCard
-                                        "Discovery & Design"
-                                        "We start by mapping your current process and identifying opportunities. I deliver a clear implementation plan with realistic timelines and costs."
-                                        [ 
-                                            "Current process mapping"
-                                            "Automation opportunity report"
-                                            "Prioritized roadmap" ]
-
-                                    approachCard
-                                        "Build & Iterate"
-                                        "I build in focused sprints, delivering working software every 1–2 weeks. You see progress early and often, with room to course-correct as we go."
-                                        [ 
-                                            "Workflow design & implementation"
-                                            "System integrations & data sync"
-                                            "Testing & refinement" ]
-
-                                    approachCard
-                                        "Support & Optimize"
-                                        "After launch, I provide ongoing support to ensure everything runs smoothly. We monitor performance and continuously optimize for better results."
-                                        [ 
-                                            "Ongoing tuning & monitoring"
-                                            "New workflow rollouts"
-                                            "Quarterly optimization reviews" ]
+                                    ]
                                 ]
                             ]
                         ]
                     ]
-                ]
-            ]
+            }
+            
+
+            // HOW I WORK
+            ProgressiveReveal {
+                Children = 
+                    Html.section [
+                        prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
+                        prop.children [
+                            Html.div [
+                                prop.className "max-w-6xl mx-auto"
+                                prop.children [
+                                    Html.p [
+                                        prop.className "section-label text-center mb-8"
+                                        prop.text "APPROACH"
+                                    ]
+                                    Html.h2 [
+                                        prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
+                                        prop.text "How I Engage"
+                                    ]
+
+                                    Html.div [
+                                        prop.className "grid lg:grid-cols-3 gap-8"
+                                        prop.children [
+
+                                            let approachCard (title: string) (body: string) bullets =
+                                                Html.div [
+                                                    prop.className "approach-card"
+                                                    prop.children [
+                                                        Html.h4 [
+                                                            prop.className "cormorant-font text-2xl font-light mb-4"
+                                                            prop.text title
+                                                        ]
+                                                        Html.p [
+                                                            prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                            prop.text body
+                                                        ]
+                                                        Html.ul [
+                                                            prop.className "space-y-2 text-xs opacity-50"
+                                                            prop.children [
+                                                                for b in bullets do Html.li ("• " + b)
+                                                            ]
+                                                        ]
+                                                    ]
+                                                ]
+
+                                            approachCard
+                                                "Discovery & Design"
+                                                "We start by mapping your current process and identifying opportunities. I deliver a clear implementation plan with realistic timelines and costs."
+                                                [ 
+                                                    "Current process mapping"
+                                                    "Automation opportunity report"
+                                                    "Prioritized roadmap" ]
+
+                                            approachCard
+                                                "Build & Iterate"
+                                                "I build in focused sprints, delivering working software every 1–2 weeks. You see progress early and often, with room to course-correct as we go."
+                                                [ 
+                                                    "Workflow design & implementation"
+                                                    "System integrations & data sync"
+                                                    "Testing & refinement" ]
+
+                                            approachCard
+                                                "Support & Optimize"
+                                                "After launch, I provide ongoing support to ensure everything runs smoothly. We monitor performance and continuously optimize for better results."
+                                                [ 
+                                                    "Ongoing tuning & monitoring"
+                                                    "New workflow rollouts"
+                                                    "Quarterly optimization reviews" ]
+                                        ]
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+            }
 
             // ALL SERVICES GRID
             Html.section [
@@ -269,320 +280,329 @@ let ServicesLanding (dispatch: Msg -> unit) =
                                 prop.text "ALL CAPABILITIES"
                             ]
 
-                            Html.div [
-                                prop.className "grid sm:grid-cols-2 lg:grid-cols-3 gap-8"
-                                prop.children [
+                            ProgressiveReveal {
+                                Children =
+                                Html.div [
+                                    prop.className "grid sm:grid-cols-2 lg:grid-cols-3 gap-8"
+                                    prop.children [
 
-                                    // Web Development
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Website) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "🌐"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "Web Development"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Building responsive and performant web applications."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "React"
-                                                    Html.span "•"
-                                                    Html.span "TypeScript"
-                                                    Html.span "•"
-                                                    Html.span "F#"
-                                                    Html.span "•"
-                                                    Html.span "Tailwind"
+                                        
+
+                                        // Web Development
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection Website |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "🌐"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "Web Development"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Building responsive and performant web applications."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "React"
+                                                        Html.span "•"
+                                                        Html.span "TypeScript"
+                                                        Html.span "•"
+                                                        Html.span "F#"
+                                                        Html.span "•"
+                                                        Html.span "Tailwind"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // UI/UX Design → also Website
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Website) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "🎨"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "UI/UX Design"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Designing clear, user-friendly interfaces and flows."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "Figma"
-                                                    Html.span "•"
-                                                    Html.span "Design Systems"
-                                                    Html.span "•"
-                                                    Html.span "Prototyping"
+                                        // UI/UX Design → also Website
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection Website |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "🎨"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "UI/UX Design"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Designing clear, user-friendly interfaces and flows."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "Figma"
+                                                        Html.span "•"
+                                                        Html.span "Design Systems"
+                                                        Html.span "•"
+                                                        Html.span "Prototyping"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // E-Commerce Sites → Website
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Website) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "🛒"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "E-Commerce Sites"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Online stores and product pages that actually convert."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "Shopify"
-                                                    Html.span "•"
-                                                    Html.span "Stripe"
-                                                    Html.span "•"
-                                                    Html.span "Printful"
-                                                    Html.span "•"
-                                                    Html.span "Custom"
+                                        // E-Commerce Sites → Website
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection Website |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "🛒"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "E-Commerce Sites"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Online stores and product pages that actually convert."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "Shopify"
+                                                        Html.span "•"
+                                                        Html.span "Stripe"
+                                                        Html.span "•"
+                                                        Html.span "Printful"
+                                                        Html.span "•"
+                                                        Html.span "CS-Cart"
+                                                        Html.span "•"
+                                                        Html.span "Magento"
+                                                        Html.span "•"
+                                                        Html.span "Custom"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // Sales & CRM Platforms → SalesPlatform
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView SalesPlatform) |> dispatch)
+                                        // Sales & CRM Platforms → SalesPlatform
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection SalesPlatform |> dispatch)
 
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "📊"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "Sales & CRM Platforms"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "CRM, pipelines, and automations that support your sales motion."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "HubSpot"
-                                                    Html.span "•"
-                                                    Html.span "Salesforce"
-                                                    Html.span "•"
-                                                    Html.span "Custom CRM"
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "📊"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "Sales & CRM Platforms"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "CRM, pipelines, and automations that support your sales motion."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "HubSpot"
+                                                        Html.span "•"
+                                                        Html.span "Salesforce"
+                                                        Html.span "•"
+                                                        Html.span "Custom CRM"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // LLM Training & Tuning → AI
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView AI) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "📚"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "LLM Training & Tuning"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Training and tuning LLMs around your data and processes."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "Fine-tuning"
-                                                    Html.span "•"
-                                                    Html.span "Prompt Engineering"
-                                                    Html.span "•"
-                                                    Html.span "RAG"
+                                        // LLM Training & Tuning → AI
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection AI |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "📚"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "LLM Training & Tuning"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Training and tuning LLMs around your data and processes."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "Fine-tuning"
+                                                        Html.span "•"
+                                                        Html.span "Prompt Engineering"
+                                                        Html.span "•"
+                                                        Html.span "RAG"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // Software Integration → Integration
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Integration) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "🔗"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "Software Integration"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Connecting CRMs, ERPs, EMRs, and other core systems."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "REST APIs"
-                                                    Html.span "•"
-                                                    Html.span "Webhooks"
-                                                    Html.span "•"
-                                                    Html.span "OAuth"
+                                        // Software Integration → Integration
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection Integration |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "🔗"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "Software Integration"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Connecting CRMs, ERPs, EMRs, and other core systems."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "REST APIs"
+                                                        Html.span "•"
+                                                        Html.span "Webhooks"
+                                                        Html.span "•"
+                                                        Html.span "OAuth"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // API Development → Integration
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Integration) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "🔌"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "API Development"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Designing and implementing robust APIs for your platform."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "GraphQL"
-                                                    Html.span "•"
-                                                    Html.span "REST"
-                                                    Html.span "•"
-                                                    Html.span "gRPC"
-                                                    Html.span "•"
-                                                    Html.span "OpenAPI"
+                                        // API Development → Integration
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection Integration |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "🔌"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "API Development"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Designing and implementing robust APIs for your platform."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "GraphQL"
+                                                        Html.span "•"
+                                                        Html.span "REST"
+                                                        Html.span "•"
+                                                        Html.span "gRPC"
+                                                        Html.span "•"
+                                                        Html.span "OpenAPI"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // Cloud & Platform Delivery → Development
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Development) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "☁️"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "Cloud & Platform Delivery"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Deploying and running your applications in the cloud."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "Azure"
-                                                    Html.span "•"
-                                                    Html.span "AWS"
-                                                    Html.span "•"
-                                                    Html.span "Docker"
-                                                    Html.span "•"
-                                                    Html.span "K8s"
+                                        // Cloud & Platform Delivery → Development
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection Development |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "☁️"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "Cloud & Platform Delivery"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Deploying and running your applications in the cloud."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "Azure"
+                                                        Html.span "•"
+                                                        Html.span "AWS"
+                                                        Html.span "•"
+                                                        Html.span "Docker"
+                                                        Html.span "•"
+                                                        Html.span "K8s"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // Analytics & Reporting → Development
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Development) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "📊"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "Analytics & Reporting"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Dashboards and reporting for your product or operations."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "PowerBI"
-                                                    Html.span "•"
-                                                    Html.span "Custom Dashboards"
-                                                    Html.span "•"
-                                                    Html.span "SQL"
+                                        // Analytics & Reporting → Development
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection Development |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "📊"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "Analytics & Reporting"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Dashboards and reporting for your product or operations."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "PowerBI"
+                                                        Html.span "•"
+                                                        Html.span "Custom Dashboards"
+                                                        Html.span "•"
+                                                        Html.span "SQL"
+                                                    ]
                                                 ]
                                             ]
                                         ]
-                                    ]
 
-                                    // Performance & Security → Development
-                                    Html.div [
-                                        prop.className "service-card"
-                                        prop.onClick (fun _ -> LoadSection (ProfessionalServicesAppView Development) |> dispatch)
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "text-3xl mb-4 opacity-60"
-                                                prop.text "⚡"
-                                            ]
-                                            Html.h3 [
-                                                prop.className "cormorant-font text-xl font-light mb-3"
-                                                prop.text "Performance & Security"
-                                            ]
-                                            Html.p [
-                                                prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                prop.text "Hardening, profiling, and tuning existing applications."
-                                            ]
-                                            Html.div [
-                                                prop.className "flex flex-wrap gap-2 text-xs opacity-50"
-                                                prop.children [
-                                                    Html.span "Load Testing"
-                                                    Html.span "•"
-                                                    Html.span "Security Audits"
-                                                    Html.span "•"
-                                                    Html.span "Optimization"
+                                        // Performance & Security → Development
+                                        Html.div [
+                                            prop.className "service-card"
+                                            prop.onClick (fun _ -> GoToSection Development |> dispatch)
+                                            prop.children [
+                                                Html.div [
+                                                    prop.className "text-3xl mb-4 opacity-60"
+                                                    prop.text "⚡"
+                                                ]
+                                                Html.h3 [
+                                                    prop.className "cormorant-font text-xl font-light mb-3"
+                                                    prop.text "Performance & Security"
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text "Hardening, profiling, and tuning existing applications."
+                                                ]
+                                                Html.div [
+                                                    prop.className "flex flex-wrap gap-2 text-xs opacity-50"
+                                                    prop.children [
+                                                        Html.span "Load Testing"
+                                                        Html.span "•"
+                                                        Html.span "Security Audits"
+                                                        Html.span "•"
+                                                        Html.span "Optimization"
+                                                    ]
                                                 ]
                                             ]
                                         ]
                                     ]
                                 ]
-                            ]
+                            }
                         ]
                     ]
                 ]
@@ -642,47 +662,51 @@ let ServicesLanding (dispatch: Msg -> unit) =
             ]
 
             // CTA
-            Html.section [
-                prop.className "py-20 px-4 sm:px-6 lg:px-12 mb-24"
-                prop.children [
-                    Html.div [
-                        prop.className "max-w-4xl mx-auto text-center"
+            ProgressiveReveal {
+                Children = 
+                    Html.section [
+                        prop.className "py-20 px-4 sm:px-6 lg:px-12 mb-24"
                         prop.children [
-                            Html.h2 [
-                                prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light mb-8"
-                                prop.text "Ready to start building?"
-                            ]
-                            Html.p [
-                                prop.className "text-sm opacity-60 mb-12 leading-loose"
-                                prop.text
-                                    "Let's talk about your project. I offer free initial consultations to discuss your needs and see if we're a good fit."
-                            ]
                             Html.div [
-                                prop.className "flex flex-col sm:flex-row gap-6 justify-center"
+                                prop.className "max-w-4xl mx-auto text-center"
                                 prop.children [
-                                    Html.button [
-                                        prop.className "cta-btn"
-                                        prop.text "Schedule a Consultation"
-                                        prop.onClick (fun _ ->
-                                            // adjust target view if you prefer a different contact entry
-                                            LoadSection ContactAppView |> dispatch
-                                        )
+                                    Html.h2 [
+                                        prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light mb-8"
+                                        prop.text "Ready to start building?"
                                     ]
-                                    Html.button [
-                                        prop.className "cta-btn"
-                                        prop.text "View Past Projects"
-                                        prop.onClick (fun _ ->
-                                            LoadSection PortfolioAppLandingView |> dispatch
-                                        )
+                                    Html.p [
+                                        prop.className "text-sm opacity-60 mb-12 leading-loose"
+                                        prop.text
+                                            "Let's talk about your project. I offer free initial consultations to discuss your needs and see if we're a good fit."
+                                    ]
+                                    Html.div [
+                                        prop.className "flex flex-col sm:flex-row gap-6 justify-center"
+                                        prop.children [
+                                            Html.button [
+                                                prop.className "cta-btn"
+                                                prop.text "Schedule a Consultation"
+                                                prop.onClick (fun _ ->
+                                                    // adjust target view if you prefer a different contact entry
+                                                    LoadApp ContactAppView |> dispatch
+                                                )
+                                            ]
+                                            Html.button [
+                                                prop.className "cta-btn"
+                                                prop.text "View Past Projects"
+                                                prop.onClick (fun _ ->
+                                                    LoadApp PortfolioAppLandingView |> dispatch
+                                                )
+                                            ]
+                                        ]
                                     ]
                                 ]
                             ]
                         ]
                     ]
-                ]
-            ]
+            }
         ]
     ]
+
 [<ReactComponent>]
 let View (model: Model) (dispatch: Msg -> unit) =
     React.useEffectOnce (fun () ->
@@ -696,10 +720,7 @@ let View (model: Model) (dispatch: Msg -> unit) =
         prop.children [
 
             match model.CurrentSection with
-            | ServicesLanding ->
-                // New premium landing layout
-                ServicesLanding dispatch
-
+            | ServicesLanding -> ServicesLanding dispatch
             | _ ->
                 // Back button aligned with service details
                 Html.div [
@@ -723,8 +744,7 @@ let View (model: Model) (dispatch: Msg -> unit) =
                                 mb-6
                             "
                             prop.onClick (fun _ ->
-                                LoadSection (ProfessionalServicesAppView ProfessionalServicesView.ServicesLanding)
-                                |> dispatch
+                                GoToSection ProfessionalServicesView.ServicesLanding |> dispatch
                             )
                             prop.children [
                                 Html.span [ prop.text "←" ]

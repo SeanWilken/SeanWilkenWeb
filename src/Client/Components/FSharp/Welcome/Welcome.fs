@@ -149,9 +149,16 @@ let ExploreSection (props: WelcomeProps) =
                             }
 
                             ExploreTile {
-                                ImgSrc      = "./img/nikola-duza-unsplash-shop.jpg"
+                                ImgSrc      = "./img/ann-artroom-unsplash.jpg"
                                 Section     = WebAppView.AppView.PortfolioAppDesignView
                                 Description = "Designs: Check out some drawings I've done recently."
+                                Dispatch    = props.dispatch
+                            }
+
+                            ExploreTile {
+                                ImgSrc      = "./img/nikola-duza-unsplash-shop.jpg"
+                                Section     = WebAppView.AppView.ShopAppView
+                                Description = "Shop: Designs + Product = Store."
                                 Dispatch    = props.dispatch
                             }
 
@@ -162,12 +169,6 @@ let ExploreSection (props: WelcomeProps) =
                                 Dispatch    = props.dispatch
                             }
 
-                            ExploreTile {
-                                ImgSrc      = "./img/jakub-zerdzicki-unsplash-contact.jpg"
-                                Section     = WebAppView.AppView.ContactAppView
-                                Description = "Contact: Let's hear it already!"
-                                Dispatch    = props.dispatch
-                            }
                         ]
                     ]
                 ]
