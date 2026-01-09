@@ -31,6 +31,28 @@ type Model = {
 
 let artworks : ArtPiece list = [
     {
+        Id = "null-space"
+        Title = "Null Space"
+        Description = "An exploration of duality and transformation..."
+        Year = "2026"
+        Medium = "Digital Illustration"
+        Tags = ["Portrait"; "Conceptual"; "Monochrome"]
+        ImageSrc = "../../img/artwork/null-space.png"
+        ShiftDirection = ScaleUp
+        DetailsSide = Right
+    }
+    {
+        Id = "forever-burning"
+        Title = "Forever Burning"
+        Description = "Skeletal hands cradle a burning rose—a meditation on passion..."
+        Year = "2025"
+        Medium = "Mixed Media Digital"
+        Tags = ["Symbolic"; "Color"; "Narrative"]
+        ImageSrc = "../../img/artwork/forever-burning.png"
+        ShiftDirection = FadeIn
+        DetailsSide = Left
+    }
+    {
         Id = "bows-and-bubbles"
         Title = "Bows & Bubbles"
         Description = "What's poppin?"
@@ -86,26 +108,15 @@ let artworks : ArtPiece list = [
         DetailsSide = Left
     }
     {
-        Id = "null-space"
-        Title = "Null Space"
-        Description = "An exploration of duality and transformation..."
+        Id = "xray"
+        Title = "Null XRay"
+        Description = "Minimal contours to define form, not beauty."
         Year = "2026"
         Medium = "Digital Illustration"
-        Tags = ["Portrait"; "Conceptual"; "Monochrome"]
-        ImageSrc = "../../img/artwork/null-space.png"
-        ShiftDirection = ScaleUp
-        DetailsSide = Right
-    }
-    {
-        Id = "forever-burning"
-        Title = "Forever Burning"
-        Description = "Skeletal hands cradle a burning rose—a meditation on passion..."
-        Year = "2025"
-        Medium = "Mixed Media Digital"
-        Tags = ["Symbolic"; "Color"; "Narrative"]
-        ImageSrc = "../../img/artwork/forever-burning.png"
+        Tags = ["Portrait"; "Minimalist"; "Monochrome"]
+        ImageSrc = "../../img/artwork/blurred-outline.png"
         ShiftDirection = FadeIn
-        DetailsSide = Left
+        DetailsSide = Right
     }
 ]
 
@@ -388,7 +399,7 @@ let ArtGalleryPage (model: Model) dispatch =
             ]
 
             GalleryHero()
-            
+
             Html.div [
                 prop.className "space-y-0"
                 prop.children [
