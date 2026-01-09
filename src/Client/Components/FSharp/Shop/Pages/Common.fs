@@ -429,12 +429,13 @@ module Ui =
             | SlideLeft
             | Snap
 
-        type ScrollRevealProps = {
+        type ScrollRevealProps = {|
+
             Variant   : RevealVariant
             Delay     : float
             Threshold : float
             Children  : ReactElement
-        }
+        |}
 
         [<ReactComponent>]
         let ScrollReveal (props: ScrollRevealProps) =

@@ -6,7 +6,6 @@ open Client.Components.Shop.Common.Ui.Animations
 module Sections =
 
     // we don't want these types
-
     type Product = {
         Name  : string
         Price : string
@@ -27,7 +26,7 @@ module Sections =
             prop.className "relative bg-base-100 py-16 sm:py-24 px-4 sm:px-6 lg:px-10"
             prop.children [
 
-                ScrollReveal {
+                ScrollReveal {|
                     Variant   = FadeUp
                     Delay     = 0.0
                     Threshold = 0.3
@@ -49,13 +48,13 @@ module Sections =
                                 ]
                             ]
                         ]
-                }
+                |}
 
                 Html.div [
                     prop.className "grid gap-6 sm:gap-8 md:grid-cols-2 lg:grid-cols-4 max-w-6xl mx-auto"
                     prop.children [
                         for idx, product in products |> List.indexed do
-                            ScrollReveal {
+                            ScrollReveal {|
                                 Variant   = Snap
                                 Delay     = float idx * 0.1
                                 Threshold = 0.2
@@ -77,7 +76,7 @@ module Sections =
                                             ]
                                         ]
                                     ]
-                            }
+                            |}
                     ]
                 ]
             ]
@@ -88,7 +87,8 @@ module Sections =
         Html.section [
             prop.className "relative bg-base-100 py-20 sm:py-24 px-4 sm:px-6 lg:px-10"
             prop.children [
-                ScrollReveal {
+                ScrollReveal {|
+
                     Variant   = ScaleUp
                     Delay     = 0.0
                     Threshold = 0.3
@@ -111,7 +111,7 @@ module Sections =
                                 ]
                             ]
                         ]
-                }
+                |}
             ]
         ]
 
@@ -169,7 +169,7 @@ module Sections =
             prop.className "relative bg-base-100 py-20 sm:py-28 px-4 sm:px-6 lg:px-10"
             prop.children [
 
-                ScrollReveal {
+                ScrollReveal {|
                     Variant   = FadeUp
                     Delay     = 0.0
                     Threshold = 0.25
@@ -187,14 +187,14 @@ module Sections =
                                 ]
                             ]
                         ]
-                }
+                |}
 
                 Html.div [
                     prop.className "grid gap-10 md:grid-cols-3 max-w-5xl mx-auto"
                     prop.children [
                         for idx, f in features |> List.indexed do
 
-                            ScrollReveal {
+                            ScrollReveal {|
                                 Variant   = FadeIn
                                 Delay     = float idx * 0.15
                                 Threshold = 0.2
@@ -216,7 +216,7 @@ module Sections =
                                             ]
                                         ]
                                     ]
-                            }
+                            |}
                     ]
                 ]
             ]
@@ -250,7 +250,7 @@ module Hero =
                 Html.div [
                     prop.className "relative h-full flex items-center justify-center px-4 sm:px-6 lg:px-8"
                     prop.children [
-                        ScrollReveal {
+                        ScrollReveal {|
                             Variant   = FadeUp
                             Delay     = 0.1
                             Threshold = 0.3
@@ -298,7 +298,7 @@ module Hero =
                                         ]
                                     ]
                                 ]
-                        }
+                        |}
                     ]
                 ]
 

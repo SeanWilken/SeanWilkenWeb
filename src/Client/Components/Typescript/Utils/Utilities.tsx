@@ -36,7 +36,6 @@ export const OVERRIDES: Record<string, string> = {
   aqua: "#7FDBFF",
   turquoise: "#40E0D0",
   mint: "#AAF0D1",
-  'ice blue': "#AFDBF5",
   'light blue': "#ADD8E6",
   royal: "#4169E1",
   'true royal': "#0A2A88",
@@ -57,7 +56,9 @@ export const OVERRIDES: Record<string, string> = {
   'grey triblend': "#666260",
   'aqua triblend': "#3193af",
   'white fleck triblend': "#d9d9d9",
-
+  'charity pink': "#ee6181",
+  'baby blue': "#bac9de",
+  
   // --- Grays ---
   ash: "#B2BEB5",
   silver: "#C0C0C0",
@@ -69,6 +70,8 @@ export const OVERRIDES: Record<string, string> = {
   // --- Heather family ---
   heather: "#BEBEBE",
   'heather charcoal': "#3e4142",
+  'heather natural': "#e7d7be",
+  'heather deep teal': "#486e81",
   'charcoal heather': "#3f3e3c",
   "dark gray heather": "#4A4A4A",
   "athletic heather": "#C2C2C2",
@@ -82,7 +85,7 @@ export const OVERRIDES: Record<string, string> = {
   "heather prism ice blue": "#C7E8F3",
   "heather prism dust": "#E8DCD2",
   "heather grey": "#a2a5a9",
-  "heather mauve": "#C8A2C8",
+  "heather mauve": "#a66c68",
   "heather stone": "#A49F96",
   "heather brown": "#8B6F47",
   "heather olive": "#7A8450",
@@ -91,14 +94,15 @@ export const OVERRIDES: Record<string, string> = {
   "dark grey heather": "#424242",
   "heather raspberry": "#cb4465",
   "heather dust": "#e0d4c3",
-
+  "oatmeal heather": "#f7f4ed",
+  
   // --- Vintage / washed ---
   "vintage black": "#1C1C1C",
   "vintage navy": "#2A324B",
-  "vintage white": "#F5F5F5",
   "vintage red": "#A63A3A",
   "vintage royal": "#3A4F8C",
-
+  'vintage white': "#eee8dc",
+  
   // --- Triblend family ---
   triblend: "#C0BFBF",
   "black triblend": "#2B2B2B",
@@ -110,9 +114,15 @@ export const OVERRIDES: Record<string, string> = {
   "mauve triblend": "#C7A0B5",
 
   // --- Oddballs / Printful specials ---
+  sandshell: "#f0e9d7",
   autumn: "#A64B2A",
   citreon: "#E4D00A",
   citrine: "#E4D00A",
+  paprika: "#ef5354",
+  chambray: "#cfe5f0",
+  'soft pink': "#f5d2d9",
+  'blue jean': "#939ba8",
+  'ice blue': "#819399",
   citron: "#E4D00A",
   storm: "#7A7F8C",
   sand: "#E2C9A6",

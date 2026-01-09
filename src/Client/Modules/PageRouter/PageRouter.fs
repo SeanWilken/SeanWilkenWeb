@@ -176,7 +176,7 @@ let urlUpdate (result: Page option) (model: WebAppModels.WebAppModel) : WebAppMo
         { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.CodeGallery Model.Animations) },
         Cmd.none
     | Some (Portfolio (Design DesignGallery)) ->
-        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.DesignGallery Portfolio.ArtGallery.getInitialModel) },
+        { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.DesignGallery Portfolio.ArtGallery.initialModel) },
         Cmd.none
     | Some (Portfolio _) ->
         { model with CurrentAreaModel = WebAppModels.Portfolio PortfolioLanding.Model.PortfolioGallery },

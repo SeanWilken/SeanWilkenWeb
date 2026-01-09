@@ -116,8 +116,9 @@ let View (model: WebAppModel) (dispatch: WebAppMsg -> unit) =
                     | Model.Welcome -> Welcome.View (WelcomeMsg >> dispatch)
                     | Model.About aboutModel -> About.View aboutModel (AboutMsg >> dispatch)
                     | Model.Services serviceModel -> Services.Landing.View serviceModel (ServicesMsg >> dispatch)
-                    | Model.Shop shopModel -> Shop.ShopView shopModel (ShopMsg >> dispatch)
                     | Model.Contact -> Contact.View ()
+                    // Shop
+                    | Model.Shop shopModel -> Shop.ShopView shopModel (ShopMsg >> dispatch)
                     // Portfolio - Games & Gallery
                     | Model.Portfolio portfolioModel -> PortfolioLanding.View portfolioModel (PortfolioMsg >> dispatch)
                     // TSX Page

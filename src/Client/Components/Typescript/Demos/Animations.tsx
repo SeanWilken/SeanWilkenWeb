@@ -739,9 +739,9 @@ export default function DemoShowcase(props: { onBack?: () => void; initialIndex?
 
   const demos = [
     { name: "Parallax Scroll", component: ParallaxScrollDemo },
-    { name: "Mouse Follow", component: MouseFollowDemo },
     { name: "Particle System", component: ParticleSystemDemo },
     { name: "Shader Gradients", component: ShaderGradientDemo },
+    // { name: "Mouse Follow", component: MouseFollowDemo },
     // { name: "3D Transform", component: GPU3DTransformDemo },
     // { name: "Magnetic Elements", component: MagneticElementsDemo },
   ];

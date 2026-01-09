@@ -29,7 +29,7 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
         PortfolioGallery, Cmd.none
 
     | LoadSection PortfolioAppDesignView, _ ->
-        DesignGallery { CurrentPieceIndex = None }, Cmd.none
+        DesignGallery ArtGallery.initialModel, Cmd.none
 
     | ArtGalleryMsg subMsg, DesignGallery m ->
         let updated, cmd = ArtGallery.update subMsg m
@@ -529,7 +529,7 @@ let View (model: Model) dispatch =
         ]
 
     | DesignGallery m ->
-        ArtGallery.view m (ArtGalleryMsg >> dispatch)
+        ArtGallery.ArtGalleryPage m (ArtGalleryMsg >> dispatch)
 
     | CodeGallery m ->
-        CodeGallery.view m (CodeGalleryMsg >> dispatch)
+        CodeGallery.CodeGalleryPage m (CodeGalleryMsg >> dispatch)

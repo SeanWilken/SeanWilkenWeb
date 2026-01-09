@@ -365,7 +365,7 @@ let SourceViewer = React.functionComponent(fun (props: Props) ->
 
 // ---------------- MAIN VIEW ----------------
 
-let view model dispatch =
+let CodeGalleryPage model dispatch =
     match model with
     | CodeGallery ->
         Html.section [
@@ -495,25 +495,25 @@ let view model dispatch =
                 ]
 
                 // FEATURED EXPERIMENT (Goal Roll for now)
-                Html.div [
-                    prop.children [
-                        Html.p [
-                            prop.className
-                                "text-[0.7rem] tracking-[0.2em] uppercase text-base-content/50 text-center mb-6"
-                            prop.text "Featured experiment"
-                        ]
-                        FeaturedExperiment {| 
-                            Title       = "Synth Never Sets"
-                            Tag         = "TSX Game"
-                            Description =
-                                "Roll the windows down on a never ending synthwave drive."
-                            Icon        = LucideIcon.Compass "w-8 h-8"
-                            OnSource    = (fun () -> LoadSourceCode CodeSection.SynthNeverSets |> dispatch)
-                            OnLaunch    = (fun () -> LoadSection CodeSection.SynthNeverSets |> dispatch)
-                            Media       = goalRollPreviewMedia
-                        |}
-                    ]
-                ]
+                // Html.div [
+                //     prop.children [
+                //         Html.p [
+                //             prop.className
+                //                 "text-[0.7rem] tracking-[0.2em] uppercase text-base-content/50 text-center mb-6"
+                //             prop.text "Featured experiment"
+                //         ]
+                //         FeaturedExperiment {| 
+                //             Title       = "Synth Never Sets"
+                //             Tag         = "TSX Game"
+                //             Description =
+                //                 "Roll the windows down on a never ending synthwave drive."
+                //             Icon        = LucideIcon.Compass "w-8 h-8"
+                //             OnSource    = (fun () -> LoadSourceCode CodeSection.SynthNeverSets |> dispatch)
+                //             OnLaunch    = (fun () -> LoadSection CodeSection.SynthNeverSets |> dispatch)
+                //             Media       = goalRollPreviewMedia
+                //         |}
+                //     ]
+                // ]
 
                 // ALL EXPERIMENTS GRID
                 Client.Components.Shop.Common.Ui.Animations.ProgressiveReveal {
@@ -547,11 +547,11 @@ let view model dispatch =
                                             CodeSection.PivotPoint
                                             dispatch
 
-                                        CodeGalleryCard
-                                            "Synth Never Sets"
-                                            "Roll the windows down on a never ending synthwave drive.Roll the windows down on a never ending synthwave drive."
-                                            CodeSection.SynthNeverSets
-                                            dispatch
+                                        // CodeGalleryCard
+                                        //     "Synth Never Sets"
+                                        //     "Roll the windows down on a never ending synthwave drive.Roll the windows down on a never ending synthwave drive."
+                                        //     CodeSection.SynthNeverSets
+                                        //     dispatch
 
                                         CodeGalleryCard
                                             "Tile Sort"

@@ -190,6 +190,17 @@ let AboutHero selectedIndex setSelectedIndex =
                         ]
                     ]
 
+                    Html.div [
+                        prop.className "hero-image mb-16 md:mb-24 rounded-2xl overflow-hidden"
+                        prop.children [
+                            Html.img [
+                                prop.src (tileContents[selectedIndex].Image |> Option.defaultValue "./img/josh-boak-unsplash-overview.jpg")
+                                prop.alt "About hero"
+                                prop.className "w-full h-80 md:h-96 object-cover"
+                            ]
+                        ]
+                    ]
+
                     // Three info cards (Website / Industry / Personal)
                     Html.div [
                         prop.className "grid md:grid-cols-3 gap-6 mb-16 md:mb-24"
@@ -202,7 +213,6 @@ let AboutHero selectedIndex setSelectedIndex =
                                         prop.onClick ( fun _ -> setSelectedIndex i )
                                         prop.children [
                                             tile.Icon
-                                            LucideIcon.BookOpen "w-10 h-10 mx-auto mb-6 opacity-60"
                                             Html.h3 [
                                                 prop.className "cormorant-font text-2xl font-light mb-3"
                                                 prop.text tile.Title
@@ -219,16 +229,6 @@ let AboutHero selectedIndex setSelectedIndex =
                         ]
                     ]
 
-                    Html.div [
-                        prop.className "hero-image mb-16 md:mb-24 rounded-2xl overflow-hidden"
-                        prop.children [
-                            Html.img [
-                                prop.src (tileContents[selectedIndex].Image |> Option.defaultValue "./img/josh-boak-unsplash-overview.jpg")
-                                prop.alt "About hero"
-                                prop.className "w-full h-80 md:h-96 object-cover"
-                            ]
-                        ]
-                    ]
                 ]
             ]
         ]
@@ -238,7 +238,7 @@ let AboutHero selectedIndex setSelectedIndex =
 let AboutPersonalSection (tileContent: TileContent) =
     
     Html.section [
-        prop.className "py-10 md:py-16 px-6 md:px-8 lg:px-12"
+        prop.className "py-5 md:py-16 px-6 md:px-8 lg:px-12"
         prop.children [
             Html.div [
                 prop.className "max-w-5xl mx-auto"
