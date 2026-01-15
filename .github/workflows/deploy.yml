@@ -44,8 +44,8 @@ jobs:
       - name: Run Bundle target
         env:
           VITE_STRIPE_API_PK: ${{ secrets.VITE_STRIPE_API_PK }}
-        run: 
-          printfn "VITE_STRIPE_API_PK=%s" (System.Environment.GetEnvironmentVariable("VITE_STRIPE_API_PK"))
+        run: |
+          echo "VITE_STRIPE_API_PK=$VITE_STRIPE_API_PK"
           dotnet run bundle
 
       - name: Upload artifact
