@@ -51,6 +51,11 @@ export const OVERRIDES: Record<string, string> = {
   coral: "#FF7F50",
   peach: "#FFDAB9",
   orange: "#FF7A00",
+  bay: "#b1b8a6",
+  blossom: "#f0c8d1",
+  butter: "#f3d99e",
+  peachy: "#ecbca6",
+  hydrangea: "#d8e2eb",
   'navy blazer': "#272e3a",
   'solid black triblend': "#1a1e1c",
   'athletic grey triblend': "#8c8c89",
@@ -68,6 +73,7 @@ export const OVERRIDES: Record<string, string> = {
   'carbon grey': "#b6b3af",
   'dark gray': "#4A4A4A",
   charcoal: "#333333",
+  graphite: "#514d4c",
   
   // --- Heather family ---
   heather: "#BEBEBE",

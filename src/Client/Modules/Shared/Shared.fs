@@ -8,13 +8,13 @@ open Client.GameDomain.GridGame
 module Env =
     open Fable.Core
     /// Read Vite env var: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
-    [<Emit("import.meta.env.VITE_STRIPE_API_PK_TEST")>]
+    [<Emit("import.meta.env.VITE_STRIPE_API_PK")>]
     let private stripePkInternal : string = jsNative
 
     /// Safe F# wrapper with a fallback or explicit failure
     let stripePublishableKey : string =
         if System.String.IsNullOrWhiteSpace stripePkInternal then
-            failwith "VITE_STRIPE_API_PK_TEST is not set in Vite env"
+            failwith "VITE_STRIPE_API_PK is not set in Vite env"
         else
             stripePkInternal
 

@@ -7,7 +7,7 @@ services:
       dockerfile: infrastructure/docker/App/Dockerfile.app
       args:
         APP_ENV: "Staging"
-        VITE_STRIPE_API_PK_TEST: ${VITE_STRIPE_API_PK_TEST}
+        VITE_STRIPE_API_PK: ${VITE_STRIPE_API_PK}
         VITE_API_BASE_URL: ${VITE_API_BASE_URL}
         SERVER_PROXY_PORT: ${SERVER_PROXY_PORT}
     image: seanwilkenweb-app:staging
@@ -30,7 +30,7 @@ services:
       MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
 
       # Optional: if your server or client reads these at runtime too
-      VITE_STRIPE_API_PK_TEST: ${VITE_STRIPE_API_PK_TEST}
+      VITE_STRIPE_API_PK: ${VITE_STRIPE_API_PK}
       VITE_API_BASE_URL: ${VITE_API_BASE_URL}
       SERVER_PROXY_PORT: ${SERVER_PROXY_PORT}
 

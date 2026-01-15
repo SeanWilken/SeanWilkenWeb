@@ -161,18 +161,18 @@ module OrderDraftStorage =
     let setDraftPrintfulResult
         (draftExternalId: string)
         (status: string)
-        (responseJson: string)
+        (responseJson: string option)
         (printfulOrderId: int option)
-        : Async<unit> =
+        : Async<bool> =
         async {
             let filter =
                 Builders<OrderDraftDocument>.Filter
                     .Eq((fun d -> d.DraftExternalId), draftExternalId)
 
-            let updates =
+            let update =
                 Builders<OrderDraftDocument>.Update
                     .Set((fun d -> d.Status), status)
-                    .Set((fun d -> d.PrintfulResponseJson), Some responseJson)
+                    .Set((fun d -> d.PrintfulResponseJson), responseJson)
                     .Set((fun d -> d.UpdatedAt), DateTime.UtcNow)
                     .Set(
                         (fun d -> d.PrintfulOrderId),
@@ -181,8 +181,11 @@ module OrderDraftStorage =
                         | None -> Nullable()
                     )
 
-            let! _ = drafts.UpdateOneAsync(filter, updates) |> Async.AwaitTask
-            return ()
+            let! result =
+                drafts.UpdateOneAsync(filter, update)
+                |> Async.AwaitTask
+
+            return result.ModifiedCount = 1L
         }
 
     // -------------------------------------------------------------

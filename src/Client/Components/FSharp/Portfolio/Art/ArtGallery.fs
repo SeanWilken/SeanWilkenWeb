@@ -42,17 +42,6 @@ let artworks : ArtPiece list = [
         DetailsSide = Right
     }
     {
-        Id = "forever-burning"
-        Title = "Forever Burning"
-        Description = "Skeletal hands cradle a burning rose—a meditation on passion..."
-        Year = "2025"
-        Medium = "Mixed Media Digital"
-        Tags = ["Symbolic"; "Color"; "Narrative"]
-        ImageSrc = "../../img/artwork/forever-burning.png"
-        ShiftDirection = FadeIn
-        DetailsSide = Left
-    }
-    {
         Id = "fuming-beauty"
         Title = "Fuming Beauty"
         Description = "Blazing through life while it lasts."
@@ -61,7 +50,7 @@ let artworks : ArtPiece list = [
         Tags = []
         ImageSrc = "../../img/artwork/fuming-beauty.png"
         ShiftDirection = Snap
-        DetailsSide = Right
+        DetailsSide = Left
     }
     {
         Id = "this-is-quiet"
@@ -75,6 +64,39 @@ let artworks : ArtPiece list = [
         DetailsSide = Right
     }
     {
+        Id = "burning-blossom"
+        Title = "Burning Blossom"
+        Description = "Burning up cause it's cherry blossom season"
+        Year = "2026"
+        Medium = "Digital Illustration"
+        Tags = ["Floral"; "Pattern"; "Bold"]
+        ImageSrc = "../../img/artwork/burning-blossom.png"
+        ShiftDirection = FadeUp
+        DetailsSide = Left
+    }
+    {
+        Id = "vices"
+        Title = "Vices"
+        Description = "Careful what you choose..."
+        Year = "2026"
+        Medium = "Digital Illustration"
+        Tags = ["Chaotic"; "Colored";]
+        ImageSrc = "../../img/artwork/vices.png"
+        ShiftDirection = ScaleUp
+        DetailsSide = Right
+    }
+    {
+        Id = "forever-burning"
+        Title = "Forever Burning"
+        Description = "Skeletal hands cradle a burning rose—a meditation on passion..."
+        Year = "2025"
+        Medium = "Mixed Media Digital"
+        Tags = ["Symbolic"; "Color"; "Narrative"]
+        ImageSrc = "../../img/artwork/forever-burning.png"
+        ShiftDirection = SlideRight
+        DetailsSide = Left
+    }
+    {
         Id = "roses"
         Title = "Roses"
         Description = "A bold pattern exploring the duality of beauty and chaos..."
@@ -83,7 +105,29 @@ let artworks : ArtPiece list = [
         Tags = ["Floral"; "Pattern"; "Bold"]
         ImageSrc = "../../img/artwork/roses.png"
         ShiftDirection = Snap
+        DetailsSide = Right
+    }
+    {
+        Id = "caution-very-hot"
+        Title = "Caution: Very Hot"
+        Description = "You know what they say?"
+        Year = "2026"
+        Medium = "Digital Pattern Design"
+        Tags = [ "Shadows"; "Colored" ]
+        ImageSrc = "../../img/artwork/caution-very-hot.png"
+        ShiftDirection = Snap
         DetailsSide = Left
+    }
+    {
+        Id = "emotion-flow"
+        Title = "Emotion Flow"
+        Description = "Going therough it all again..."
+        Year = "2026"
+        Medium = "Digital Art"
+        Tags = [ "Flow"; "Composition" ]
+        ImageSrc = "../../img/artwork/emotion-flow.png"
+        ShiftDirection = ScaleUp
+        DetailsSide = Right
     }
     {
         Id = "mistfortune"
@@ -94,7 +138,7 @@ let artworks : ArtPiece list = [
         Tags = []
         ImageSrc = "../../img/artwork/misfortune.png"
         ShiftDirection = SlideLeft
-        DetailsSide = Right
+        DetailsSide = Left
     }
     {
         Id = "out-for-blood"
@@ -105,7 +149,7 @@ let artworks : ArtPiece list = [
         Tags = ["Ironic"; "Statement"; "Detailed"]
         ImageSrc = "../../img/artwork/out-for-blood.png"
         ShiftDirection = FadeUp
-        DetailsSide = Left
+        DetailsSide = Right
     }
     {
         Id = "bows-and-bubbles"

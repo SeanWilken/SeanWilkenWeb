@@ -701,8 +701,6 @@ module PrintfulApi =
                     System.Console.WriteLine $"[Printful][SyncSingleProductDetails] DESERIALIZE ERROR: {e.Message}"
                     return None
             }
-    open SyncProduct
-
 
     module CatalogProduct = 
 
@@ -776,6 +774,7 @@ module PrintfulApi =
 
 
     module Checkout =
+        open MongoService.OrderDraftStorage
 
         // ---------------- helpers ----------------
 
@@ -917,6 +916,14 @@ module PrintfulApi =
                     return failwith e.Message
             }
 
+        let markOrderConfirmed draftExternalId printfulJson printfulOrderId =
+            setDraftPrintfulResult
+                draftExternalId
+                "order_confirmed"
+                (Some printfulJson)
+                (Some printfulOrderId)
+
+
         let confirmOrder (req : ConfirmOrderRequest) : Async<ConfirmOrderResponse> =
             async {
 
@@ -937,7 +944,7 @@ module PrintfulApi =
                     use content = new StringContent("", Encoding.UTF8, "application/json")
 
                     let! _ = 
-                        OrderDraftStorage.setStripePaymentIntent
+                        setStripePaymentIntent
                             req.OrderDraftId
                             req.StripeConfirmation
 
@@ -953,12 +960,8 @@ module PrintfulApi =
                     let parsed : Types.Sync.Order.PrintfulConfirmOrderResponse = JsonSerializer.Deserialize<Types.Sync.Order.PrintfulConfirmOrderResponse>(body)
                     System.Console.WriteLine $"[Printful][CONFIRM] PARSED {parsed}"
                     
-                    let! _ = 
-                        OrderDraftStorage.setOrderConfirmed
-                            req.OrderDraftId
-                            parsed.result.id
-                            parsed.result.status
-
+                    let! _ = markOrderConfirmed req.OrderDraftId body parsed.result.id
+                        
                     let previewLines =
                         parsed.result.items
                         |> Array.toList
@@ -972,6 +975,13 @@ module PrintfulApi =
                             Tax              = parsed.result.retail_costs.tax |> Option.defaultValue 0m
                             Total            = parsed.result.retail_costs.total
                         }
+
+                    let! _ = 
+                        Gmail.sendEmail
+                            req.CustomerInfo.Email
+                            "Your Xero Effort order confirmation"
+                            (Gmail.orderConfirmationEmail req.OrderDraftId orderTotals.Total "usd")
+
 
                     return {
                         OrderId = parsed.result.id
