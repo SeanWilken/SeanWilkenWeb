@@ -43,8 +43,10 @@ jobs:
 
       - name: Run Bundle target
         env:
-          VITE_STRIPE_API_PK_TEST: ${{ secrets.VITE_STRIPE_API_PK_TEST }}
-        run: dotnet run bundle
+          VITE_STRIPE_API_PK: ${{ secrets.VITE_STRIPE_API_PK }}
+        run: 
+          printfn "VITE_STRIPE_API_PK=%s" (System.Environment.GetEnvironmentVariable("VITE_STRIPE_API_PK"))
+          dotnet run bundle
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
