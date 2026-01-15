@@ -4,7 +4,8 @@ open System
 
 [<RequireQualifiedAccess>]
 module EnvConfig =
-    let stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_SK_TEST")
+    let viteStripeKey = Environment.GetEnvironmentVariable("VITE_STRIPE_API_PK")
+    let stripeKey = Environment.GetEnvironmentVariable("STRIPE_API_SK")
     let printfulKey = Environment.GetEnvironmentVariable("PRINTFUL_API_KEY")
     let printfulOAuthKey = Environment.GetEnvironmentVariable("PRINTFUL_OAUTH_KEY")
     let printfulStoreKey = Environment.GetEnvironmentVariable("PRINTFUL_STORE_ID")
