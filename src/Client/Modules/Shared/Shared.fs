@@ -15,7 +15,6 @@ module Env =
     let stripePublishableKey : string =
         if System.String.IsNullOrWhiteSpace stripePkInternal then
             ""
-            // failwith "VITE_STRIPE_API_PK is not set in Vite env"
         else
             stripePkInternal
 

@@ -22,26 +22,12 @@ Target.create "Clean" (fun _ ->
 
 Target.create "RestoreClientDependencies" (fun _ -> run pnpm [ "i" ] clientPath)
 
-open Fake.Core
-
-let viteStripePk = System.Environment.GetEnvironmentVariable("VITE_STRIPE_API_PK")
-
 Target.create "Bundle" (fun _ ->
-    if System.String.IsNullOrWhiteSpace viteStripePk then
-        failwith "VITE_STRIPE_API_PK is missing in environment"
-
     [
-        "server",
-            dotnet [ "publish"; "-c"; "Release"; "-o"; deployPath ] serverPath
-
-        "client",
-            CreateProcess.fromRawCommand "pnpm" [ "exec"; "vite"; "build" ]
-            |> CreateProcess.withWorkingDirectory clientPath
-            |> CreateProcess.withEnvironment [ ("VITE_STRIPE_API_PK", viteStripePk) ]
+        "server", dotnet [ "publish"; "-c"; "Release"; "-o"; deployPath ] serverPath
+        "client", dotnet [ "fable"; "-o"; "output"; "-s"; "--run"; "pnpm"; "exec"; "vite"; "build" ] clientPath
     ]
-    |> runParallel
-)
-
+    |> runParallel)
 
 
 Target.create "Azure" (fun _ ->
