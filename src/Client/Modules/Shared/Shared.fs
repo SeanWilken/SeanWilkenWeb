@@ -14,7 +14,8 @@ module Env =
     /// Safe F# wrapper with a fallback or explicit failure
     let stripePublishableKey : string =
         if System.String.IsNullOrWhiteSpace stripePkInternal then
-            failwith "VITE_STRIPE_API_PK is not set in Vite env"
+            ""
+            // failwith "VITE_STRIPE_API_PK is not set in Vite env"
         else
             stripePkInternal
 
