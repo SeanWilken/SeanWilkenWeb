@@ -16,6 +16,9 @@ $Root       = Split-Path -Parent $MyInvocation.MyCommand.Path
 $Infra      = Join-Path $Root "infrastructure/docker/App"
 $EnvFile    = Join-Path $Infra "Production/.env"
 $Dockerfile = Join-Path $Infra "dockerfile.app"
+# TerraForm and K8s paths
+$Terraform      = Join-Path $Root "infrastructure/terraform"
+$K8S            = Join-Path $Root "infrastructure/k8s"
 
 if (-not (Test-Path $Dockerfile)) {
     Write-Host "ERROR: Could not find $Dockerfile" -ForegroundColor Red
@@ -47,56 +50,66 @@ Get-Content $EnvFile | ForEach-Object {
 $ViteStripePk     = $envVars["VITE_STRIPE_API_PK"]
 $ViteApiBaseUrl   = $envVars["VITE_API_BASE_URL"]
 $ServerProxyPort  = $envVars["SERVER_PROXY_PORT"]
+$KubeconfigPath  = $envVars["KUBECONFIG"]
 
 if (-not $ViteStripePk -or -not $ViteApiBaseUrl -or -not $ServerProxyPort) {
     Write-Host "ERROR: Missing required build-time variables in .env" -ForegroundColor Red
     exit 1
 }
 
+
 # 4) Build image
 Write-Host ""
 Write-Host "Building production image with Podman..." -ForegroundColor Cyan
 
 podman build `
-    -f $Dockerfile `
-    --build-arg VITE_STRIPE_API_PK=$ViteStripePk `
+-f $Dockerfile `
+--build-arg VITE_STRIPE_API_PK=$ViteStripePk `
     --build-arg VITE_API_BASE_URL=$ViteApiBaseUrl `
     --build-arg SERVER_PROXY_PORT=$ServerProxyPort `
     -t registry.digitalocean.com/wilkenweb/app:$Tag `
     $Root
+    
+    Write-Host ""
+    Write-Host "Production image built successfully."
+    
+    # 5) Push image
+    Write-Host ""
+    Write-Host "Pushing image to DOCR..." -ForegroundColor Cyan
+    
+    podman push registry.digitalocean.com/wilkenweb/app:$Tag
+    
+    Write-Host ""
+    Write-Host "Image pushed successfully."
 
-Write-Host ""
-Write-Host "Production image built successfully."
 
-# 5) Push image
-Write-Host ""
-Write-Host "Pushing image to DOCR..." -ForegroundColor Cyan
-
-podman push registry.digitalocean.com/wilkenweb/app:$Tag
-
-Write-Host ""
-Write-Host "Image pushed successfully."
+$env:KUBECONFIG = (Resolve-Path $KubeconfigPath)
+Write-Host "Using kubeconfig: $env:KUBECONFIG" -ForegroundColor Cyan
+kubectl get nodes
 
 # 6) Terraform apply with tag
-Write-Host ""
+Write-Host "SWITCHING DIRECTORY TO: $Terraform"
+Set-Location $Terraform
 Write-Host "Running Terraform apply for Tag: $Tag." -ForegroundColor Cyan
 terraform apply -var="tag=$Tag" -auto-approve
 Write-Host "Applied Terraform for Tag: $Tag."
 
-# 7) Apply K8s overlays (Kustomize)
-Write-Host ""
-Write-Host "Applying K8S overlays for Tag: $Tag." -ForegroundColor Cyan
-kubectl apply -k infrastructure/k8s/overlays/prod
-Write-Host "Applied K8S overlays for Tag: $Tag."
+# # 7) Apply K8s overlays (Kustomize)
+# Write-Host "SWITCH TO K8S DIRECTORY: $Root"
+# Set-Location $K8S
+# Write-Host "Applying K8S overlays for Tag: $Tag." -ForegroundColor Cyan
+# kubectl apply -k infrastructure/k8s/overlays/production
+# Write-Host "Applied K8S overlays for Tag: $Tag."
 
-# 8) Wait for rollout
-Write-Host ""
-Write-Host "Waiting for K8S Production rollout..." -ForegroundColor Cyan
-kubectl rollout status deployment/app -n store-prod
-Write-Host "K8S Production rollout complete."
+# # 8) Wait for rollout
+# Write-Host ""
+# Set-Location $Root
+# Write-Host "Waiting for K8S Production rollout..." -ForegroundColor Cyan
+# kubectl rollout status deployment/app -n wilkenweb-prod
+# Write-Host "K8S Production rollout complete."
 
-# 9) Health check
-Write-Host ""
-Write-Host "Performing health check on https://seanwilken.com/api/health ..." -ForegroundColor Cyan
-$Health = Invoke-WebRequest "https://seanwilken.com/api/health" -UseBasicParsing
-Write-Host "Health check response: $($Health.StatusCode)" -ForegroundColor Green
+# # 9) Health check
+# Write-Host ""
+# Write-Host "Performing health check on https://seanwilken.com/api/health ..." -ForegroundColor Cyan
+# $Health = Invoke-WebRequest "https://seanwilken.com/api/health" -UseBasicParsing
+# Write-Host "Health check response: $($Health.StatusCode)" -ForegroundColor Green

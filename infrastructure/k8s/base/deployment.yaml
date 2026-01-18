@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app
-  namespace: store-prod
+  namespace: wilkenweb-prod
 spec:
   replicas: 2
   selector:

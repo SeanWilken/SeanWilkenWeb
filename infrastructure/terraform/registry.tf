@@ -7,3 +7,10 @@ resource "digitalocean_container_registry" "registry" {
   subscription_tier_slug = "basic"
   region                 = var.region
 }
+
+resource "kubernetes_namespace" "wilkenweb_prod" {
+  metadata {
+    name = "wilkenweb-prod"
+  }
+}
+

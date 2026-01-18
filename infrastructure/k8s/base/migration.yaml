@@ -2,7 +2,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: app-migrations
-  namespace: store-prod
+  namespace: wilkenweb-prod
 spec:
   backoffLimit: 0
   template:
@@ -10,7 +10,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: registry.digitalocean.com/wilkenweb/app:REPLACE_TAG
+          image: registry.digitalocean.com/wilkenweb/app:${tag}
           command: ["dotnet", "Server.dll", "migrate"]
           envFrom:
             - secretRef:

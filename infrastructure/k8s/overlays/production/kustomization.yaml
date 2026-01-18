@@ -1,4 +1,4 @@
-namespace: store-prod
+namespace: wilkenweb-prod
 
 resources:
   - ../../base/namespace.yaml
