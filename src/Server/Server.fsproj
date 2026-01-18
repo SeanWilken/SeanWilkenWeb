@@ -10,6 +10,7 @@
     <Compile Include="Modules\Env.fs" />
     <Compile Include="Modules\Gmail.fs" />
     <Compile Include="Modules\Mongo.fs" />
+    <Compile Include="Modules\MigrationRunner.fs" />
     <Compile Include="Modules\Stripe.fs" />
     <Compile Include="Modules\Printful.fs" />
     <Compile Include="Modules\Server.fs" />

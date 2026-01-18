@@ -13,6 +13,9 @@ output/
 packages/
 paket-files/
 node_modules/
+infrastructure/k8s/overlays/production/patch-image.yaml
+infrastructure/k8s/base/secrets.template.yaml
+infrastructure/terraform/*.example
 infrastructure/docker/App/Development/.env
 infrastructure/docker/App/Staging/.env
 infrastructure/docker/App/Production/.env

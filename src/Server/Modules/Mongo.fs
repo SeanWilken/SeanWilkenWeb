@@ -3,6 +3,64 @@ module MongoService
 open System
 open MongoDB.Bson
 open MongoDB.Bson.Serialization.Attributes
+open MongoDB.Driver
+
+
+module Migration =
+
+    type MigrationRecord =
+        { 
+            Version: string
+            Name: string
+            AppliedAt: DateTime 
+        }
+
+    module MigrationStore =
+
+        let private collection (db: IMongoDatabase) =
+            db.GetCollection<BsonDocument>("migrations")
+
+        let getAppliedVersions (db: IMongoDatabase) =
+            (collection db)
+                .Find(FilterDefinition<BsonDocument>.Empty)
+                .ToList()
+            |> Seq.map (fun d -> d.["version"].AsString)
+            |> Set.ofSeq
+
+        let recordApplied (db: IMongoDatabase) (version: string) (name: string) =
+            let doc =
+                BsonDocument([
+                    BsonElement("version", version)
+                    BsonElement("name", name)
+                    BsonElement("appliedAt", BsonDateTime(System.DateTime.UtcNow))
+                ])
+
+            (collection db)
+                .InsertOne doc
+
+    module Migration001 =
+    
+        let version = "001"
+        let name = "init-drafts-collection"
+
+        let up (db: IMongoDatabase) =
+            let collections = db.ListCollectionNames().ToList()
+            if not (collections.Contains("order_drafts")) then
+                db.CreateCollection("order_drafts")
+
+            let col = db.GetCollection<BsonDocument>("order_drafts")
+
+            let indexes =
+                [ 
+                    Builders.IndexKeys.Ascending("draftExternalId"), CreateIndexOptions(Unique = true, Name = "draftExternalId_unique")
+                    Builders.IndexKeys.Ascending("stripePaymentIntentId"), CreateIndexOptions(Name = "stripe_pi_idx")
+                    Builders.IndexKeys.Combine(Builders.IndexKeys.Ascending("customerEmail"), Builders.IndexKeys.Descending("createdAt")), CreateIndexOptions(Name = "customer_email_created_idx")
+                    Builders.IndexKeys.Descending("createdAt"), CreateIndexOptions(Name = "createdAt_desc_idx")
+                ]
+
+            for (keys, opts) in indexes do
+                col.Indexes.CreateOne(CreateIndexModel(keys, opts))
+
 
 [<CLIMutable>]
 type OrderDraftDocument = {

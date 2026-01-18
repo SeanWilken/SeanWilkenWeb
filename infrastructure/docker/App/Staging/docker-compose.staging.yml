@@ -27,7 +27,7 @@ services:
 
       # DB
       DATABASE_URL: ${DATABASE_URL}
-      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+      MONGO_CONNECTION_STRING: ${MONGO_CONNECTION_STRING}
 
       # Optional: if your server or client reads these at runtime too
       VITE_API_BASE_URL: ${VITE_API_BASE_URL}

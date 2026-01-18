@@ -130,39 +130,6 @@ let artworks : ArtPiece list = [
         DetailsSide = Right
     }
     {
-        Id = "mistfortune"
-        Title = "Mistfortune"
-        Description = "It was never in the cards to begin with."
-        Year = "2021"
-        Medium = "Digital Illustration"
-        Tags = []
-        ImageSrc = "../../img/artwork/misfortune.png"
-        ShiftDirection = SlideLeft
-        DetailsSide = Left
-    }
-    {
-        Id = "out-for-blood"
-        Title = "Out for Blood"
-        Description = "Blood lust runs high"
-        Year = "2021"
-        Medium = "Digital Illustration"
-        Tags = ["Ironic"; "Statement"; "Detailed"]
-        ImageSrc = "../../img/artwork/out-for-blood.png"
-        ShiftDirection = FadeUp
-        DetailsSide = Right
-    }
-    {
-        Id = "bows-and-bubbles"
-        Title = "Bows & Bubbles"
-        Description = "What's poppin?"
-        Year = "2022"
-        Medium = "Digital Illustration"
-        Tags = [ "Ironic" ]
-        ImageSrc = "../../img/artwork/bows-and-bubbles.jpg"
-        ShiftDirection = SlideRight
-        DetailsSide = Left
-    }
-    {
         Id = "xray"
         Title = "Null XRay"
         Description = "Minimal contours to define form, not beauty."
@@ -171,7 +138,7 @@ let artworks : ArtPiece list = [
         Tags = ["Portrait"; "Minimalist"; "Monochrome"]
         ImageSrc = "../../img/artwork/blurred-outline.png"
         ShiftDirection = FadeIn
-        DetailsSide = Right
+        DetailsSide = Left
     }
 ]
 

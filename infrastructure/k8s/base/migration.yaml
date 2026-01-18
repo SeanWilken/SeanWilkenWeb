@@ -1,0 +1,19 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: app-migrations
+  namespace: store-prod
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrate
+          image: registry.digitalocean.com/wilkenweb/app:REPLACE_TAG
+          command: ["dotnet", "Server.dll", "migrate"]
+          envFrom:
+            - secretRef:
+                name: app-secrets
+            - configMapRef:
+                name: app-config

@@ -1,0 +1,11 @@
+namespace: store-prod
+
+resources:
+  - ../../base/namespace.yaml
+  - ../../base/configmap.yaml
+  - ../../base/app-deployment.yaml
+  - ../../base/app-service.yaml
+  - ../../base/ingress.yaml
+
+patchesStrategicMerge:
+  - patch-image.yaml

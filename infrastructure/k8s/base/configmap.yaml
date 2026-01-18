@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: app-config
+  namespace: store-prod
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  PUBLIC_BASE_URL: "https://seanwilken.com"
+  MONGO_DB_NAME: "xeroeffort"

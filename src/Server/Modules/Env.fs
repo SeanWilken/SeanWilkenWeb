@@ -10,7 +10,7 @@ module EnvConfig =
     let printfulOAuthKey = Environment.GetEnvironmentVariable("PRINTFUL_OAUTH_KEY")
     let printfulStoreKey = Environment.GetEnvironmentVariable("PRINTFUL_STORE_ID")
     let mongoUrl = 
-        match Environment.GetEnvironmentVariable("DATABASE_URL") with
+        match Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING") with
         | null | "" -> "mongodb://localhost:27017/xeroeffort"
         | s -> s
     let elasticUrl = Environment.GetEnvironmentVariable("ELASTICSEARCH_URL")

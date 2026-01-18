@@ -3,6 +3,9 @@ module Server
 open Saturn
 open Giraffe
 open PrintfulService.PrintfulApi
+open MongoDB.Driver
+
+
 
 let spaFallback : HttpHandler =
     fun next ctx ->
@@ -14,11 +17,25 @@ let spaFallback : HttpHandler =
             next ctx
 
 
+module HealthAPI =
+    let healthCheckHandler: HttpHandler =
+        fun next ctx -> task {
+            ctx.SetStatusCode 200
+            ctx.WriteTextAsync "OK" |> Async.AwaitTask |> ignore
+            return! next ctx
+        }
+
+    let handler =
+        router {
+            get "/api/health" healthCheckHandler
+        }
+
 let app = application {
     use_router (
         choose [
             ProductAPI.handler
             CheckoutAPI.handler
+            HealthAPI.handler
             spaFallback
         ])
     memory_cache
@@ -27,6 +44,12 @@ let app = application {
 }
 
 [<EntryPoint>]
-let main _ =
-    run app
-    0
+let main args =
+    match args with
+    | [| "migrate" |] ->
+        let conn = EnvService.EnvConfig.mongoUrl
+        MigrationRunner.runMigrations conn
+        exit 0
+    | _ ->
+        run app
+        exit 0

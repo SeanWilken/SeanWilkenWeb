@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: store-prod
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+    - host: seanwilken.com
+      http:
+        paths:
+          - path: /shop(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: app
+                port:
+                  number: 80
+          - path: /api(/|$)(.*)
+            pathType: Prefix
+            backend:
+              service:
+                name: app
+                port:
+                  number: 80
