@@ -8,4 +8,4 @@ kind: Kustomization
 images:
 - name: registry.digitalocean.com/wilkenweb/app
   newName: registry.digitalocean.com/wilkenweb/app
-  newTag: d45c7cb
+  newTag: e72d9a1

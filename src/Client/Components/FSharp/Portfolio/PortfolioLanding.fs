@@ -7,6 +7,7 @@ open Components.FSharp.Portfolio
 open Fable.React
 open Browser.Dom
 open SharedViewModule.WebAppView
+open Client.Components.Shop.Common.Ui.Animations
 
 type Msg =
     | LoadSection of AppView
@@ -230,7 +231,10 @@ let TerminalTypingAnimation () =
 
 [<ReactComponent>]
 let GithubProfileCard () =
-    Client.Components.Shop.Common.Ui.Animations.ProgressiveReveal {
+    ScrollReveal {|
+        Variant   = SlideLeft
+        Delay     = 0.08
+        Threshold = 0.45
         Children =
             Html.div [
                 prop.className "profile-card"
@@ -305,7 +309,7 @@ let GithubProfileCard () =
                     ]
                 ]
             ]
-    }
+    |}
 
 
 
@@ -368,24 +372,30 @@ let BrowseByFocusSection (dispatch) =
                     ]
 
                     // Tiles
-                    Html.div [
-                        prop.className "mt-16 grid gap-y-16 gap-x-24 md:grid-cols-2"
-                        prop.children [
-                            FocusTile
-                                (fun _ -> LoadSection AppView.PortfolioAppCodeView |> dispatch)
-                                (Html.span "</>")
-                                "Code Experiments"
-                                "Interactive demos, tools, and prototypes. Play with the UI and read the source behind it."
-                                "Open-code experiments gallery →"
+                    ScrollReveal {|
+                        Variant   = FadeUp
+                        Delay     = 0.08
+                        Threshold = 0.45
+                        Children = 
+                            Html.div [
+                                prop.className "mt-16 grid gap-y-16 gap-x-24 md:grid-cols-2"
+                                prop.children [
+                                    FocusTile
+                                        (fun _ -> LoadSection AppView.PortfolioAppCodeView |> dispatch)
+                                        (Html.span "</>")
+                                        "Code Experiments"
+                                        "Interactive demos, tools, and prototypes. Play with the UI and read the source behind it."
+                                        "Open-code experiments gallery →"
 
-                            FocusTile
-                                (fun _ -> LoadSection AppView.PortfolioAppDesignView |> dispatch)
-                                (Html.span "✎")
-                                "Design & Drawings"
-                                "Visual explorations, studies, and sketches that inform how I think about UI and products."
-                                "Open Design & Drawings gallery →"
-                        ]
-                    ]
+                                    FocusTile
+                                        (fun _ -> LoadSection AppView.PortfolioAppDesignView |> dispatch)
+                                        (Html.span "✎")
+                                        "Design & Drawings"
+                                        "Visual explorations, studies, and sketches that inform how I think about UI and products."
+                                        "Open Design & Drawings gallery →"
+                                ]
+                            ]
+                    |}
                 ]
             ]
         ]
@@ -458,62 +468,7 @@ let View (model: Model) dispatch =
                     ]
                 ]
             ]
-
-            // BROWSE BY FOCUS
-            // Html.section [
-            //     prop.className "py-24 px-4 sm:px-6 lg:px-12"
-            //     prop.children [
-            //         Html.div [
-            //             prop.className "max-w-6xl mx-auto"
-            //             prop.children [
-            //                 Html.div [
-            //                     prop.className "mb-16"
-            //                     prop.children [
-            //                         Html.h2 [
-            //                             prop.className "serif text-4xl lg:text-5xl font-light mb-4"
-            //                             prop.text "Browse by focus"
-            //                         ]
-            //                         Html.p [
-            //                             prop.className "text-sm opacity-50"
-            //                             prop.text "Pick a lens or tag (browse shop → tech gallery) about the core model/principles."
-            //                         ]
-            //                     ]
-            //                 ]
-
-            //                 Html.div [
-            //                     prop.className "grid lg:grid-cols-2 gap-8"
-            //                     prop.children [
-            //                         browseCategory
-            //                             "Interactive demos, tools, and prototypes. Play with the UI and read the source behind it."
-            //                             "Demos and Games →"
-            //                             "Code Experiments"
-            //                             (LucideIcon.Gamepad2 "w-5 h-5")
-            //                             (fun _ ->
-            //                                 dispatch (
-            //                                     SharedPortfolioGallery.LoadSection
-            //                                         SharedWebAppViewSections.AppView.PortfolioAppCodeView
-            //                                 )
-            //                             )
-
-            //                         browseCategory
-            //                             "Visual explorations, studies, and sketches that inform how I think about UI and products."
-            //                             "Art and Design →"
-            //                             "Design & Drawings"
-            //                             (LucideIcon.PenTool "w-5 h-5")
-            //                             (fun _ ->
-            //                                 dispatch (
-            //                                     SharedPortfolioGallery.LoadSection
-            //                                         SharedWebAppViewSections.AppView.PortfolioAppDesignView
-            //                                 )
-            //                             )
-            //                     ]
-            //                 ]
-            //             ]
-            //         ]
-            //     ]
-            // ]
-            BrowseByFocusSection dispatch
-
+            
             // TERMINAL SNIPPET
             Html.section [
                 prop.className "py-24 px-4 sm:px-6 lg:px-12"
@@ -526,6 +481,9 @@ let View (model: Model) dispatch =
                     ]
                 ]
             ]
+
+            BrowseByFocusSection dispatch
+
         ]
 
     | DesignGallery m ->

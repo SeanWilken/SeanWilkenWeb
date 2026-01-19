@@ -892,6 +892,8 @@ module PrintfulApi =
         let mapOrderItemToPreviewLine currency (orderItem: Types.Sync.Order.OrderItem) =
             {
                 Item = {
+                    Name          = orderItem.name
+                    ThumbnailUrl = orderItem.product.image
                     Kind           = CartItemKind.Sync
                     Quantity       = orderItem.quantity
                     // Sync-based items (Printful "store/sync" world)

@@ -1046,7 +1046,7 @@ module View =
 
                 match model.Step, model.OrderConfirmation with
                 | Review, Some confirmationResp ->
-                    OrderConfirmation.ExampleOrderConfirmation confirmationResp
+                    OrderConfirmation.View confirmationResp
                 | _ -> 
                     Html.div [
                         prop.className "grid grid-cols-1 lg:grid-cols-3 gap-10 lg:gap-12"

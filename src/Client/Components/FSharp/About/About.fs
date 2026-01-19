@@ -4,6 +4,7 @@ open Feliz
 open Elmish
 open Bindings.LucideIcon
 open SharedViewModule.WebAppView
+open Client.Components.Shop.Common.Ui.Animations
 
 
 // ----------------------------------------------------------------------
@@ -243,32 +244,39 @@ let AboutPersonalSection (tileContent: TileContent) =
             Html.div [
                 prop.className "max-w-5xl mx-auto"
                 prop.children [
-                    Html.div [
-                        prop.className "content-section mb-12 md:mb-16"
-                        prop.children [
-
+                    ScrollReveal {|
+                        Variant   = Snap
+                        Delay     = 0.08
+                        Threshold = 0.45
+                        Children =
                             Html.div [
-                                prop.className "flex items-center gap-3 mb-6 md:mb-8"
+                                prop.className "content-section mb-12 md:mb-16"
                                 prop.children [
-                                    LucideIcon.Info "w-5 h-5 opacity-60"
-                                    Html.span [
-                                        prop.className "text-[0.7rem] tracking-[0.2em] uppercase opacity-60"
-                                        prop.text tileContent.Title
+
+
+                                    Html.div [
+                                        prop.className "flex items-center gap-3 mb-6 md:mb-8"
+                                        prop.children [
+                                            LucideIcon.Info "w-5 h-5 opacity-60"
+                                            Html.span [
+                                                prop.className "text-[0.7rem] tracking-[0.2em] uppercase opacity-60"
+                                                prop.text tileContent.Title
+                                            ]
+                                        ]
+                                    ]
+
+                                    Html.h2 [
+                                        prop.className "cormorant-font text-3xl md:text-4xl font-light mb-6 md:mb-8 leading-tight"
+                                        prop.text tileContent.Summary
+                                    ]
+
+                                    Html.p [
+                                        prop.className "text-sm opacity-70 leading-loose whitespace-pre-line"
+                                        prop.text tileContent.Details
                                     ]
                                 ]
                             ]
-
-                            Html.h2 [
-                                prop.className "cormorant-font text-3xl md:text-4xl font-light mb-6 md:mb-8 leading-tight"
-                                prop.text tileContent.Summary
-                            ]
-
-                            Html.p [
-                                prop.className "text-sm opacity-70 leading-loose whitespace-pre-line"
-                                prop.text tileContent.Details
-                            ]
-                        ]
-                    ]
+                    |}
                 ]
             ]
         ]
@@ -419,7 +427,17 @@ let View (model: Model) (dispatch: Msg -> unit) =
         prop.children [
             AboutHero activeIndex ( fun idx -> ToggleContent idx |> dispatch )
             AboutPersonalSection sectionDetails
-            AboutWorkAndTech()
-            AboutCta dispatch
+            ScrollReveal {|
+                Variant   = FadeIn
+                Delay     = 0.08
+                Threshold = 0.45
+                Children = AboutWorkAndTech()
+            |}
+            ScrollReveal {|
+                Variant   = SlideLeft
+                Delay     = 0.08
+                Threshold = 0.45
+                Children = AboutCta dispatch
+            |}
         ]
     ]

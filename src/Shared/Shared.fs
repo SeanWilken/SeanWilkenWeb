@@ -885,6 +885,8 @@ module Api =
             | Custom
 
         type CheckoutCartItem = {
+            Name           : string
+            ThumbnailUrl   : string
             Kind           : CartItemKind
             Quantity       : int
             // Sync-based items (Printful "store/sync" world)

@@ -228,8 +228,10 @@ let OrderConfirmation (props: OrderConfirmationProps) =
                                                                             prop.className "absolute inset-0 bg-linear-to-b from-gray-200 to-gray-300 flex items-center justify-center"
                                                                             prop.children [
                                                                                 // Replace with your Lucide binding
-                                                                                Html.i [
-                                                                                    prop.className "lucide lucide-package w-8 h-8 text-gray-400"
+                                                                                Html.img [
+                                                                                    prop.src line.Item.ThumbnailUrl
+                                                                                    prop.alt line.Item.Name
+                                                                                    prop.className " object-cover"
                                                                                 ]
                                                                             ]
                                                                         ]
@@ -245,7 +247,7 @@ let OrderConfirmation (props: OrderConfirmationProps) =
                                                                                     prop.children [
                                                                                         Html.h3 [
                                                                                             prop.className "text-base font-medium text-gray-900 mb-1"
-                                                                                            prop.text "Product Item"
+                                                                                            prop.text line.Item.Name
                                                                                         ]
                                                                                         Html.p [
                                                                                             prop.className "text-sm text-gray-500"
@@ -539,5 +541,5 @@ let OrderConfirmation (props: OrderConfirmationProps) =
 // ---------- Example usage with mock data ----------
 
 [<ReactComponent>]
-let ExampleOrderConfirmation (orderResponse : Shared.Api.Checkout.ConfirmOrderResponse) =
+let View (orderResponse : Shared.Api.Checkout.ConfirmOrderResponse) =
     OrderConfirmation { orderData = orderResponse }

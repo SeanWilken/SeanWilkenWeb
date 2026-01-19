@@ -4,6 +4,7 @@ open Feliz
 open Bindings.LucideIcon
 open Components.Layout.LayoutElements
 open SharedViewModule
+open Client.Components.Shop.Common.Ui.Animations
 
 // ---------- Types ----------
 
@@ -300,18 +301,31 @@ let Welcome (props: WelcomeProps) =
         prop.className "flex flex-col w-full"
         prop.children [
             WelcomeHero props
-            Client.Components.Shop.Common.Ui.Animations.ProgressiveReveal {
+            
+            ScrollReveal {|
+                Variant   = FadeIn
+                Delay     = 0.08
+                Threshold = 0.45
                 Children = ExploreSection props
-            }
-            Client.Components.Shop.Common.Ui.Animations.ProgressiveReveal {
+            |}
+            ScrollReveal {|
+                Variant   = ScaleUp
+                Delay     = 0.08
+                Threshold = 0.45
                 Children = ServicesSection props
-            }
-            Client.Components.Shop.Common.Ui.Animations.ProgressiveReveal {
+            |}
+            ScrollReveal {|
+                Variant   = SlideRight
+                Delay     = 0.08
+                Threshold = 0.45
                 Children = SiteStackSection props
-            }
-            Client.Components.Shop.Common.Ui.Animations.ProgressiveReveal {
+            |}
+            ScrollReveal {|
+                Variant   = FadeUp
+                Delay     = 0.08
+                Threshold = 0.45
                 Children = ComingSoonSection props
-            }
+            |}
         ]
     ]
 

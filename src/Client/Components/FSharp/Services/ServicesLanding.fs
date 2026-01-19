@@ -195,78 +195,76 @@ let ServicesLanding (dispatch: Msg -> unit) =
             
 
             // HOW I WORK
-            ProgressiveReveal {
-                Children = 
-                    Html.section [
-                        prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
+            Html.section [
+                prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
+                prop.children [
+                    Html.div [
+                        prop.className "max-w-6xl mx-auto"
                         prop.children [
+                            Html.p [
+                                prop.className "section-label text-center mb-8"
+                                prop.text "APPROACH"
+                            ]
+                            Html.h2 [
+                                prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
+                                prop.text "How I Engage"
+                            ]
+
                             Html.div [
-                                prop.className "max-w-6xl mx-auto"
+                                prop.className "grid lg:grid-cols-3 gap-8"
                                 prop.children [
-                                    Html.p [
-                                        prop.className "section-label text-center mb-8"
-                                        prop.text "APPROACH"
-                                    ]
-                                    Html.h2 [
-                                        prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
-                                        prop.text "How I Engage"
-                                    ]
 
-                                    Html.div [
-                                        prop.className "grid lg:grid-cols-3 gap-8"
-                                        prop.children [
-
-                                            let approachCard (title: string) (body: string) bullets =
-                                                Html.div [
-                                                    prop.className "approach-card"
+                                    let approachCard (title: string) (body: string) bullets =
+                                        Html.div [
+                                            prop.className "approach-card"
+                                            prop.children [
+                                                Html.h4 [
+                                                    prop.className "cormorant-font text-2xl font-light mb-4"
+                                                    prop.text title
+                                                ]
+                                                Html.p [
+                                                    prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                    prop.text body
+                                                ]
+                                                Html.ul [
+                                                    prop.className "space-y-2 text-xs opacity-50"
                                                     prop.children [
-                                                        Html.h4 [
-                                                            prop.className "cormorant-font text-2xl font-light mb-4"
-                                                            prop.text title
-                                                        ]
-                                                        Html.p [
-                                                            prop.className "text-xs opacity-60 mb-4 leading-relaxed"
-                                                            prop.text body
-                                                        ]
-                                                        Html.ul [
-                                                            prop.className "space-y-2 text-xs opacity-50"
-                                                            prop.children [
-                                                                for b in bullets do Html.li ("• " + b)
-                                                            ]
-                                                        ]
+                                                        for b in bullets do Html.li ("• " + b)
                                                     ]
                                                 ]
-
-                                            approachCard
-                                                "Discovery & Design"
-                                                "We start by mapping your current process and identifying opportunities. I deliver a clear implementation plan with realistic timelines and costs."
-                                                [ 
-                                                    "Current process mapping"
-                                                    "Automation opportunity report"
-                                                    "Prioritized roadmap" ]
-
-                                            approachCard
-                                                "Build & Iterate"
-                                                "I build in focused sprints, delivering working software every 1–2 weeks. You see progress early and often, with room to course-correct as we go."
-                                                [ 
-                                                    "Workflow design & implementation"
-                                                    "System integrations & data sync"
-                                                    "Testing & refinement" ]
-
-                                            approachCard
-                                                "Support & Optimize"
-                                                "After launch, I provide ongoing support to ensure everything runs smoothly. We monitor performance and continuously optimize for better results."
-                                                [ 
-                                                    "Ongoing tuning & monitoring"
-                                                    "New workflow rollouts"
-                                                    "Quarterly optimization reviews" ]
+                                            ]
                                         ]
-                                    ]
+
+                                    approachCard
+                                        "Discovery & Design"
+                                        "We start by mapping your current process and identifying opportunities. I deliver a clear implementation plan with realistic timelines and costs."
+                                        [ 
+                                            "Current process mapping"
+                                            "Automation opportunity report"
+                                            "Prioritized roadmap" ]
+
+                                    approachCard
+                                        "Build & Iterate"
+                                        "I build in focused sprints, delivering working software every 1-2 weeks. You see progress early and often, with room to course-correct as we go."
+                                        [ 
+                                            "Workflow design & implementation"
+                                            "System integrations & data sync"
+                                            "Testing & refinement" ]
+
+                                    approachCard
+                                        "Support & Optimize"
+                                        "After launch, I provide ongoing support to ensure everything runs smoothly. We monitor performance and continuously optimize for better results."
+                                        [ 
+                                            "Ongoing tuning & monitoring"
+                                            "New workflow rollouts"
+                                            "Quarterly optimization reviews" ]
                                 ]
                             ]
                         ]
                     ]
-            }
+                ]
+            ]
+            
 
             // ALL SERVICES GRID
             Html.section [

@@ -528,6 +528,8 @@ module Checkout =
         match item with
         | CartLineItem.Template t ->
             {
+                Name = t.Name
+                ThumbnailUrl = t.PreviewImage |> Option.defaultValue ""
                 Kind             = CartItemKind.Template
                 Quantity         = t.Quantity
                 ExternalProductId = None
@@ -540,6 +542,8 @@ module Checkout =
 
         | CartLineItem.Sync s ->
             {
+                Name = s.Name
+                ThumbnailUrl = s.ThumbnailUrl
                 Kind             = CartItemKind.Sync
                 Quantity         = s.Quantity
                 ExternalProductId = s.ExternalId
@@ -552,6 +556,8 @@ module Checkout =
 
         | CartLineItem.Custom c ->
             {
+                Name = c.Name
+                ThumbnailUrl = c.ThumbnailUrl
                 Kind             = CartItemKind.Custom
                 Quantity         = c.Quantity
                 ExternalProductId = None

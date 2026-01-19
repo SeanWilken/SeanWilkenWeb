@@ -147,7 +147,7 @@ let CodeGalleryCard (title: string) (description: string) CodeSection dispatch =
             // top gradient bar
             Html.div [
                 prop.className
-                    "h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-accent"
+                    "h-1.5 w-full bg-linear-to-r from-primary via-secondary to-accent"
             ]
 
             Html.div [
@@ -228,7 +228,7 @@ type FeaturedExperimentProps = {|
 let FeaturedExperiment (props: FeaturedExperimentProps) =
     Html.div [
         prop.className
-            "rounded-3xl border border-base-200/80 bg-gradient-to-br from-base-200/80 via-base-100 to-base-100 px-6 py-8 lg:px-10 lg:py-10 shadow-xl transition-transform duration-300 hover:-translate-y-2"
+            "rounded-3xl border border-base-200/80 bg-linear-to-br from-base-200/80 via-base-100 to-base-100 px-6 py-8 lg:px-10 lg:py-10 shadow-xl transition-transform duration-300 hover:-translate-y-2"
         prop.children [
             Html.div [
                 prop.className "grid lg:grid-cols-2 gap-10 lg:gap-12 items-center"
@@ -243,7 +243,7 @@ let FeaturedExperiment (props: FeaturedExperimentProps) =
                                 prop.children [
                                     Html.div [
                                         prop.className
-                                            "w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white"
+                                            "w-16 h-16 rounded-full bg-linear-to-br from-primary to-secondary flex items-center justify-center text-white"
                                         prop.children [ props.Icon ]
                                     ]
                                     Html.div [
@@ -296,7 +296,7 @@ let FeaturedExperiment (props: FeaturedExperimentProps) =
                     // RIGHT: media slot (video / placeholder)
                     Html.div [
                         prop.className
-                            "aspect-video rounded-2xl border border-base-300/60 bg-gradient-to-br from-primary/10 via-base-100/40 to-secondary/10 flex items-center justify-center overflow-hidden"
+                            "aspect-video rounded-2xl border border-base-300/60 bg-linear-to-br from-primary/10 via-base-100/40 to-secondary/10 flex items-center justify-center overflow-hidden"
                         prop.children [ props.Media ]
                     ]
                 ]
@@ -628,6 +628,5 @@ let CodeGalleryPage model dispatch =
             |}
     | SynthNeverSets -> 
         SynthNeverSets.View () (SynthNeverSetsMsg >> dispatch) (LoadSection CodeLanding) dispatch
-        // Components.TSX.Portfolio.Games.SynthNeverSets.View (LoadSection Gallery) dispatch
     | SourceCode codeSection ->
         SourceViewer {| Section = codeSection; OnBack = fun () -> dispatch (LoadSection CodeLanding) |}
