@@ -602,15 +602,14 @@ module Types =
                 result : ConfirmOrderResult
             }
 
+open Types.Sync.Order
 
 module PrintfulApi =
 
     module SyncProduct =
 
         open Types.Sync.SyncProductSummary
-        open Shared.Api.Printful.SyncProduct
         open Types.Sync.SyncProductVariant
-        open Types.Sync.SyncProductVariant.Mapping
         open Types.Sync.SyncProductSummary.Mapping
         open Shared.StoreProductViewer.SyncProduct
 
@@ -770,11 +769,117 @@ module PrintfulApi =
 
         }
 
-
-
-
     module Checkout =
         open MongoService.OrderDraftStorage
+
+        module OrderConfirmationEmail =
+
+            open Gmail
+            
+            let renderItemRowsHtml (currencySymbol: string) (items: OrderItem array) =
+                let sb = StringBuilder()
+
+                for it in items do
+                    let name = htmlEncode it.name
+                    let qty  = it.quantity
+                    let unit = htmlEncode it.retail_price
+
+                    sb.AppendLine("<table role=\"presentation\" width=\"100%\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"margin:0 0 10px 0;\">") |> ignore
+                    sb.AppendLine("  <tr>") |> ignore
+                    sb.AppendLine("    <td style=\"font-size:14px; color:#111; padding:8px 0;\">") |> ignore
+                    sb.AppendLine($"      <div style=\"font-weight:700;\">{name}</div>") |> ignore
+                    sb.AppendLine("      <div style=\"font-size:12px; color:#666; margin-top:2px;\">") |> ignore
+                    sb.AppendLine($"        Qty {qty}") |> ignore
+                    sb.AppendLine("      </div>") |> ignore
+                    sb.AppendLine("    </td>") |> ignore
+                    sb.AppendLine("    <td align=\"right\" style=\"font-size:14px; color:#111; padding:8px 0; white-space:nowrap;\">") |> ignore
+                    sb.AppendLine($"{currencySymbol}{unit}") |> ignore
+                    sb.AppendLine("    </td>") |> ignore
+                    sb.AppendLine("  </tr>") |> ignore
+                    sb.AppendLine("</table>") |> ignore
+
+                sb.ToString()
+
+            
+            let mkVars
+                (brandName: string)
+                (brandSiteUrl: string)
+                (brandTagline: string)
+                (supportEmail: string)
+                (orderLookupUrl: string)
+                (stripePaymentIntentId: string)
+                (doc: OrderDraftDocument option)
+                (confirm: PrintfulConfirmOrderResponse)
+                =
+                    let firstName, paymentConfirmation, stripeId, draftId =
+                        match doc with
+                        | None ->
+                            confirm.result.recipient.name, DateTime.UtcNow, stripePaymentIntentId, confirm.result.external_id
+                        | Some d ->
+                            let fn = d.CustomerFirstName |> Option.defaultValue "Friend"
+                            let pc =
+                                if d.PaymentConfirmedAt.HasValue then d.PaymentConfirmedAt.Value
+                                else d.CreatedAt
+                            let sid = d.StripePaymentIntentId |> Option.defaultValue stripePaymentIntentId 
+                            let did = d.DraftExternalId
+                            fn, pc, sid, did
+                    let r = confirm.result
+                    let rc = r.retail_costs
+                    let symbol = currencySymbol rc.currency
+
+                    let ship = r.recipient
+                    { 
+                        BrandLogoUrl = Some "https://xeroeffort.com/img/xe_ico.png"
+                        BrandName = brandName
+                        BrandTagline = brandTagline
+                        BrandSiteUrl = brandSiteUrl
+                        HeroImageUrl = Some "https://xeroeffort.com/img/roses.png"
+                        SupportEmail = supportEmail
+
+                        OrderDate = formatOrderDate paymentConfirmation
+                        CustomerFirstname = htmlEncode firstName
+
+                        AppOrderId = htmlEncode draftId
+                        PrintfulOrderId = htmlEncode (string r.id)
+                        StripePaymentId = htmlEncode stripeId 
+                        OrderLookupUrl = orderLookupUrl
+
+                        ItemCount = r.items.Length
+                        ItemRowsHtml = renderItemRowsHtml symbol r.items
+                        CurrencySymbol = symbol
+                        Subtotal = $"{fmtDecimal rc.subtotal}"
+                        Shipping = "" // $"{rc.shipping:0.00}"
+                        Tax =
+                            match rc.tax with
+                            | Some t -> $"{fmtDecimal t}"
+                            | None -> "0.00"
+                        Total = $"{fmtDecimal rc.total}"
+                        ShipName = htmlEncode ship.name
+                        ShipLine1 = htmlEncode ship.address1
+                        ShipLine2 = 
+                            if String.IsNullOrWhiteSpace ship.address2 then "" else htmlEncode ship.address2
+                        ShipCity = htmlEncode ship.city
+                        ShipState = htmlEncode ship.state_code
+                        ShipZip = htmlEncode ship.zip
+                        ShipCountry = htmlEncode ship.country_name
+                        ShipEmail = htmlEncode ship.email 
+                    }
+
+            let orderConfirmationEmail orderResponse orderDraft stripePaymentIntentId = 
+                renderOrderConfirmationTemplate
+                    (ServerUtilities.EmbeddedResources.loadEmbedded "Server.Template.Email.OrderConfirmation.html")
+                    (mkVars
+                        "Xero Effort"
+                        "xeroeffort.com"
+                        "All things come from xero"
+                        "xeroeffortclub@gmail.com"
+                        "https://xeroeffort.com/shop/orders"
+                        stripePaymentIntentId
+                        orderDraft
+                        orderResponse)
+
+
+
 
         // ---------------- helpers ----------------
 
@@ -976,12 +1081,14 @@ module PrintfulApi =
                             Total            = parsed.result.retail_costs.total
                         }
 
+                    let! docOpt =
+                        tryGetByDraftExternalId req.OrderDraftId
+
                     let! _ = 
                         Gmail.sendEmail
                             req.CustomerInfo.Email
-                            "Your Xero Effort order confirmation"
-                            (Gmail.orderConfirmationEmail req.OrderDraftId orderTotals.Total "usd")
-
+                            $"Xero Effort Order Confirmation: {req.OrderDraftId}"
+                            (OrderConfirmationEmail.orderConfirmationEmail parsed docOpt req.StripeConfirmation)
 
                     return {
                         OrderId = parsed.result.id
@@ -1016,6 +1123,7 @@ module PrintfulApi =
 
         let lookupOrder (req: OrderLookupRequest) : Async<OrderLookupResponse> =
             async {
+
                 let! drafts =
                     OrderDraftStorage.findByEmailAndOptionalOrderId
                         req.Email

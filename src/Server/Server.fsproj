@@ -8,12 +8,16 @@
   <ItemGroup>
     <None Include="paket.references" />
     <Compile Include="Modules\Env.fs" />
+    <Compile Include="Modules\Utilities.fs" />
     <Compile Include="Modules\Gmail.fs" />
     <Compile Include="Modules\Mongo.fs" />
     <Compile Include="Modules\MigrationRunner.fs" />
     <Compile Include="Modules\Stripe.fs" />
     <Compile Include="Modules\Printful.fs" />
     <Compile Include="Modules\Server.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Template\Email\OrderConfirmation.html" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Shared\Shared.fsproj" />

@@ -115,9 +115,41 @@ Guidelines:
 
 ---
 
+# Development Environment Configuration
+
+infrastructure/docker/App/Development/.env
+
+```bash
+
+VITE_STRIPE_API_PK=pk_test_...
+STRIPE_API_SK=sk_test_...
+PRINTFUL_API_KEY=...
+PRINTFUL_OAUTH_KEY=...
+MONGO_INITDB_DATABASE=xeroeffort
+MONGO_INITDB_ROOT_USERNAME=xero
+MONGO_INITDB_ROOT_PASSWORD=dev123
+MONGO_CONNECTION_STRING=mongodb://xero:dev123@localhost:27017/
+ELASTICSEARCH_URL=http://localhost:9200
+ASPNETCORE_URLS=http://0.0.0.0:5000
+VITE_API_BASE_URL=localhost
+SERVER_PROXY_PORT=5000
+PRINTFUL_STORE_ID=...
+GMAIL_SMTP_HOST=smtp.gmail.com
+GMAIL_SMTP_PORT=587
+GMAIL_USERNAME=mail@gmail.com
+GMAIL_APP_PASSWORD=...
+GMAIL_FROM_NAME=Xero Effort
+GMAIL_FROM_ADDRESS=mail@gmail.com
+
+```
+
+
+
 # 🎉 Final Notes
 
 This documentation suite is designed to scale with the platform.  
 As the project grows — new services, new domains, new pipelines — the docs folder will grow with it.
 
 Welcome aboard, and enjoy exploring the system.
+
+
