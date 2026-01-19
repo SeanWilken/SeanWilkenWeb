@@ -6,19 +6,25 @@ metadata:
 spec:
   replicas: 2
   selector:
-    matchLabels: { app: app }
+    matchLabels:
+      app: app
   template:
     metadata:
-      labels: { app: app }
+      labels:
+        app: app
     spec:
+      imagePullSecrets:
+        - name: do-regcred
       containers:
         - name: app
           image: registry.digitalocean.com/wilkenweb/app:latest
           ports:
             - containerPort: 5000
           envFrom:
-            - configMapRef: { name: app-config }
-            - secretRef: { name: app-secrets }
+            - configMapRef:
+                name: app-config
+            - secretRef:
+                name: app-secrets
           readinessProbe:
             httpGet:
               path: /api/health
@@ -32,5 +38,9 @@ spec:
             initialDelaySeconds: 30
             periodSeconds: 20
           resources:
-            requests: { cpu: "100m", memory: "256Mi" }
-            limits:   { cpu: "500m", memory: "512Mi" }
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

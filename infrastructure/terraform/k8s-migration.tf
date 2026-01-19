@@ -1,5 +1,8 @@
- resource "kubectl_manifest" "migration_job" {
-  yaml_body = templatefile("${path.module}/../k8s/base/migration.yaml", {
-    tag = var.tag
-  })
+resource "local_file" "patch_image" {
+  content = templatefile(
+    "../k8s/overlays/production/patch-image.yaml.tmpl",
+    { tag = var.tag }
+  )
+
+  filename = "../k8s/overlays/production/patch-image.yaml"
 }

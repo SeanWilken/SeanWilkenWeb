@@ -1,11 +1,11 @@
 namespace: wilkenweb-prod
-
 resources:
-  - ../../base/namespace.yaml
-  - ../../base/configmap.yaml
-  - ../../base/app-deployment.yaml
-  - ../../base/app-service.yaml
-  - ../../base/ingress.yaml
-
-patchesStrategicMerge:
-  - patch-image.yaml
+- ../../base
+patches:
+- path: patch-image.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: registry.digitalocean.com/wilkenweb/app
+  newName: registry.digitalocean.com/wilkenweb/app
+  newTag: f0d3321

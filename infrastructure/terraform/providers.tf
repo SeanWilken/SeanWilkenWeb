@@ -4,4 +4,12 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(digitalocean_kubernetes_cluster.cluster.kube_config[0].cluster_ca_certificate)
 }
 
-provider "helm" {}
+provider "kubectl" {
+  config_path = var.kubeconfig_path
+}
+
+provider "helm" {
+  kubernetes = {
+    config_path = var.kubeconfig_path
+  }
+}

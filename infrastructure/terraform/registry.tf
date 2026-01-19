@@ -8,7 +8,7 @@ resource "digitalocean_container_registry" "registry" {
   region                 = var.region
 }
 
-resource "kubernetes_namespace" "wilkenweb_prod" {
+resource "kubernetes_namespace_v1" "wilkenweb_prod" {
   metadata {
     name = "wilkenweb-prod"
   }

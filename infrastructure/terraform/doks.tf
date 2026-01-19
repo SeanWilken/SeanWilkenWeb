@@ -4,8 +4,10 @@ resource "digitalocean_kubernetes_cluster" "cluster" {
   version = var.k8s_version
 
   node_pool {
-    name       = "wilken-web-pool"
+    name       = var.node_pool_name
     size       = var.node_size
-    node_count = var.node_count
+    auto_scale  = var.auto_scale
+    min_nodes   = var.min_nodes
+    max_nodes   = var.max_nodes
   }
 }

@@ -11,11 +11,14 @@ module EnvConfig =
     let printfulStoreKey = Environment.GetEnvironmentVariable("PRINTFUL_STORE_ID")
     let mongoUrl = 
         match Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING") with
-        | null | "" -> "mongodb://localhost:27017/xeroeffort"
+        | null | "" -> "mongodb://xero:dev123@localhost:27017/"
         | s -> s
     let elasticUrl = Environment.GetEnvironmentVariable("ELASTICSEARCH_URL")
     let gmailFrom = Environment.GetEnvironmentVariable "GMAIL_USERNAME"
     let gmailPass = Environment.GetEnvironmentVariable "GMAIL_APP_PASSWORD"
     let gmailFromName = Environment.GetEnvironmentVariable "GMAIL_FROM_NAME"
     let gmailSmtpHost = Environment.GetEnvironmentVariable "GMAIL_SMTP_HOST"
-    let gmailSmtpPort = Environment.GetEnvironmentVariable "GMAIL_SMTP_PORT" |> int
+    let gmailSmtpPort =
+        match Environment.GetEnvironmentVariable "GMAIL_SMTP_PORT" with
+        | null | "" -> 587 // default
+        | s -> int s

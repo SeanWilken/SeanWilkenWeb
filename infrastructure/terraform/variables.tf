@@ -18,14 +18,26 @@ variable "k8s_version" {
 }
 
 # NOTE: verify size slug via `doctl kubernetes options sizes`
+variable "node_pool_name" { 
+    type = string 
+    default = "wilken-web-pool"
+}
 variable "node_size" { 
     type = string 
     default = "s-1vcpu-2gb-amd" 
 }
+variable "auto_scale" { 
+    type = bool 
+    default = true
+}
 
-variable "node_count" { 
+variable "min_nodes" { 
     type = number 
     default = 1 
+}
+variable "max_nodes" { 
+    type = number 
+    default = 3 
 }
 
 variable "registry_name" { 
@@ -46,6 +58,10 @@ variable "mongo_size" {
 variable "mongo_version" { 
     type = string
     default = "8"
+}
+
+variable "kubeconfig_path" {
+  type = string
 }
 
 variable "tag" {

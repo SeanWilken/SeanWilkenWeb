@@ -10,7 +10,7 @@ spec:
       restartPolicy: Never
       containers:
         - name: migrate
-          image: registry.digitalocean.com/wilkenweb/app:${tag}
+          image: registry.digitalocean.com/wilkenweb/app:tag
           command: ["dotnet", "Server.dll", "migrate"]
           envFrom:
             - secretRef:

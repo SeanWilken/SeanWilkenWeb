@@ -438,8 +438,8 @@ module OrderDraftStorage =
 
             let! cursor =
                 drafts.Find(filter)
-                      .Sort(Builders<OrderDraftDocument>.Sort.Descending("createdAt"))
-                      .ToCursorAsync()
+                    .Sort(Builders<OrderDraftDocument>.Sort.Descending("createdAt"))
+                    .ToCursorAsync()
                 |> Async.AwaitTask
 
             let! results = cursor.ToListAsync() |> Async.AwaitTask
