@@ -541,6 +541,19 @@ module Store =
             Address : Address
         }
 
+module ArtGalleryViewer =
+    type ArtPiece = {
+        Id: System.Guid
+        DesignKey: string
+        Title: string
+        Description: string
+        ImageUrl: string
+        CdnUrls: string list
+        Tags: string list
+        LinkedSyncProductIds: int list
+        CreatedAt: string
+    }
+
 
 open Store
 
@@ -679,6 +692,87 @@ module StoreProductViewer =
     type GetDetailsResponse =
         { Key     : ProductKey
           Details : ProductDetails }
+
+// TODO: Still need above types until cart / checkout review and refactor
+module ShopProductViewer =
+    
+    type ShopProductListItem = { 
+        SyncProductId : int
+        DesignKey  : string option
+        Name          : string
+        ThumbnailUrl  : string option
+
+        PriceMin      : decimal option
+        PriceMax      : decimal option
+        Currency      : string option
+
+        Colors        : string list
+        Sizes         : string list
+
+        BlankName     : string option
+        BlankBrand    : string option
+        BlankModel    : string option
+        BlankImage    : string option 
+    }
+
+    type ShopVariant = { 
+        SyncVariantId     : int64
+        ExternalId        : string
+        VariantId         : int
+
+        CatalogProductId  : int
+        CatalogVariantId  : int
+
+        Name              : string
+        Size              : string
+        Color             : string
+        Availability      : string option
+
+        Currency          : string
+        RetailPrice       : decimal option
+
+        Sku               : string option
+        ImageUrl          : string option
+        PreviewUrl        : string option
+        FileUrls          : string list 
+    }
+
+    type ShopCatalogColor = { 
+        Name : string
+        Value : string option
+    }
+
+    type ShopCatalogProduct = { 
+        Id            : int
+        Name          : string
+        Brand         : string option
+        Model         : string option
+        Image         : string
+        Description   : string
+        Sizes         : string list
+        Colors        : ShopCatalogColor list
+        Techniques    : string list
+        Placements    : string list
+        ProductOptions: string list
+    }
+
+    type ShopProductDetails = {
+        SyncProductId : int
+        DesignKey  : string option
+        Name          : string
+        ThumbnailUrl  : string option
+        Tags          : string list
+
+        PriceMin      : decimal option
+        PriceMax      : decimal option
+        Currency      : string option
+
+        Colors        : string list
+        Sizes         : string list
+
+        Variants      : ShopVariant list
+        Blank         : ShopCatalogProduct option
+    }
 
 open StoreProductViewer
 
@@ -1057,7 +1151,7 @@ module Api =
         
     open Printful.SyncProduct
 
-    type ProductApi = {
+    type PrintfulProductApi = {
         getProducts : Printful.CatalogProductRequest.CatalogProductsQuery -> Async<PrintfulStoreDomain.CatalogProductResponse.CatalogProductsResponse>
         getSyncProducts : GetSyncProductsRequest -> Async<SyncProductsResponse>
         getSyncProductVariantDetails : GetSyncProductDetailsRequest -> Async<SyncProduct.SyncProductDetailsResponse>
@@ -1074,6 +1168,15 @@ module Api =
         CreateDraftOrder : Checkout.CreateDraftOrderRequest -> Async<Checkout.CreateDraftOrderResponse>
         ConfirmOrder : Checkout.ConfirmOrderRequest -> Async<Checkout.ConfirmOrderResponse>
         LookupOrder    : Checkout.OrderLookupRequest     -> Async<Checkout.OrderLookupResponse>
+    }
+
+    type ArtGalleryApi = {
+        GetGallery: unit -> Async<ArtGalleryViewer.ArtPiece list>
+    }
+
+    type ShopApi = { 
+        GetProducts : unit -> Async<ShopProductViewer.ShopProductListItem list>
+        GetProductDetails : int -> Async<ShopProductViewer.ShopProductDetails option> 
     }
 
 // Ensure that the Client and Server use same end-point

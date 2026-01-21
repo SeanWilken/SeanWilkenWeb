@@ -15,14 +15,16 @@ type GmailConfig = {
 }
 
 let loadConfig () =
-    {
-        Host     = Environment.GetEnvironmentVariable("GMAIL_SMTP_HOST")
-        Port     = Environment.GetEnvironmentVariable("GMAIL_SMTP_PORT") |> int
-        Username = Environment.GetEnvironmentVariable("GMAIL_USERNAME")
-        Password = Environment.GetEnvironmentVariable("GMAIL_APP_PASSWORD")
-        FromName = Environment.GetEnvironmentVariable("GMAIL_FROM_NAME")
-        FromAddr = Environment.GetEnvironmentVariable("GMAIL_FROM_ADDRESS")
-    }
+    EnvService.EnvConfig.getConfiguredEnvironment ()
+    |> fun envConfig ->
+        {
+            Host     = envConfig.GmailSmtpHost
+            Port     = envConfig.GmailSmtpPort
+            FromName = envConfig.GmailFromName
+            Username = envConfig.GmailFrom
+            FromAddr = envConfig.GmailFrom
+            Password = envConfig.GmailPass
+        }
 
 let sendEmail
     (toAddress : string)

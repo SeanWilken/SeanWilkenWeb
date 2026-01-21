@@ -9,9 +9,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     ports:
       - "27017:27017"
-    volumes:
-      # - ./mongo-data:/data/db
-      - ../../../scripts/mongo:/docker-entrypoint-initdb.d
+    restart: unless-stopped
     deploy:
       resources:
         limits:

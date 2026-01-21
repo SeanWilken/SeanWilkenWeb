@@ -3,9 +3,10 @@ module Server
 open Saturn
 open Giraffe
 open PrintfulService.PrintfulApi
-open MongoDB.Driver
-
-
+open ArtGalleryService
+open ShopService
+open EnvService.ArgLoader
+open EnvService.EnvLoader
 
 let spaFallback : HttpHandler =
     fun next ctx ->
@@ -33,8 +34,10 @@ module HealthAPI =
 let app = application {
     use_router (
         choose [
-            ProductAPI.handler
+            PrintfulProductApi.handler
             CheckoutAPI.handler
+            ArtGalleryAPI.handler
+            ShopAPI.handler
             HealthAPI.handler
             spaFallback
         ])
@@ -45,10 +48,28 @@ let app = application {
 
 [<EntryPoint>]
 let main args =
-    match args with
-    | [| "migrate" |] ->
-        let conn = EnvService.EnvConfig.mongoUrl
-        MigrationRunner.runMigrations conn
+    let argsList = args |> Array.toList
+
+    getArg argsList "--env-file"
+    |> Option.iter (fun path ->
+        printfn $"[startup] Loading env: {path}"
+        loadDotEnv path
+    )
+
+    argsList |> List.iter (fun x -> System.Console.WriteLine $"ARG: {x}")
+
+    let pf1 = System.Environment.GetEnvironmentVariable("PRINTFUL_API_KEY")
+    let pf2 = System.Environment.GetEnvironmentVariable("PRINTFUL_STORE_ID")
+
+    printfn $"PRINTFUL_API_KEY len: {if isNull pf1 then -1 else pf1.Length}"
+    printfn $"PRINTFUL_STORE_ID len: {if isNull pf2 then -1 else pf2.Length}"
+
+    match argsList with
+    | "sync-runner" :: _ ->
+        SyncRunner.runSync ()
+        exit 0
+    | "migrate" :: _ ->
+        MigrationRunner.runMigrations ()
         exit 0
     | _ ->
         run app

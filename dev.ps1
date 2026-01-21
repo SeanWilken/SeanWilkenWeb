@@ -56,6 +56,23 @@ if (-not (Test-Path $ServerDir)) {
 }
 
 Write-Host ""
+Write-Host "Running migrations against dev Mongo..." -ForegroundColor Cyan
+
+$max = 20
+for ($i=1; $i -le $max; $i++) {
+    try {
+        dotnet run --project (Join-Path $Root "src/Server") -- migrate
+        Write-Host "Migrations complete." -ForegroundColor Green
+        break
+    } catch {
+        if ($i -eq $max) { throw }
+        Write-Host "Mongo not ready yet (attempt $i/$max). Retrying..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 2
+    }
+}
+
+
+Write-Host ""
 Write-Host "Starting dotnet watch for the server on http://localhost:5000 ..." -ForegroundColor Cyan
 
 $serverProc = Start-Process `

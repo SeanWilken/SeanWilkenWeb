@@ -13,6 +13,5 @@ module EmbeddedResources =
         use r = new StreamReader(s)
         r.ReadToEnd()
 
-
     let loadTemplate (path: string) =
         System.IO.File.ReadAllText(path)

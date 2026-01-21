@@ -6,7 +6,8 @@ module StripePayments =
 
     let createPaymentIntent (totalCents : int) (draftOrderId : string) =
         task {
-            StripeConfiguration.ApiKey <- EnvService.EnvConfig.stripeKey
+            let envConfig = EnvService.EnvConfig.getConfiguredEnvironment()
+            StripeConfiguration.ApiKey <- envConfig.StripeKey
 
             let service = PaymentIntentService()
 

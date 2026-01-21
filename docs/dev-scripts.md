@@ -60,7 +60,6 @@ The dev compose file currently starts:
 - **MongoDB**  
   - Exposed on `localhost:27017`  
   - Initialized with credentials from `.env`  
-  - Loads initialization scripts from `scripts/mongo/`  
 
 ### Example Compose File
 
@@ -76,8 +75,6 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     ports:
       - "27017:27017"
-    volumes:
-      - ../../../scripts/mongo:/docker-entrypoint-initdb.d
     deploy:
       resources:
         limits:

@@ -17,5 +17,5 @@ resource "digitalocean_database_user" "app_user" {
 
 resource "digitalocean_database_db" "db" {
   cluster_id = digitalocean_database_cluster.mongo.id
-  name       = "xeroeffort"
+  name       = var.mongo_db
 }

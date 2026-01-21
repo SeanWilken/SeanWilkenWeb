@@ -18,10 +18,10 @@ open EnvService
 open MongoService
 open System.Text.Json.Serialization
 
-let storeHeaders =
-    
+let storeHeaders () =
+    let envConfig = EnvConfig.getConfiguredEnvironment ()
     [ 
-        "X-PF-Store-ID", EnvConfig.printfulStoreKey
+        "X-PF-Store-ID", envConfig.PrintfulStoreId
     ]
     |> Map.ofList
 
@@ -42,7 +42,8 @@ module PrintfulClient =
         )
 
     // this is what you already have, just parameterize the API key
-    let configureClient (versionOpt: string option) (apiKey:string) (headers: Map<string, string>) =
+    let configureClient (versionOpt: string option) (headers: Map<string, string>) =
+        let envConfig = EnvConfig.getConfiguredEnvironment ()
         let client = printfulHttpClient versionOpt
         if not (client.DefaultRequestHeaders.Contains("X-PF-Store-ID")) then
             headers |> Map.iter (fun k v ->
@@ -51,7 +52,7 @@ module PrintfulClient =
             )
         if isNull client.DefaultRequestHeaders.Authorization then
             client.DefaultRequestHeaders.Authorization <-
-                AuthenticationHeaderValue("Bearer", apiKey)
+                AuthenticationHeaderValue("Bearer", envConfig.PrintfulKey)
 
         client
 
@@ -92,36 +93,11 @@ module PrintfulClient =
 
 module Types =
 
-    module Common = 
-
-        // Server-only: raw types with JsonElement
-        type RawOptionData = {
-            id    : string
-            value : JsonElement
-        }
-
-        type RawColor = {
-            color_name  : string
-            color_codes : string array
-        }
-
-        type RawPlacementOption = {
-            placement               : string
-            display_name            : string
-            technique_key           : string
-            technique_display_name  : string
-            options                 : JsonElement array
-        }
-
-        type RawPlacementOptionData = {
-            ``type`` : string
-            options  : JsonElement array
-        }
-
     // Printful Product Catalog (Base Items)
+    // THIS IS V2
     module CatalogProduct =
 
-        type RawStoreVariant = {
+        type CatalogVariant = {
             id            : int
             variant_id    : int option
             size          : string option
@@ -135,255 +111,208 @@ module Types =
             currency_code : string option
         }
 
-        type RawStoreVariantResponse = {
+        type CatalogVariantResponse = {
             code   : int
-            result : RawStoreVariant
+            result : CatalogVariant
         }
 
     // Store Products imported from Printful
-    module Sync =
+    // THESE ARE WHAT WE ARE USING
+    module SyncProduct =
 
-        module SyncProductSummary =
+        [<CLIMutable>]
+        type SyncProductSummary = {
+            [<JsonPropertyName("id")>]
+            id : int
+            [<JsonPropertyName("external_id")>]
+            external_id : string
+            [<JsonPropertyName("name")>]
+            name : string
+            [<JsonPropertyName("variants")>]
+            variants : int
+            [<JsonPropertyName("thumbnail_url")>]
+            thumbnail_url : string
+            [<JsonPropertyName("synced")>]
+            synced : int
+            [<JsonPropertyName("is_ignored")>]
+            is_ignored : bool
+        }
 
-            type RawSyncProductSummary = {
-                id          : int
-                external_id : string option
-                name        : string
-                thumbnail_url : string option
-                synced      : int
-                variants    : int
-                is_ignored : bool
-            }
+        type SyncProductResponse = {
+            code : int
+            result  : SyncProductSummary array
+            paging : PagingInfoDTO
+            extra    : string array
+        }
+        
+        // do we need this? This is the list response shape?
+        type SyncProductDetails = {
+            product_id : int
+            variant_id : int
+            external_id   : string option
+            name          : string
+            thumbnail_url : string option
+        }
 
-            type RawSyncProductResponse = {
-                code : int
-                result  : RawSyncProductSummary array
-                paging : PagingInfoDTO
-                extra    : string array
+        [<CLIMutable>]
+        type VariantProductInfo = {
+            [<JsonPropertyName("variant_id")>]
+            variant_id : int
+            [<JsonPropertyName("product_id")>]
+            product_id : int
+            [<JsonPropertyName("image")>]
+            image : string
+            [<JsonPropertyName("name")>]
+            name : string
+        }
 
-            }
-            
-            type RawSyncProductDetails = {
-                product_id : int
-                variant_id : int
-                external_id   : string option
-                name          : string
-                thumbnail_url : string option
-            }
+        [<CLIMutable>]
+        type SyncFile = {
+            [<JsonPropertyName("type")>]
+            ``type`` : string
+            [<JsonPropertyName("preview_url")>]
+            preview_url : string
+        }
 
-            type RawSyncVariant = {
-                id            : int
-                sync_product_id : int option
-                name          : string option
-                variant_id : int option
-                size          : string option
-                color         : string option
-                color_code    : string option
-                image         : string option
-                retail_price  : string option   // Printful sometimes sends prices as string
-                currency      : string option
-            }
+        // [<CLIMutable>]
+        // type SyncOption = {
+        //     [<JsonPropertyName("id")>]
+        //     id : string
+        //     [<JsonPropertyName("value")>]
+        //     value : string
+        // }
 
-            type RawSyncProductDetailsResult = {
-                sync_product : RawSyncProductDetails
-                sync_variants: RawSyncVariant array
-            }
+        [<CLIMutable>]
+        type SyncVariant = {
+            [<JsonPropertyName("id")>]
+            id : int64
+            [<JsonPropertyName("external_id")>]
+            external_id : string
+            [<JsonPropertyName("sync_product_id")>]
+            sync_product_id : int64
+            [<JsonPropertyName("name")>]
+            name : string
+            [<JsonPropertyName("synced")>]
+            synced : bool
+            [<JsonPropertyName("variant_id")>]
+            variant_id : int
+            [<JsonPropertyName("retail_price")>]
+            retail_price : string
+            [<JsonPropertyName("currency")>]
+            currency : string
+            [<JsonPropertyName("is_ignored")>]
+            is_ignored : bool
+            [<JsonPropertyName("sku")>]
+            sku : string option
+            [<JsonPropertyName("product")>]
+            product : VariantProductInfo
+            [<JsonPropertyName("files")>]
+            files : SyncFile array
+            // [<JsonPropertyName("options")>]
+            // options : SyncOption array
+            [<JsonPropertyName("main_category_id")>]
+            main_category_id : int option
+            [<JsonPropertyName("warehouse_product_id")>]
+            warehouse_product_id : int option
+            [<JsonPropertyName("warehouse_product_variant_id")>]
+            warehouse_product_variant_id : int64 option
+            [<JsonPropertyName("size")>]
+            size : string
+            [<JsonPropertyName("color")>]
+            color : string
+            [<JsonPropertyName("availability_status")>]
+            availability_status : string
+        }
+
+        [<CLIMutable>]
+        type RawSyncProductDetailsResult = {
+            [<JsonPropertyName("sync_product")>]
+            sync_product : SyncProductSummary // ??
+            [<JsonPropertyName("sync_variants")>]
+            sync_variants : SyncVariant array
+        }
+
+        [<CLIMutable>]
+        type SyncProductDetailsResponse = {
+            [<JsonPropertyName("code")>]
+            code : int
+            [<JsonPropertyName("result")>]
+            result : RawSyncProductDetailsResult
+            [<JsonPropertyName("extra")>]
+            extra : JsonElement array
+        }
+
+        [<CLIMutable>]
+        type SingleSyncProductDetailsResponse = {
+            [<JsonPropertyName("code")>]
+            code : int
+            [<JsonPropertyName("result")>]
+            result : SyncVariant
+        }
 
 
-            type RawSyncProductDetailsResponse = {
-                code   : int
-                result : RawSyncProductDetailsResult
-            }
+        module Mapping =
 
-            module Mapping =
-                
-                let parsePrice (s: string option) =
-                    match s with
-                    | None -> None
-                    | Some t ->
-                        match System.Decimal.TryParse(t) with
-                        | true, v -> Some v
-                        | _ -> None
+            let tryParseDecimal (s: string) : decimal option =
+                match Decimal.TryParse(s, Globalization.NumberStyles.Any, Globalization.CultureInfo.InvariantCulture) with
+                | true, d -> Some d
+                | _ -> None
 
-                // -------------------------
-                // MAPPERS (Raw -> Shared)
-                // -------------------------
+            let private pickPreviewUrl (files: SyncFile array) : string option =
+                files
+                |> Array.tryFind (fun f -> String.Equals(f.``type``, "preview", StringComparison.OrdinalIgnoreCase))
+                |> Option.map (fun f -> f.preview_url)
+                |> Option.orElse (
+                    files
+                    |> Array.tryHead
+                    |> Option.map (fun f -> f.preview_url)
+                )
+                |> Option.filter (fun s -> not (String.IsNullOrWhiteSpace s))
 
-                let mapSummary (r: RawSyncProductSummary) : StoreProductViewer.SyncProduct.SyncProductSummary =
+            module Response =
+
+                let mapSummary (r: SyncProductSummary) : StoreProductViewer.SyncProduct.SyncProductSummary =
                     {
                         Id = r.id
-                        ExternalId    = r.external_id
                         Name          = r.name
-                        ThumbnailUrl  = r.thumbnail_url
                         VariantCount  = r.variants
+                        ExternalId    = if String.IsNullOrWhiteSpace r.external_id then None else Some r.external_id
+                        ThumbnailUrl  = if String.IsNullOrWhiteSpace r.thumbnail_url then None else Some r.thumbnail_url
                     }
 
-
-        module SyncProductVariant =
-
-
-
-            [<CLIMutable>]
-            type RawSyncProduct = {
-                [<JsonPropertyName("id")>]
-                id : int
-                [<JsonPropertyName("external_id")>]
-                external_id : string
-                [<JsonPropertyName("name")>]
-                name : string
-                [<JsonPropertyName("variants")>]
-                variants : int
-                [<JsonPropertyName("thumbnail_url")>]
-                thumbnail_url : string
-                [<JsonPropertyName("synced")>]
-                synced : int
-                [<JsonPropertyName("is_ignored")>]
-                is_ignored : bool
-            }
-
-            [<CLIMutable>]
-            type RawVariantProductInfo = {
-                [<JsonPropertyName("variant_id")>]
-                variant_id : int
-                [<JsonPropertyName("product_id")>]
-                product_id : int
-                [<JsonPropertyName("image")>]
-                image : string
-                [<JsonPropertyName("name")>]
-                name : string
-            }
-
-            [<CLIMutable>]
-            type RawSyncFile = {
-                [<JsonPropertyName("type")>]
-                ``type`` : string
-                [<JsonPropertyName("preview_url")>]
-                preview_url : string
-            }
-
-            [<CLIMutable>]
-            type RawSyncOption = {
-                [<JsonPropertyName("id")>]
-                id : string
-                [<JsonPropertyName("value")>]
-                value : string
-            }
-
-            [<CLIMutable>]
-            type RawSyncVariant = {
-                [<JsonPropertyName("id")>]
-                id : int64
-                [<JsonPropertyName("external_id")>]
-                external_id : string
-                [<JsonPropertyName("sync_product_id")>]
-                sync_product_id : int64
-                [<JsonPropertyName("name")>]
-                name : string
-                [<JsonPropertyName("synced")>]
-                synced : bool
-                [<JsonPropertyName("variant_id")>]
-                variant_id : int
-                [<JsonPropertyName("retail_price")>]
-                retail_price : string
-                [<JsonPropertyName("currency")>]
-                currency : string
-                [<JsonPropertyName("is_ignored")>]
-                is_ignored : bool
-                [<JsonPropertyName("sku")>]
-                sku : string option
-                [<JsonPropertyName("product")>]
-                product : RawVariantProductInfo
-                [<JsonPropertyName("files")>]
-                files : RawSyncFile array
-                // [<JsonPropertyName("options")>]
-                // options : RawSyncOption array
-                [<JsonPropertyName("main_category_id")>]
-                main_category_id : int option
-                [<JsonPropertyName("warehouse_product_id")>]
-                warehouse_product_id : int option
-                [<JsonPropertyName("warehouse_product_variant_id")>]
-                warehouse_product_variant_id : int64 option
-                [<JsonPropertyName("size")>]
-                size : string
-                [<JsonPropertyName("color")>]
-                color : string
-                [<JsonPropertyName("availability_status")>]
-                availability_status : string
-            }
-
-            [<CLIMutable>]
-            type RawSyncProductDetailsResult = {
-                [<JsonPropertyName("sync_product")>]
-                sync_product : RawSyncProduct
-                [<JsonPropertyName("sync_variants")>]
-                sync_variants : RawSyncVariant array
-            }
-
-            [<CLIMutable>]
-            type RawSyncProductDetailsResponse = {
-                [<JsonPropertyName("code")>]
-                code : int
-                [<JsonPropertyName("result")>]
-                result : RawSyncProductDetailsResult
-                [<JsonPropertyName("extra")>]
-                extra : JsonElement array
-            }
-
-            [<CLIMutable>]
-            type RawSingleSyncProductDetailsResponse = {
-                [<JsonPropertyName("code")>]
-                code : int
-                [<JsonPropertyName("result")>]
-                result : RawSyncVariant
-            }
-
-            open Shared.StoreProductViewer.SyncProduct
-
-
-
-            module Mapping =
-
-                let private tryParseDecimal (s: string) : decimal option =
-                    match Decimal.TryParse(s, Globalization.NumberStyles.Any, Globalization.CultureInfo.InvariantCulture) with
-                    | true, d -> Some d
-                    | _ -> None
-
-                let private pickPreviewUrl (files: RawSyncFile array) : string option =
-                    files
-                    |> Array.tryFind (fun f -> String.Equals(f.``type``, "preview", StringComparison.OrdinalIgnoreCase))
-                    |> Option.map (fun f -> f.preview_url)
-                    |> Option.orElse (
-                        files
-                        |> Array.tryHead
-                        |> Option.map (fun f -> f.preview_url)
-                    )
-                    |> Option.filter (fun s -> not (String.IsNullOrWhiteSpace s))
-
-                let toDetailsResponse (raw: RawSyncProductDetailsResponse) : SyncProductDetailsResponse =
+                let toDetailsResponse (raw: SyncProductDetailsResponse) : StoreProductViewer.SyncProduct.SyncProductDetailsResponse =
                     let sp = raw.result.sync_product
                     let variants =
                         raw.result.sync_variants
                         |> Array.toList
-                        |> List.map (fun variant ->
-                            {
-                                Id    = variant.id
-                                SyncProductId    = variant.sync_product_id
-                                VariantId = variant.variant_id
-                                ExternalId = variant.external_id // think this is what we want
-                                VariantProductId = variant.product.product_id
-                                VariantProductVariantId = variant.product.variant_id
-                                Name             = if String.IsNullOrWhiteSpace variant.name then None else Some variant.name
-                                Size             = if String.IsNullOrWhiteSpace variant.size then None else Some variant.size
-                                Color            = if String.IsNullOrWhiteSpace variant.color then None else Some variant.color
-                                ImageUrl         = if isNull variant.product.image then None else Some variant.product.image |> Option.filter (fun x -> not (String.IsNullOrWhiteSpace x))
-                                PreviewUrl       = pickPreviewUrl variant.files
-                                RetailPrice      = tryParseDecimal variant.retail_price
-                                Currency         = if String.IsNullOrWhiteSpace variant.currency then None else Some variant.currency
-                                Availability     = if String.IsNullOrWhiteSpace variant.availability_status then None else Some variant.availability_status
-                            }
+                        |> List.map (
+                            fun variant ->
+                                { 
+                                    Id    = variant.id
+                                    ExternalId = variant.external_id
+                                    SyncProductId    = variant.sync_product_id
+                                    VariantId = variant.variant_id
+                                    VariantProductId = variant.product.product_id
+                                    VariantProductVariantId = variant.product.variant_id
+                                    Name             = if String.IsNullOrWhiteSpace variant.name then None else Some variant.name
+                                    Size             = if String.IsNullOrWhiteSpace variant.size then None else Some variant.size
+                                    Color            = if String.IsNullOrWhiteSpace variant.color then None else Some variant.color
+                                    ImageUrl         = 
+                                        if isNull variant.product.image 
+                                        then None 
+                                        else Some variant.product.image |> Option.filter (fun x -> not (String.IsNullOrWhiteSpace x))
+                                    PreviewUrl       = pickPreviewUrl variant.files
+                                    RetailPrice      = tryParseDecimal variant.retail_price
+                                    Currency         = 
+                                        if String.IsNullOrWhiteSpace variant.currency 
+                                        then None
+                                        else Some variant.currency
+                                    Availability     = 
+                                        if String.IsNullOrWhiteSpace variant.availability_status 
+                                        then None 
+                                        else Some variant.availability_status
+                                } : StoreProductViewer.SyncProduct.SyncVariant
                         )
-
-                    System.Console.WriteLine $"EXTERNAL ID: {sp.external_id}"
 
                     {
                         product =
@@ -396,6 +325,62 @@ module Types =
                                 Variants      = variants
                             }
                     }
+
+            module MongoDocument =
+
+                open StoreProductStorage
+                
+                let mapVariant (v: SyncVariant) : StoreVariantDoc =
+                    { 
+                        CatalogProductId = v.product.product_id
+                        CatalogVariantId = v.product.variant_id
+                        SyncVariantId = v.id
+                        ExternalId = v.external_id
+                        VariantId = v.variant_id
+                        Name = v.name
+                        Size = v.size
+                        Color = v.color
+                        Availability = if String.IsNullOrWhiteSpace v.availability_status then None else Some v.availability_status
+                        Sku = v.sku
+                        Currency = v.currency
+                        RetailPrice = tryParseDecimal v.retail_price
+                        ImageUrl = if String.IsNullOrWhiteSpace v.product.image then None else Some v.product.image
+                        PreviewUrl = pickPreviewUrl v.files
+                        FileUrls = v.files |> Array.map (fun f -> f.preview_url)
+                    }
+
+                let computeProductSummary (variants: StoreVariantDoc[]) : StoreProductSummaryDoc =
+                    let prices = variants |> Array.choose (fun v -> v.RetailPrice)
+                    let priceMin = if prices.Length = 0 then None else Some (Array.min prices)
+                    let priceMax = if prices.Length = 0 then None else Some (Array.max prices)
+
+                    let colors =
+                        variants
+                        |> Array.map (fun v -> v.Color)
+                        |> Array.distinct
+                        |> Array.sort
+
+                    let sizes =
+                        variants
+                        |> Array.map (fun v -> v.Size)
+                        |> Array.distinct
+                        |> Array.sort
+
+                    {
+                        PriceMin = priceMin
+                        PriceMax = priceMax
+                        Colors = colors
+                        Sizes = sizes
+                        PrimaryCatalogProductId = None
+                        BlankName = None
+                        BlankBrand = None
+                        BlankModel = None
+                        BlankImage = None
+                    }
+
+
+
+            
 
         module Order =
 
@@ -466,7 +451,7 @@ module Types =
                 [<JsonPropertyName("name")>]
                 name : string
                 [<JsonPropertyName("product")>]
-                product : SyncProductVariant.RawVariantProductInfo
+                product : VariantProductInfo
                 [<JsonPropertyName("discontinued")>]
                 discontinued : bool
                 [<JsonPropertyName("out_of_stock")>]
@@ -601,24 +586,86 @@ module Types =
                 [<JsonPropertyName("result")>]
                 result : ConfirmOrderResult
             }
-
-open Types.Sync.Order
+open Types.SyncProduct
 
 module PrintfulApi =
 
+    open System.Net
+
+    let private tryGetRetryAfterSeconds (resp: HttpResponseMessage) =
+        // Prefer Retry-After header if present
+        if resp.Headers.RetryAfter <> null then
+            if resp.Headers.RetryAfter.Delta.HasValue then
+                int (resp.Headers.RetryAfter.Delta.Value.TotalSeconds)
+                |> Some
+            elif resp.Headers.RetryAfter.Date.HasValue then
+                let seconds = int (resp.Headers.RetryAfter.Date.Value - DateTimeOffset.UtcNow).TotalSeconds
+                Some (max 1 seconds)
+            else None
+        else None
+
+
     module SyncProduct =
 
-        open Types.Sync.SyncProductSummary
-        open Types.Sync.SyncProductVariant
-        open Types.Sync.SyncProductSummary.Mapping
+        open Types.SyncProduct
         open Shared.StoreProductViewer.SyncProduct
+
+        /// Raw list (paged) - keep all fields for DB sync
+        let fetchRawSyncProductsPage (limit: int option) (offset: int option) : Async<SyncProductResponse> =
+            async {
+                let printfulClient = PrintfulClient.configureClient None (storeHeaders())
+                let url =
+                    "store/products" +
+                    PrintfulClient.qsParams [
+                        match limit with  Some v -> ("limit", string v)  | None -> ()
+                        match offset with Some v -> ("offset", string v) | None -> ()
+                    ]
+
+                let! resp = printfulClient.GetAsync(url) |> Async.AwaitTask
+                let! body = resp.Content.ReadAsStringAsync() |> Async.AwaitTask
+                PrintfulClient.ensureSuccessOrFail resp body "[Printful][RawSyncProductsPage]"
+                return JsonSerializer.Deserialize<SyncProductResponse>(body, jsonOptions)
+            }
+
+        /// Raw details for one sync product - includes variants + files, etc.
+        let fetchRawSyncProductDetails (syncProductId: int) : Async<Types.SyncProduct.SyncProductDetailsResponse> =
+            async {
+                let printfulClient = PrintfulClient.configureClient None (storeHeaders())
+
+                let url = $"store/products/{syncProductId}"
+
+                let rec attempt (n: int) : Async<Types.SyncProduct.SyncProductDetailsResponse> =
+                    async {
+                        let! resp = printfulClient.GetAsync(url) |> Async.AwaitTask
+                        let! body = resp.Content.ReadAsStringAsync() |> Async.AwaitTask
+
+                        if resp.StatusCode = HttpStatusCode.TooManyRequests
+                        then
+                            let retryAfter = tryGetRetryAfterSeconds resp |> Option.defaultValue 60
+                            let jitterMs = Random().Next(0, 750)
+                            let waitMs = retryAfter * 1000 + jitterMs
+
+                            if n >= 5
+                            then return failwith $"[Printful][RawSyncProductDetails] 429 after {n} retries. Body: {body}"
+                            else
+                                printfn $"[Printful] 429 rate limited. Waiting {waitMs}ms then retrying (attempt {n+1}/5)..."
+                                do! Async.Sleep waitMs
+                                return! attempt (n + 1)
+                        else
+                            PrintfulClient.ensureSuccessOrFail resp body "[Printful][RawSyncProductDetails]"
+                            return JsonSerializer.Deserialize<Types.SyncProduct.SyncProductDetailsResponse>(body, jsonOptions)
+                    }
+
+                return! attempt 0
+            }
+
 
         let fetchSyncProducts
             (req    : GetSyncProductsRequest)
             : Async<SyncProductsResponse> =
             async {
 
-                let printfulClient = PrintfulClient.configureClient None EnvConfig.printfulKey storeHeaders
+                let printfulClient = PrintfulClient.configureClient None (storeHeaders())
 
                 let url =
                     "store/products" +
@@ -637,11 +684,11 @@ module PrintfulApi =
 
                 try
                     System.Console.WriteLine $"[Printful][SyncProducts] DESERIALIZE"
-                    let raw = JsonSerializer.Deserialize<RawSyncProductResponse>(body, jsonOptions)
+                    let raw = JsonSerializer.Deserialize<SyncProductResponse>(body, jsonOptions)
                     System.Console.WriteLine $"[Printful][SyncProducts] RAW {raw.code} items={raw.result.Length}"
 
                     return {
-                        items  = raw.result |> Array.toList |> List.map mapSummary
+                        items  = raw.result |> Array.toList |> List.map Mapping.Response.mapSummary
                         paging = { total = raw.paging.total; offset = raw.paging.offset; limit = raw.paging.limit }
                     }
                 with e ->
@@ -654,9 +701,9 @@ module PrintfulApi =
         let fetchSyncProductDetails
             // (http   : HttpClient)
             (syncProductId : Printful.SyncProduct.GetSyncProductDetailsRequest)
-            : Async<SyncProductDetailsResponse> =
+            : Async<StoreProductViewer.SyncProduct.SyncProductDetailsResponse> =
             async {
-                let printfulClient = PrintfulClient.configureClient None EnvConfig.printfulKey storeHeaders
+                let printfulClient = PrintfulClient.configureClient None (storeHeaders())
 
                 let url = $"store/products/{syncProductId.syncProductId}"
                 System.Console.WriteLine $"[Printful][SyncProductDetails] FETCH DETAILS"
@@ -669,9 +716,9 @@ module PrintfulApi =
                 try
 
                     System.Console.WriteLine $"[Printful][SyncProductDetails] DESERIALIZE {body}"
-                    let raw = JsonSerializer.Deserialize<RawSyncProductDetailsResponse>(body, jsonOptions)
+                    let raw = JsonSerializer.Deserialize<Types.SyncProduct.SyncProductDetailsResponse>(body, jsonOptions)
                     System.Console.WriteLine $"[Printful][SyncProductDetails] RAW: {raw}"
-                    return Mapping.toDetailsResponse raw
+                    return Mapping.Response.toDetailsResponse raw
                 with e ->
                     System.Console.WriteLine $"[Printful][SyncProductDetails] DESERIALIZE ERROR: {e.Message}"
                     return failwith $"[Printful][SyncProductDetails] DESERIALIZE ERROR: {e.Message}"
@@ -679,9 +726,9 @@ module PrintfulApi =
 
         let fetchSyncProductVariantDetails
             (externalSyncVariantId : string)
-            : Async<RawSingleSyncProductDetailsResponse option> =
+            : Async<SingleSyncProductDetailsResponse option> =
             async {
-                let printfulClient = PrintfulClient.configureClient None EnvConfig.printfulKey storeHeaders
+                let printfulClient = PrintfulClient.configureClient None (storeHeaders())
 
                 let url = $"store/variants/@{externalSyncVariantId}"
                 System.Console.WriteLine $"[Printful][SyncSingleProductDetails] FETCH DETAILS"
@@ -693,7 +740,7 @@ module PrintfulApi =
                 
                 try
                     System.Console.WriteLine $"[Printful][SyncSingleProductDetails] DESERIALIZE {body}"
-                    let raw = JsonSerializer.Deserialize<RawSingleSyncProductDetailsResponse>(body, jsonOptions)
+                    let raw = JsonSerializer.Deserialize<SingleSyncProductDetailsResponse>(body, jsonOptions)
                     System.Console.WriteLine $"[Printful][SyncSingleProductDetails] RAW: {raw}"
                     return Some raw
                 with e ->
@@ -701,11 +748,121 @@ module PrintfulApi =
                     return None
             }
 
-    module CatalogProduct = 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    module CatalogProduct =
+
+        let mapCatalogProductToDoc
+            (p: PrintfulStoreDomain.CatalogProductResponse.CatalogProduct.PrintfulProduct)
+            : StoreProductStorage.CatalogProductDoc = 
+                {
+                    Id = p.id
+                    MainCategoryId = p.main_category_id
+                    Type = p.``type``
+                    Name = p.name
+                    Brand = p.brand
+                    Model = p.model
+                    Image = p.image
+                    VariantCount = p.variant_count
+                    IsDiscontinued = p.is_discontinued
+                    Description = p.description
+                    Sizes = p.sizes
+                    Colors =
+                        p.colors
+                        |> Array.map (fun c ->
+                            { 
+                                StoreProductStorage.CatalogColorDoc.Name = c.name
+                                Value = c.value
+                            }
+                        )
+                    Techniques =
+                        p.techniques
+                        |> Array.map (fun t ->
+                            { 
+                                StoreProductStorage.CatalogTechniqueDoc.Key = t.key
+                                DisplayName = Some t.display_name 
+                            }
+                        )
+                    Placements =
+                        p.placements
+                        |> Array.map (fun pl ->
+                            { 
+                                StoreProductStorage.CatalogPlacementDoc.Placement = pl.placement
+                                DisplayName = Some pl.display_name 
+                            }
+                        )
+                    ProductOptions =
+                        p.product_options
+                        |> Array.map (fun o ->
+                            { 
+                                StoreProductStorage.CatalogOptionDoc.Id = o.id
+                                Title = Some o.title
+                                Type = Some o.type'
+                            }
+                        )
+                    UpdatedAt = DateTime.UtcNow
+                }
+
 
         type RawSingleCatalogProductResponse = {
             data : PrintfulStoreDomain.CatalogProductResponse.CatalogProduct.PrintfulProduct
         }
+
 
         /// Fetch a single Printful catalog product (v2)
         let fetchCatalogProductById
@@ -713,7 +870,7 @@ module PrintfulApi =
             : Async<PrintfulCatalog.CatalogProduct> =
             async {
 
-                let printfulClient = PrintfulClient.configureClient (Some "v2") EnvConfig.printfulKey storeHeaders
+                let printfulClient = PrintfulClient.configureClient (Some "v2") (storeHeaders())
 
 
                 let url = $"catalog-products/{catalogProductId}"
@@ -750,7 +907,7 @@ module PrintfulApi =
             let url = PrintfulClient.productQueryString queryParams
 
             // configureClient storeHeaders
-            let printfulClient = PrintfulClient.configureClient (Some "v2") EnvConfig.printfulKey storeHeaders
+            let printfulClient = PrintfulClient.configureClient (Some "v2") (storeHeaders())
 
             System.Console.WriteLine $"URL: {url}"
             // + url
@@ -775,6 +932,7 @@ module PrintfulApi =
         module OrderConfirmationEmail =
 
             open Gmail
+            open Types.SyncProduct.Order
             
             let renderItemRowsHtml (currencySymbol: string) (items: OrderItem array) =
                 let sb = StringBuilder()
@@ -833,7 +991,7 @@ module PrintfulApi =
                         BrandName = brandName
                         BrandTagline = brandTagline
                         BrandSiteUrl = brandSiteUrl
-                        HeroImageUrl = Some "https://xeroeffort.com/img/roses.png"
+                        HeroImageUrl = Some "https://xeroeffort.com/img/artwork/roses.png"
                         SupportEmail = supportEmail
 
                         OrderDate = formatOrderDate paymentConfirmation
@@ -889,7 +1047,7 @@ module PrintfulApi =
             | true, dec -> dec
 
 
-        let mapOrderItemToPreviewLine currency (orderItem: Types.Sync.Order.OrderItem) =
+        let mapOrderItemToPreviewLine currency (orderItem: Types.SyncProduct.Order.OrderItem) =
             {
                 Item = {
                     Name          = orderItem.name
@@ -918,11 +1076,7 @@ module PrintfulApi =
         let createDraftOrder (req : CreateDraftOrderRequest) =
             async {
 
-                let printfulClient = 
-                    PrintfulClient.configureClient 
-                        None 
-                        EnvConfig.printfulKey
-                        storeHeaders
+                let printfulClient = PrintfulClient.configureClient None (storeHeaders())
 
                 let intenalOrderId = Guid.NewGuid().ToString()
 
@@ -963,7 +1117,7 @@ module PrintfulApi =
                     // response.EnsureSuccessStatusCode() |> ignore
                     let! body = response.Content.ReadAsStringAsync() |> Async.AwaitTask
                     System.Console.WriteLine $"[Printful][DRAFT] BODY {body}"
-                    let parsed = JsonSerializer.Deserialize<Types.Sync.Order.OrderResponse>(body)
+                    let parsed = JsonSerializer.Deserialize<Types.SyncProduct.Order.OrderResponse>(body)
                     System.Console.WriteLine $"[Printful][DRAFT] PARSED {parsed}"
 
                     let previewLines =
@@ -1034,11 +1188,7 @@ module PrintfulApi =
         let confirmOrder (req : ConfirmOrderRequest) : Async<ConfirmOrderResponse> =
             async {
 
-                let printfulClient = 
-                    PrintfulClient.configureClient 
-                        None 
-                        EnvConfig.printfulKey
-                        storeHeaders
+                let printfulClient = PrintfulClient.configureClient None (storeHeaders())
 
                 let urlParam =
                     match Guid.TryParse req.OrderDraftId with
@@ -1064,7 +1214,8 @@ module PrintfulApi =
                     let! body = response.Content.ReadAsStringAsync() |> Async.AwaitTask
                     System.Console.WriteLine $"[Printful][CONFIRM] BODY {body}"
 
-                    let parsed : Types.Sync.Order.PrintfulConfirmOrderResponse = JsonSerializer.Deserialize<Types.Sync.Order.PrintfulConfirmOrderResponse>(body)
+                    let parsed : Types.SyncProduct.Order.PrintfulConfirmOrderResponse = 
+                        JsonSerializer.Deserialize<Types.SyncProduct.Order.PrintfulConfirmOrderResponse>(body)
                     System.Console.WriteLine $"[Printful][CONFIRM] PARSED {parsed}"
                     
                     let! _ = markOrderConfirmed req.OrderDraftId body parsed.result.id
@@ -1171,9 +1322,9 @@ module PrintfulApi =
             |> Remoting.buildHttpHandler
 
 
-    module ProductAPI =
+    module PrintfulProductApi =
 
-        let private productApi : ProductApi = {
+        let private printfulProductApi : PrintfulProductApi = {
             getProducts = CatalogProduct.fetchProducts
             getSyncProducts = SyncProduct.fetchSyncProducts
             getSyncProductVariantDetails = SyncProduct.fetchSyncProductDetails
@@ -1182,6 +1333,77 @@ module PrintfulApi =
         let handler : HttpHandler =
             Remoting.createApi()
             |> Remoting.withRouteBuilder (fun typeName methodName ->
-                sprintf "/api/products/%s" methodName)
-            |> Remoting.fromValue productApi
+                sprintf "/api/printful/%s" methodName)
+            |> Remoting.fromValue printfulProductApi
             |> Remoting.buildHttpHandler
+
+
+module MongoHelpers =
+    open MongoDB.Driver
+    open MongoService.StoreProductStorage
+
+    let upsertFromRawDetails
+        (collection: IMongoCollection<StoreProductDoc>)
+        (raw: SyncProductDetailsResponse)
+        =
+        async {
+            let sp = raw.result.sync_product
+            let now = DateTime.UtcNow
+
+            let filter =
+                Builders<StoreProductDoc>.Filter.Eq((fun p -> p.SyncProductId), sp.id)
+
+            let! existing =
+                collection.Find(filter).FirstOrDefaultAsync()
+                |> Async.AwaitTask
+
+            let variants =
+                raw.result.sync_variants
+                |> Array.map Mapping.MongoDocument.mapVariant
+
+            let summary = Mapping.MongoDocument.computeProductSummary variants
+
+            let doc =
+                if isNull (box existing)
+                then
+                    { 
+                        Id = Guid.NewGuid()
+                        SyncProductId = sp.id
+                        ExternalId = if String.IsNullOrWhiteSpace sp.external_id then None else Some sp.external_id
+                        Name = sp.name
+                        ThumbnailUrl = if String.IsNullOrWhiteSpace sp.thumbnail_url then None else Some sp.thumbnail_url
+                        Synced = Some sp.synced
+                        VariantCount = sp.variants
+                        IsIgnored = Some sp.is_ignored
+                        DesignKey = None
+                        Tags = [||]
+                        Variants = variants
+                        CatalogProductIds = [||]
+                        Summary = summary
+                        CreatedAt = now
+                        UpdatedAt = now 
+                    }
+                else
+                    { existing with
+                        ExternalId = if String.IsNullOrWhiteSpace sp.external_id then None else Some sp.external_id
+                        Name = sp.name
+                        ThumbnailUrl = if String.IsNullOrWhiteSpace sp.thumbnail_url then None else Some sp.thumbnail_url
+                        Synced = Some sp.synced
+                        VariantCount = sp.variants
+                        IsIgnored = Some sp.is_ignored
+                        Variants = variants
+                        Summary = { 
+                            existing.Summary with
+                                PriceMin = summary.PriceMin 
+                                PriceMax = summary.PriceMax 
+                                Colors = summary.Colors 
+                                Sizes = summary.Sizes 
+                        }
+                        UpdatedAt = now
+                    }
+
+            do!
+                collection.ReplaceOneAsync(filter, doc, ReplaceOptions(IsUpsert = true))
+                |> Async.AwaitTask
+                |> Async.Ignore
+        }

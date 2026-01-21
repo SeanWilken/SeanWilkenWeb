@@ -223,6 +223,31 @@ module PrintfulMapping =
             }
         )
 
+    let tryMakeSyncProductCartItem (qty:int) (details: Shared.ShopProductViewer.ShopProductDetails) (selectedVariantId:int64) : SyncCartItem option =
+        details.Variants
+        |> List.iter ( fun v ->
+
+            printfn $"SEARCH FOR VARIANT: {selectedVariantId} = {v.SyncVariantId} : {selectedVariantId = v.SyncVariantId}"
+        )
+        details.Variants
+        |> List.tryFind (fun v -> v.SyncVariantId = selectedVariantId)
+        |> Option.map (fun v ->
+            {
+                SyncProductId = v.SyncVariantId
+                SyncVariantId = v.VariantId
+                ExternalId = Some v.ExternalId
+                CatalogVariantId = Some v.CatalogVariantId
+                Quantity      = qty
+                Name          = v.Name
+                ThumbnailUrl  = v.PreviewUrl |> Option.orElse v.ImageUrl |> Option.defaultValue ""
+                Size          = v.Size
+                ColorName     = v.Color
+                ColorCodeOpt  = None
+                UnitPrice     = v.RetailPrice |> Option.defaultValue 0m
+                Currency      = v.Currency
+            }
+        )
+
 
     let toSyncCartDU
         (qty   : int)
@@ -561,6 +586,19 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
 
                     // Don't set Section here. Navigate instead.
                     model, Cmd.ofMsg (NavigateTo (ProductViewer pvModel))
+                | Collection.ViewProduct sp ->
+                    let seed = Shared.StoreProductViewer.ProductSeed.SeedSync {
+                        ExternalId = None // think this is what we need....
+                        Id = sp.SyncProductId
+                        Name = sp.Name
+                        ThumbnailUrl = sp.ThumbnailUrl
+                        VariantCount = sp.Sizes.Length * sp.Colors.Length
+                    }
+                    let pvModel, _ =
+                        Product.initFromSeed seed Shared.StoreProductViewer.ReturnTo.BackToCollection
+
+                    // Don't set Section here. Navigate instead.
+                    model, Cmd.ofMsg (NavigateTo (ProductViewer pvModel))
 
                     // let seed = Shared.StoreProductViewer.ProductSeed.SeedSync sp
                     // let pvModel, _ =
@@ -591,9 +629,16 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
                     let initCB = Collection.initModel
                     model, Cmd.ofMsg (NavigateTo (CollectionBrowser initCB))
                 | Product.PrimaryAction ->
-                    match pv.Details, pv.SelectedVariantId with
+                    // match pv.Details, pv.SelectedVariantId with
+                    // | UseDeferred.Deferred.Resolved d, Some evid ->
+                    //     match PrintfulMapping.tryMakeSyncCartItem 1 d.product evid with
+                    //     | Some item -> model, Cmd.ofMsg (ShopMsg.AddCartItem (CartLineItem.Sync item))
+                    //     | None      -> model, Cmd.none
+                    // | _ ->
+                    //     model, Cmd.none
+                    match pv.ProductDetails, pv.SelectedVariantId with
                     | UseDeferred.Deferred.Resolved d, Some evid ->
-                        match PrintfulMapping.tryMakeSyncCartItem 1 d.product evid with
+                        match PrintfulMapping.tryMakeSyncProductCartItem 1 d evid with
                         | Some item -> model, Cmd.ofMsg (ShopMsg.AddCartItem (CartLineItem.Sync item))
                         | None      -> model, Cmd.none
                     | _ ->

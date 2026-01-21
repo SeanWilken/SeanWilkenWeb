@@ -50,6 +50,10 @@ variable "mongo_name" {
     type = string 
     default = "xeroeffort-prod-mongo"
 }
+variable "mongo_db" { 
+    type = string 
+    default = "xeroeffort"
+}
 variable "mongo_size" { 
     type = string
     default = "db-s-1vcpu-2gb"
