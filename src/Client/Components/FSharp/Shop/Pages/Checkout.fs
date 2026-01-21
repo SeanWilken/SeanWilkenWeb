@@ -703,7 +703,7 @@ module View =
         Html.div [
             // ✅ This now matches prop.ref‘s expected type
             prop.ref containerRef
-            prop.className "border rounded p-3 min-h-[60px]"
+            prop.className "border rounded p-3 min-h-15"
         ]
 
     [<ReactComponent>]
@@ -721,7 +721,7 @@ module View =
                 |}
 
                 Html.button [
-                    prop.className "btn btn-primary"
+                    prop.className "btn btn-primary w-full"
                     prop.disabled (model.IsBusy || model.Stripe.IsNone || model.StripeClientSecret.IsNone)
                     prop.text (if model.IsBusy then "Processing..." else "Pay now")
                     prop.onClick (fun _ -> 
