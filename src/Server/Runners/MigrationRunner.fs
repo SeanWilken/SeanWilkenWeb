@@ -18,6 +18,11 @@ module AllMigrations =
                 Name = Migration001.name
                 Up = Migration001.up
             }
+            {
+                Version = Migration002.version
+                Name = Migration002.name
+                Up = Migration002.up
+            }
         ]
 
 let runAll (db: IMongoDatabase) =
@@ -41,8 +46,9 @@ let runAll (db: IMongoDatabase) =
         Console.WriteLine $"Applied migration {script.Version} - {script.Name}"
     )
 
-let runMigrations (connectionString: string) =
-    let client = new MongoClient(connectionString)
-    let db = client.GetDatabase("xeroeffort")
+let runMigrations () =
+    let envConfig = EnvService.EnvConfig.getConfiguredEnvironment ()
+    let client = new MongoClient(envConfig.MongoDbConnectionString)
+    let db = client.GetDatabase envConfig.MongoDbName
     runAll db
     client.Dispose()

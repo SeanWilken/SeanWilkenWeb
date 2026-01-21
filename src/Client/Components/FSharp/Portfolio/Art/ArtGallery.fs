@@ -6,15 +6,11 @@ open Browser
 open Bindings.LucideIcon
 open Client.Components.Shop.Common.Ui.Animations
 open TSXDemos
+open Feliz.UseDeferred
+open Client.Api
 
-type ArtPiece = {
-    Id: string
-    Title: string
-    Description: string
-    Year: string
-    Medium: string
-    Tags: string list
-    ImageSrc: string
+type GalleryArtPiece = {
+    ArtPiece: Shared.ArtGalleryViewer.ArtPiece
     ShiftDirection: RevealVariant
     DetailsSide: DetailsSide
 }
@@ -24,132 +20,53 @@ and DetailsSide =
 
 type Msg =
     | BackToPortfolio
+    | LoadGalleryPieces
+    | LoadedGalleryPieces of Shared.ArtGalleryViewer.ArtPiece list
+    | FailedToLoadGalleryPieces of exn
 
 type Model = {
-    ArtPieces: ArtPiece list
+    ArtPieces: Deferred<GalleryArtPiece list>
 }
 
-let artworks : ArtPiece list = [
-    {
-        Id = "null-space"
-        Title = "Null Space"
-        Description = "An exploration of duality and transformation..."
-        Year = "2026"
-        Medium = "Digital Illustration"
-        Tags = ["Portrait"; "Conceptual"; "Monochrome"]
-        ImageSrc = "../../img/artwork/null-space.png"
-        ShiftDirection = ScaleUp
-        DetailsSide = Right
-    }
-    {
-        Id = "fuming-beauty"
-        Title = "Fuming Beauty"
-        Description = "Blazing through life while it lasts."
-        Year = "2026"
-        Medium = "Digital Illustration"
-        Tags = []
-        ImageSrc = "../../img/artwork/fuming-beauty.png"
-        ShiftDirection = Snap
-        DetailsSide = Left
-    }
-    {
-        Id = "this-is-quiet"
-        Title = "This Is Quiet"
-        Description = "A study in contradictions—the skull, surrounded by instruments of chaos and noise, declares silence..."
-        Year = "2026"
-        Medium = "Digital Illustration"
-        Tags = ["Ironic"; "Statement"; "Detailed"]
-        ImageSrc = "../../img/artwork/this-is-quiet.png"
-        ShiftDirection = FadeIn
-        DetailsSide = Right
-    }
-    {
-        Id = "burning-blossom"
-        Title = "Burning Blossom"
-        Description = "Burning up cause it's cherry blossom season"
-        Year = "2026"
-        Medium = "Digital Illustration"
-        Tags = ["Floral"; "Pattern"; "Bold"]
-        ImageSrc = "../../img/artwork/burning-blossom.png"
-        ShiftDirection = FadeUp
-        DetailsSide = Left
-    }
-    {
-        Id = "vices"
-        Title = "Vices"
-        Description = "Careful what you choose..."
-        Year = "2026"
-        Medium = "Digital Illustration"
-        Tags = ["Chaotic"; "Colored";]
-        ImageSrc = "../../img/artwork/vices.png"
-        ShiftDirection = ScaleUp
-        DetailsSide = Right
-    }
-    {
-        Id = "forever-burning"
-        Title = "Forever Burning"
-        Description = "Skeletal hands cradle a burning rose—a meditation on passion..."
-        Year = "2025"
-        Medium = "Mixed Media Digital"
-        Tags = ["Symbolic"; "Color"; "Narrative"]
-        ImageSrc = "../../img/artwork/forever-burning.png"
-        ShiftDirection = SlideRight
-        DetailsSide = Left
-    }
-    {
-        Id = "roses"
-        Title = "Roses"
-        Description = "A bold pattern exploring the duality of beauty and chaos..."
-        Year = "2026"
-        Medium = "Digital Pattern Design"
-        Tags = ["Floral"; "Pattern"; "Bold"]
-        ImageSrc = "../../img/artwork/roses.png"
-        ShiftDirection = Snap
-        DetailsSide = Right
-    }
-    {
-        Id = "caution-very-hot"
-        Title = "Caution: Very Hot"
-        Description = "You know what they say?"
-        Year = "2026"
-        Medium = "Digital Pattern Design"
-        Tags = [ "Shadows"; "Colored" ]
-        ImageSrc = "../../img/artwork/caution-very-hot.png"
-        ShiftDirection = Snap
-        DetailsSide = Left
-    }
-    {
-        Id = "emotion-flow"
-        Title = "Emotion Flow"
-        Description = "Going therough it all again..."
-        Year = "2026"
-        Medium = "Digital Art"
-        Tags = [ "Flow"; "Composition" ]
-        ImageSrc = "../../img/artwork/emotion-flow.png"
-        ShiftDirection = ScaleUp
-        DetailsSide = Right
-    }
-    {
-        Id = "xray"
-        Title = "Null XRay"
-        Description = "Minimal contours to define form, not beauty."
-        Year = "2026"
-        Medium = "Digital Illustration"
-        Tags = ["Portrait"; "Minimalist"; "Monochrome"]
-        ImageSrc = "../../img/artwork/blurred-outline.png"
-        ShiftDirection = FadeIn
-        DetailsSide = Left
-    }
-]
+let loadGalleryCmd =
+    Cmd.OfAsync.either
+        artGalleryApi.GetGallery
+        ()
+        LoadedGalleryPieces
+        FailedToLoadGalleryPieces
 
-let initialModel = { ArtPieces = artworks } 
+let initialModel = { ArtPieces = Deferred.HasNotStartedYet } 
 
 let init () : Model * Cmd<Msg> =
-    initialModel, Cmd.none
+    initialModel, Cmd.ofMsg LoadGalleryPieces
 
 let update (msg: Msg) (model: Model) =
     match msg with
     | BackToPortfolio -> model, Cmd.none
+    | LoadGalleryPieces -> model, loadGalleryCmd
+    | LoadedGalleryPieces artPieces ->
+        { model with 
+            ArtPieces =
+                artPieces
+                |> List.mapi (fun idx artPiece ->
+                    let side = if idx % 2 = 0 then Left else Right
+                    let direction =
+                        match idx % 4 with
+                        | 0 -> SlideRight
+                        | 1 -> FadeIn
+                        | 2 -> Snap
+                        | _ -> ScaleUp
+
+                    {
+                        ArtPiece = artPiece
+                        DetailsSide = side
+                        ShiftDirection = direction
+                    }
+                )
+                |> Deferred.Resolved
+        }, Cmd.none
+    | FailedToLoadGalleryPieces ex ->
+        { model with ArtPieces = Deferred.Failed ex }, Cmd.none
 
 type RightHeaderIcon = {
     icon: ReactElement
@@ -209,7 +126,7 @@ let tagPill (tag: string) =
     ]
 
 [<ReactComponent>]
-let ArtPieceCard (art: ArtPiece) =
+let ArtPieceCard (art: GalleryArtPiece) =
     let isLeft = art.DetailsSide = Left
 
     let detailsColOrder = if isLeft then "lg:order-1" else "lg:order-2"
@@ -220,7 +137,7 @@ let ArtPieceCard (art: ArtPiece) =
         else "lg:-ml-10 xl:-ml-16"
 
     Html.section [
-        prop.key art.Id
+        prop.key art.ArtPiece.DesignKey
         prop.className "min-h-[130vh] sm:min-h-[140vh] lg:min-h-[155vh] flex items-center"
         prop.children [
             Html.div [
@@ -259,26 +176,26 @@ let ArtPieceCard (art: ArtPiece) =
                                                                                 prop.children [
                                                                                     Html.p [
                                                                                         prop.className "text-[11px] tracking-[0.28em] uppercase opacity-60"
-                                                                                        prop.text $"{art.Year} • {art.Medium}"
+                                                                                        prop.text $"{art.ArtPiece.CreatedAt}"
                                                                                     ]
                                                                                 ]
                                                                             ]
 
                                                                             Html.h2 [
                                                                                 prop.className "font-serif text-3xl sm:text-4xl leading-tight"
-                                                                                prop.text art.Title
+                                                                                prop.text art.ArtPiece.Title
                                                                             ]
 
                                                                             Html.p [
                                                                                 prop.className "text-sm sm:text-base leading-relaxed opacity-75"
-                                                                                prop.text art.Description
+                                                                                prop.text art.ArtPiece.Description
                                                                             ]
 
-                                                                            if not art.Tags.IsEmpty then
+                                                                            if not art.ArtPiece.Tags.IsEmpty then
                                                                                 Html.div [
                                                                                     prop.className "pt-1 flex flex-wrap gap-2"
                                                                                     prop.children [
-                                                                                        art.Tags
+                                                                                        art.ArtPiece.Tags
                                                                                         |> List.map tagPill
                                                                                         |> React.fragment
                                                                                     ]
@@ -319,8 +236,8 @@ let ArtPieceCard (art: ArtPiece) =
 
                                                                     // Image (above shader)
                                                                     Html.img [
-                                                                        prop.src art.ImageSrc
-                                                                        prop.alt art.Title
+                                                                        prop.src art.ArtPiece.ImageUrl
+                                                                        prop.alt art.ArtPiece.Title
                                                                         // prop.loading.lazy
                                                                         prop.className
                                                                             "relative z-10 w-full h-auto object-contain"
@@ -425,8 +342,69 @@ let ArtGalleryPage (model: Model) dispatch =
             Html.div [
                 prop.className "space-y-0"
                 prop.children [
-                    for art in model.ArtPieces do
-                        ArtPieceCard art
+                    match model.ArtPieces with
+                    | Deferred.HasNotStartedYet
+                    | Deferred.InProgress ->
+                        Html.div [
+                            prop.className "w-full py-20 flex justify-center"
+                            prop.children [
+                                Html.div [
+                                    prop.className "loading-spinner loading-lg loading"
+                                ]
+                            ]
+                        ]
+                    | Deferred.Failed ex ->
+                        Html.div [
+                            prop.children [
+                                Html.div [
+                                    // "card" container for image + shader, contained and theme aware
+                                    prop.className
+                                        "relative overflow-hidden rounded-2xl border border-base-content/10 shadow-2xl"
+
+                                    prop.children [
+
+                                        // Shader background layer (contained to this card)
+                                        Html.div [
+                                            prop.className "absolute inset-0"
+                                            prop.children [
+                                                ShaderGradientBackground {|
+                                                    className = Some "opacity-80"
+                                                    intensity = Some 0.55
+                                                |}
+
+                                                // readability/contrast veil so art stays readable
+                                                Html.div [
+                                                    prop.className "absolute inset-0 bg-base-100/30"
+                                                ]
+                                            ]
+                                        ]
+
+                                        // Image (above shader)
+                                        Html.img [
+                                            prop.src "/img/artwork/this-is-quiet.png"
+                                            prop.alt "Errawr!!!!"
+                                            // prop.loading.lazy
+                                            prop.className
+                                                "relative z-10 w-full h-auto object-contain"
+                                        ]
+
+                                        // Subtle frame ring (above everything)
+                                        Html.div [
+                                            prop.className
+                                                "pointer-events-none absolute inset-0 rounded-2xl ring-1 ring-base-content/10 z-20"
+                                        ]
+                                    ]
+                                ]
+                                Html.div [
+                                    prop.className "w-full py-20 text-center text-red-500"
+                                    prop.text $"Oh no! we failed to load the art gallery"
+                                ]
+                            ]
+                        ]
+                    | Deferred.Resolved artPieces ->
+                        artPieces
+                        |> List.map ArtPieceCard
+                        |> React.fragment
                 ]
             ]
 

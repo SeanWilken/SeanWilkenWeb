@@ -31,8 +31,8 @@ type Model =
 
 let getInitialModel = CodeGallery
 
-let getSourceCode CodeSection : string = 
-    match CodeSection with
+let getSourceCode codeSection : string = 
+    match codeSection with
     | CodeSection.TileSort -> importDefault "./TileSort/TileSort.fs?raw"
     | CodeSection.TileTap -> importDefault "./TileTap/TileTap.fs?raw"
     | CodeSection.GoalRoll -> importDefault "./GoalRoll/GoalRoll.fs?raw"
@@ -136,7 +136,7 @@ let private gameMeta title =
 
 // “experiment card” for the ALL EXPERIMENTS grid
 [<ReactComponent>]
-let CodeGalleryCard (title: string) (description: string) CodeSection dispatch =
+let CodeGalleryCard (title: string) (description: string) codeSection dispatch =
     let icon, tag = gameMeta title
 
     Html.div [
@@ -193,12 +193,12 @@ let CodeGalleryCard (title: string) (description: string) CodeSection dispatch =
                                 prop.className
                                     "inline-flex-1 btn btn-xs sm:btn-sm btn-outline tracking-[0.15em] uppercase text-[0.7rem]"
                                 prop.text "Source code"
-                                prop.onClick (fun _ -> LoadSourceCode CodeSection |> dispatch)
+                                prop.onClick (fun _ -> LoadSourceCode codeSection |> dispatch)
                             ]
                             Html.button [
                                 prop.className
                                     "btn btn-xs sm:btn-sm btn-primary gap-2 tracking-[0.15em] uppercase text-[0.7rem]"
-                                prop.onClick (fun _ -> dispatch (LoadSection CodeSection))
+                                prop.onClick (fun _ -> dispatch (LoadSection codeSection))
                                 prop.children [
                                     Html.span [ prop.text "Launch demo" ]
                                     LucideIcon.Play "w-3 h-3"

@@ -346,7 +346,7 @@ module Designer =
                 model.Query
 
         Cmd.OfAsync.either
-            (fun qp -> Client.Api.productsApi.getProducts qp)
+            (fun qp -> Client.Api.printfulProductApi.getProducts qp)
             q
             ProductsLoaded
             (fun ex -> LoadFailed ex.Message)

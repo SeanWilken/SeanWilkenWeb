@@ -133,6 +133,7 @@ module PrintfulMapping =
 
             // 6. Wrap it in the DU
             Some (CartLineItem.Custom baseItem)
+
     let toTemplateCartDU
         (qty   : int)
         (model : Designer.Model)
@@ -223,14 +224,39 @@ module PrintfulMapping =
             }
         )
 
+    let tryMakeSyncProductCartItem (qty:int) (details: Shared.ShopProductViewer.ShopProductDetails) (selectedVariantId:int64) : SyncCartItem option =
+        details.Variants
+        |> List.iter ( fun v ->
+
+            printfn $"SEARCH FOR VARIANT: {selectedVariantId} = {v.SyncVariantId} : {selectedVariantId = v.SyncVariantId}"
+        )
+        details.Variants
+        |> List.tryFind (fun v -> v.SyncVariantId = selectedVariantId)
+        |> Option.map (fun v ->
+            {
+                SyncProductId = v.SyncVariantId
+                SyncVariantId = v.VariantId
+                ExternalId = Some v.ExternalId
+                CatalogVariantId = Some v.CatalogVariantId
+                Quantity      = qty
+                Name          = v.Name
+                ThumbnailUrl  = v.PreviewUrl |> Option.orElse v.ImageUrl |> Option.defaultValue ""
+                Size          = v.Size
+                ColorName     = v.Color
+                ColorCodeOpt  = None
+                UnitPrice     = v.RetailPrice |> Option.defaultValue 0m
+                Currency      = v.Currency
+            }
+        )
+
 
     let toSyncCartDU
         (qty   : int)
         (model : Product.Model)
         : CartLineItem option =
-            match model.Details with
+            match model.ProductDetails with
             | Deferred.Resolved details ->
-                tryMakeSyncCartItem qty details.product (model.SelectedVariantId |> Option.defaultValue 0)
+                tryMakeSyncProductCartItem qty details (model.SelectedVariantId |> Option.defaultValue 0)
                 |> Option.map (fun syncItem -> CartLineItem.Sync syncItem)
             | _ -> None
 
@@ -554,21 +580,17 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
         | CollectionBrowser cb ->
             let updatedModel, cmd' =
                 match subMsg with
-                | Collection.ViewSyncProduct sp ->
-                    let seed = Shared.StoreProductViewer.ProductSeed.SeedSync sp
+                | Collection.ViewProduct sp ->
+                    let seed = Shared.StoreProductViewer.ProductSeed.SeedSync {
+                        ExternalId = None
+                        Id = sp.SyncProductId
+                        Name = sp.Name
+                        ThumbnailUrl = sp.ThumbnailUrl
+                        VariantCount = sp.Sizes.Length * sp.Colors.Length
+                    }
                     let pvModel, _ =
                         Product.initFromSeed seed Shared.StoreProductViewer.ReturnTo.BackToCollection
-
-                    // Don't set Section here. Navigate instead.
                     model, Cmd.ofMsg (NavigateTo (ProductViewer pvModel))
-
-                    // let seed = Shared.StoreProductViewer.ProductSeed.SeedSync sp
-                    // let pvModel, _ =
-                    //     Product.initFromSeed
-                    //         seed
-                    //         Shared.StoreProductViewer.ReturnTo.BackToCollection
-                    // { model with Section = ProductViewer pvModel }, 
-                    // Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
                 | _ ->
                     Collection.update subMsg cb
                     |> fun (m, cmd) -> 
@@ -591,9 +613,9 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
                     let initCB = Collection.initModel
                     model, Cmd.ofMsg (NavigateTo (CollectionBrowser initCB))
                 | Product.PrimaryAction ->
-                    match pv.Details, pv.SelectedVariantId with
+                    match pv.ProductDetails, pv.SelectedVariantId with
                     | UseDeferred.Deferred.Resolved d, Some evid ->
-                        match PrintfulMapping.tryMakeSyncCartItem 1 d.product evid with
+                        match PrintfulMapping.tryMakeSyncProductCartItem 1 d evid with
                         | Some item -> model, Cmd.ofMsg (ShopMsg.AddCartItem (CartLineItem.Sync item))
                         | None      -> model, Cmd.none
                     | _ ->
@@ -636,20 +658,14 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
         | CollectionBrowser cb ->
             // fresh designer state
             let model' = { model with Section = CollectionBrowser cb }
-            // immediately ask the designer to load products
             model', Cmd.none 
-            // Cmd.ofMsg (ShopCollectionMsg Collection.LoadMore)
         | ProductDesigner pd ->
             // fresh designer state
             let model' = { model with Section = ProductDesigner pd }
-            // immediately ask the designer to load products
-            // Cmd.ofMsg (ShopDesignerMsg ProductDesigner.Msg.LoadProducts)
             model', Cmd.none 
         | ProductViewer pv ->
             let model' =  { model with Section = ProductViewer pv }
-            
             model', Cmd.none 
-            // Cmd.ofMsg (ShopProduct ProductViewer.Msg.LoadDetails)
         | _ ->
             { model with Section = section }, Cmd.none
 

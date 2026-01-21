@@ -177,7 +177,7 @@ let urlUpdate (result: Page option) (model: WebAppModels.WebAppModel) : WebAppMo
         Cmd.none
     | Some (Portfolio (Design DesignGallery)) ->
         { model with CurrentAreaModel = WebAppModels.Portfolio (PortfolioLanding.Model.DesignGallery Portfolio.ArtGallery.initialModel) },
-        Cmd.none
+        Cmd.ofMsg (PortfolioMsg (PortfolioLanding.Msg.ArtGalleryMsg Portfolio.ArtGallery.Msg.LoadGalleryPieces))
     | Some (Portfolio _) ->
         { model with CurrentAreaModel = WebAppModels.Portfolio PortfolioLanding.Model.PortfolioGallery },
         Cmd.none
@@ -190,7 +190,14 @@ let urlUpdate (result: Page option) (model: WebAppModels.WebAppModel) : WebAppMo
     | Some (Shop area) ->
         let initCmd =
             match area with
-            | ProductViewer _ -> Cmd.ofMsg (ShopMsg (Shop.ShopMsg.ShopProduct Product.Msg.LoadDetails))
+            | ProductViewer pk ->
+                let id =
+                    match pk with
+                    | Sync s -> s
+                    | Catalog c -> c
+                    | Template t -> t
+                    |> int
+                Cmd.ofMsg (ShopMsg (Shop.ShopMsg.ShopProduct (Product.Msg.LoadProductDetails id)))
             | ProductDesigner -> Cmd.ofMsg (ShopMsg (Shop.ShopMsg.ShopDesignerMsg Designer.Msg.LoadProducts))
             | CollectionBrowser -> Cmd.ofMsg (ShopMsg (Shop.ShopMsg.ShopCollectionMsg Collection.Msg.LoadMore))
             | _ -> Cmd.none
