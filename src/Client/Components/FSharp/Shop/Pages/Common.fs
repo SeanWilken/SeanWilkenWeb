@@ -6,7 +6,7 @@ module Ui =
     /// Simple helper to concatenate tailwind classes cleanly
     let inline tw (classes: string list) =
         classes
-        |> List.filter (System.String.IsNullOrWhiteSpace >> not)
+        |> List.filter (SharedViewModule.Helpers.iNoWS >> not)
         |> String.concat " "
 
     /// DaisyUI button variants

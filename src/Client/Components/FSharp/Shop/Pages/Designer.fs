@@ -859,7 +859,7 @@ module Designer =
                 Html.div [
                     prop.className "w-14 h-14 rounded-md bg-base-200 flex items-center justify-center overflow-hidden"
                     prop.children [
-                        if System.String.IsNullOrWhiteSpace p.thumbnailURL |> not then
+                        if SharedViewModule.Helpers.iNoWS p.thumbnailURL |> not then
                             Html.img [
                                 prop.src p.thumbnailURL
                                 prop.alt p.name
@@ -1504,7 +1504,7 @@ module Designer =
                             TotalCount = model.Paging.total
                             Filters    = model.Query              // or appropriate filters for designer
                             Paging     = model.Paging
-                            SearchTerm = if System.String.IsNullOrWhiteSpace model.SearchTerm then None else Some model.SearchTerm                     // or Some model.searchTerm if you have it
+                            SearchTerm = if SharedViewModule.Helpers.iNoWS model.SearchTerm then None else Some model.SearchTerm                     // or Some model.searchTerm if you have it
                             OnSearchChanged = (fun term -> dispatch (DesignerSearchChanged term) )
                             DisableControls = false
                             // OnSortChanged = (fun sortDetails -> dispatch (DesignerSortChanged sortDetails) )

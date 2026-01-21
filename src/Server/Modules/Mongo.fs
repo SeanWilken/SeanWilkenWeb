@@ -796,7 +796,7 @@ module StoreProductStorage =
             let currencyOpt =
                 d.Variants
                 |> Array.map (fun v -> v.Currency)
-                |> Array.tryFind (fun c -> not (System.String.IsNullOrWhiteSpace c))
+                |> Array.tryFind (fun c -> not (String.IsNullOrWhiteSpace c))
 
             { 
                 SyncProductId = d.SyncProductId

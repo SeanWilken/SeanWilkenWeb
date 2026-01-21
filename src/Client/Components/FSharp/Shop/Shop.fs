@@ -533,7 +533,7 @@ let update (msg: ShopMsg) (model: Model) : Model * Cmd<ShopMsg> =
                                 countryCode   = mdl.CustomerShippingInfo.Country
                                 email = mdl.CustomerShippingInfo.Email
                                 phone = 
-                                    if System.String.IsNullOrWhiteSpace mdl.CustomerShippingInfo.Phone
+                                    if SharedViewModule.Helpers.iNoWS mdl.CustomerShippingInfo.Phone
                                     then None
                                     else Some mdl.CustomerShippingInfo.Phone
                             }

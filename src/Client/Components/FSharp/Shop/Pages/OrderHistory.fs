@@ -55,13 +55,13 @@ module OrderHistory =
             { model with OrderId = orderId; Error = None }, Cmd.none
             
         | SearchOrders ->
-            if String.IsNullOrWhiteSpace(model.Email) then
+            if SharedViewModule.Helpers.iNoWS(model.Email) then
                 { model with Error = Some "Email is required" }, Cmd.none
             else
                 let request = {
                     Email = model.Email.Trim()
                     OrderId = 
-                        if String.IsNullOrWhiteSpace(model.OrderId) then None
+                        if SharedViewModule.Helpers.iNoWS(model.OrderId) then None
                         else Some (model.OrderId.Trim())
                 }
                 

@@ -16,7 +16,7 @@ module ProductCard =
     open TSXUtilities
 
     let safeStrings (xs: string list) =
-        xs |> List.choose (fun s -> if isNull s || System.String.IsNullOrWhiteSpace s then None else Some s)
+        xs |> List.choose (fun s -> if isNull s || SharedViewModule.Helpers.iNoWS s then None else Some s)
     let fmtPrice (d: decimal) = d.ToString("0.00")
     
     let priceText (product: ShopProductViewer.ShopProductListItem) =
@@ -29,6 +29,16 @@ module ProductCard =
 
     let distinctColors (product: ShopProductViewer.ShopProductListItem) = product.Colors |> safeStrings |> List.distinct
     let distinctSizes (product: ShopProductViewer.ShopProductListItem) = product.Sizes  |> safeStrings |> List.distinct
+
+
+    let colorAttrStr = "color"
+    let sizeAttrStr = "size"
+    let lengthStringOrEmpty length attrStr =
+        if length <= 0 then ""
+        elif length = 1 then $"{length} {attrStr}"
+        else $"{length} {attrStr}s"
+
+    let iNoWS str = SharedViewModule.Helpers.iNoWS str
 
     [<ReactComponent>]
     let FeaturedProductCard (onSelect: ShopProductViewer.ShopProductListItem -> unit) (featuredProductOpt: ShopProductViewer.ShopProductListItem option) =
@@ -82,7 +92,7 @@ module ProductCard =
                                     
                                     // Blank name if exists
                                     match product.BlankName with
-                                    | Some bn when not (System.String.IsNullOrWhiteSpace bn) ->
+                                    | Some bn when not (SharedViewModule.Helpers.iNoWS bn) ->
                                         Html.p [
                                             prop.className "text-xs text-base-content/40 font-light"
                                             prop.text bn
@@ -110,7 +120,15 @@ module ProductCard =
                                             ]
                                             Html.p [
                                                 prop.className "text-xs text-base-content/50 tracking-wider"
-                                                prop.text $"{sizes.Length} sizes • {colors.Length} colors"
+                                                prop.text (
+                                                    let sizeStr = lengthStringOrEmpty sizes.Length sizeAttrStr
+                                                    let colorStr = lengthStringOrEmpty colors.Length colorAttrStr
+                                                    let separatorOrEmpty = 
+                                                        if iNoWS sizeStr || iNoWS colorStr
+                                                        then ""
+                                                        else " • "
+                                                    sizeStr + separatorOrEmpty + colorStr
+                                                )
                                             ]
                                         ]
                                     ]
@@ -247,7 +265,7 @@ module ProductCard =
                                 
                                 // Blank name
                                 match product.BlankName with
-                                | Some bn when not (System.String.IsNullOrWhiteSpace bn) ->
+                                | Some bn when not (SharedViewModule.Helpers.iNoWS bn) ->
                                     Html.p [
                                         prop.className "text-xs text-base-content/40 font-light truncate"
                                         prop.text bn

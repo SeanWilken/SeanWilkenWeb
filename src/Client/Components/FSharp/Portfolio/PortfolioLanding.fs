@@ -90,7 +90,7 @@ let TerminalTypingAnimation () =
                 let step = steps[stepIndex]
                 let cmdLen = step.Command.Length
                 let hasCommand =
-                    not (System.String.IsNullOrWhiteSpace step.Command)
+                    not (SharedViewModule.Helpers.iNoWS step.Command)
 
                 let timeoutId =
                     if not outputShown && hasCommand && charIndex < cmdLen then
@@ -137,7 +137,7 @@ let TerminalTypingAnimation () =
             for i in 0 .. stepIndex - 1 do
                 let step = steps[i]
 
-                if not (System.String.IsNullOrWhiteSpace step.Command) then
+                if not (SharedViewModule.Helpers.iNoWS step.Command) then
                     Html.div [
                         prop.key (sprintf "cmd-%d" i)
                         prop.className "terminal-line"
@@ -166,7 +166,7 @@ let TerminalTypingAnimation () =
             let step = steps[stepIndex]
             let cmdLen = step.Command.Length
             let hasCommand =
-                not (System.String.IsNullOrWhiteSpace step.Command)
+                not (SharedViewModule.Helpers.iNoWS step.Command)
 
             let typed =
                 if hasCommand && charIndex <= cmdLen then

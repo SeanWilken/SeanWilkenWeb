@@ -5,6 +5,9 @@ open Browser
 open Bindings.LucideIcon
 open Client.GameDomain.GridGame
 
+module Helpers =
+    let iNoWS str = System.String.IsNullOrWhiteSpace str
+
 module Env =
     open Fable.Core
     /// Read Vite env var: import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
@@ -13,11 +16,10 @@ module Env =
 
     /// Safe F# wrapper with a fallback or explicit failure
     let stripePublishableKey : string =
-        if System.String.IsNullOrWhiteSpace stripePkInternal then
+        if Helpers.iNoWS stripePkInternal then
             ""
         else
             stripePkInternal
-
 
 module WebAppView =
 
@@ -484,7 +486,7 @@ module SharedMicroGames =
                                     Html.div [ prop.text l ]
                             ]
                         ]
-                        if not (System.String.IsNullOrWhiteSpace closeLabel)
+                        if not (Helpers.iNoWS closeLabel)
                         then 
                             Html.button [
                                 prop.className "btn btn-xs btn-ghost mt-4 text-cyan-200 hover:text-cyan-50"

@@ -567,12 +567,12 @@ module View =
                 // ]
 
                 let isDisabled =
-                    System.String.IsNullOrWhiteSpace model.CustomerShippingInfo.Email ||
-                    System.String.IsNullOrWhiteSpace model.CustomerShippingInfo.FirstName ||
-                    System.String.IsNullOrWhiteSpace model.CustomerShippingInfo.LastName ||
-                    System.String.IsNullOrWhiteSpace model.CustomerShippingInfo.City ||
-                    System.String.IsNullOrWhiteSpace model.CustomerShippingInfo.State ||
-                    System.String.IsNullOrWhiteSpace model.CustomerShippingInfo.ZipCode
+                    SharedViewModule.Helpers.iNoWS model.CustomerShippingInfo.Email ||
+                    SharedViewModule.Helpers.iNoWS model.CustomerShippingInfo.FirstName ||
+                    SharedViewModule.Helpers.iNoWS model.CustomerShippingInfo.LastName ||
+                    SharedViewModule.Helpers.iNoWS model.CustomerShippingInfo.City ||
+                    SharedViewModule.Helpers.iNoWS model.CustomerShippingInfo.State ||
+                    SharedViewModule.Helpers.iNoWS model.CustomerShippingInfo.ZipCode
 
                 Html.div [
                     prop.className "flex flex-col md:flex-row gap-3 pt-6"
@@ -632,7 +632,7 @@ module View =
 
     let safeCssVar name fallback = 
         let value = TSXUtilities.getCssVar name 
-        if System.String.IsNullOrWhiteSpace value
+        if SharedViewModule.Helpers.iNoWS value
         then fallback else TSXUtilities.convertOklchToHex value
 
 
@@ -788,7 +788,7 @@ module View =
                             prop.children [
                                 Html.p $"{model.CustomerShippingInfo.FirstName} {model.CustomerShippingInfo.LastName}"
                                 Html.p model.CustomerShippingInfo.Address
-                                if not (System.String.IsNullOrWhiteSpace model.CustomerShippingInfo.Apartment) then
+                                if not (SharedViewModule.Helpers.iNoWS model.CustomerShippingInfo.Apartment) then
                                     Html.p model.CustomerShippingInfo.Apartment
                                 Html.p $"{model.CustomerShippingInfo.City}, {model.CustomerShippingInfo.State} {model.CustomerShippingInfo.ZipCode}"
                                 Html.p model.CustomerShippingInfo.Phone

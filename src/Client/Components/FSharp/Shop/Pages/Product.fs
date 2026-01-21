@@ -528,7 +528,7 @@ module Product =
                                                         match details.Blank with
                                                         | Some blank ->
                                                             Html.p [ prop.text $"Made with premium {blank.Name}." ]
-                                                            if not (System.String.IsNullOrWhiteSpace blank.Description) then
+                                                            if not (SharedViewModule.Helpers.iNoWS blank.Description) then
                                                                 Html.p [ prop.text blank.Description ]
                                                         | None ->
                                                             Html.p [ prop.text "Premium quality garment with professional printing." ]

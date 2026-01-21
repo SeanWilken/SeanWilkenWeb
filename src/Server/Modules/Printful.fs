@@ -66,7 +66,7 @@ module PrintfulClient =
         pairs
         |> List.map (fun (k,v) -> $"{k}={System.Uri.EscapeDataString(v)}")
         |> String.concat "&"
-        |> fun s -> if System.String.IsNullOrWhiteSpace s then "" else "?" + s
+        |> fun s -> if String.IsNullOrWhiteSpace s then "" else "?" + s
 
     // review if multipurpose or not
     let productQueryString (q: Printful.CatalogProductRequest.CatalogProductsQuery) =
@@ -377,10 +377,6 @@ module Types =
                         BlankModel = None
                         BlankImage = None
                     }
-
-
-
-            
 
         module Order =
 

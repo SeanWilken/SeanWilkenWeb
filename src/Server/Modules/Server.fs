@@ -7,15 +7,28 @@ open ArtGalleryService
 open ShopService
 open EnvService.ArgLoader
 open EnvService.EnvLoader
+open Microsoft.AspNetCore.Http
+
+let private isFileRequest (path: PathString) =
+    let p = path.Value
+    not (isNull p) && p.Contains(".")
 
 let spaFallback : HttpHandler =
     fun next ctx ->
-        // Only handle GETs (so POST/PUT still 404 properly if not matched)
-        if ctx.Request.Method = "GET" then
-            // Serve the built index.html from the public folder
-            htmlFile "public/index.html" next ctx
+        if ctx.Request.Method <> "GET"
+        then next ctx
         else
-            next ctx
+            let path = ctx.Request.Path
+            // Don't hijack API routes
+            if path.StartsWithSegments(PathString("/api"))
+            then next ctx
+            // Don't hijack assets (Vite build uses /assets/*)
+            elif path.StartsWithSegments(PathString("/assets"))
+            then next ctx
+            // Don't hijack file requests (e.g. /favicon.ico, /robots.txt, /Resume.html)
+            elif isFileRequest path
+            then next ctx
+            else htmlFile "public/index.html" next ctx
 
 
 module HealthAPI =
