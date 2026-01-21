@@ -18,7 +18,7 @@ console.log("===================");
 // https://vitejs.dev/config/
 export default defineConfig({
     envDir: "../../infrastructure",
-    base: "./",
+    base: "/",
     plugins: [
         tailwindcss(),
         react(),

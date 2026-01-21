@@ -58,7 +58,7 @@ let tileContents : TileContent list = [
             Beyond the technical, this site reflects my commitment to clarity, usability, and developer experience. Every page is crafted to be both informative and interactive, with real code experiments and demos you can launch and explore.
         """
         Icon = LucideIcon.BookOpen "w-10 h-10 mx-auto mb-6 opacity-60"
-        Image = Some "./img/josh-boak-unsplash-overview.jpg"
+        Image = Some "https://seanwilken.com/img/josh-boak-unsplash-overview.jpg"
     }
     {
         Title = "Industry"
@@ -71,7 +71,7 @@ let tileContents : TileContent list = [
             Whether it's mentoring junior developers, leading code reviews, or architecting new features, I bring a focus on quality, communication, and long-term value. My experience covers web, cloud, and desktop, with a passion for automation and developer tooling.
         """
         Icon = LucideIcon.Briefcase "w-10 h-10 mx-auto mb-6 opacity-60"
-        Image = Some "./img/bernd-dittrich-unsplash-office.jpg"
+        Image = Some "https://seanwilken.com/img/bernd-dittrich-unsplash-office.jpg"
     }
     {
         Title = "Personal"
@@ -84,7 +84,7 @@ let tileContents : TileContent list = [
             My personal philosophy is simple: stay curious, help others, and never stop improving. Life is best lived with a sense of adventure and a willingness to try new things.
         """
         Icon = LucideIcon.UserCircle "w-10 h-10 mx-auto mb-6 opacity-60"
-        Image = Some "./img/sailing-1.JPG"
+        Image = Some "https://seanwilken.com/img/sailing-1.JPG"
     }
 ]
 
@@ -195,7 +195,7 @@ let AboutHero selectedIndex setSelectedIndex =
                         prop.className "hero-image mb-16 md:mb-24 rounded-2xl overflow-hidden"
                         prop.children [
                             Html.img [
-                                prop.src (tileContents[selectedIndex].Image |> Option.defaultValue "./img/josh-boak-unsplash-overview.jpg")
+                                prop.src (tileContents[selectedIndex].Image |> Option.defaultValue "https://seanwilken.com/img/josh-boak-unsplash-overview.jpg")
                                 prop.alt "About hero"
                                 prop.className "w-full h-80 md:h-96 object-cover"
                             ]

@@ -59,7 +59,7 @@ let ServicesLanding (dispatch: Msg -> unit) =
                 prop.className "hero-image mb-16 md:mb-24 rounded-2xl overflow-hidden"
                 prop.children [
                     Html.img [
-                        prop.src ("../../img/daria-nepriakhina-planning-unsplash.jpg")
+                        prop.src ("../.https://seanwilken.com/img/daria-nepriakhina-planning-unsplash.jpg")
                         prop.alt "About hero"
                         prop.className "w-full h-80 md:h-96 object-cover"
                     ]

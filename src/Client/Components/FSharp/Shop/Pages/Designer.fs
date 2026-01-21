@@ -109,7 +109,7 @@ module Designer =
                 {
                     Id           = Guid.NewGuid()
                     Name         = "Bowing Bubbles"
-                    ImageUrl     = "./../img/artwork/bowing-bubbles.jpg"
+                    ImageUrl     = "./.https://seanwilken.com/img/artwork/bowing-bubbles.jpg"
                     Tagline      = Some "Sweet as chewed gum."
                     TechniqueHint = None
                     WidthPx  = None
@@ -118,7 +118,7 @@ module Designer =
                 {
                     Id           = Guid.NewGuid()
                     Name         = "Caution: Very Hot"
-                    ImageUrl     = "./../img/artwork/caution-very-hot.jpg"
+                    ImageUrl     = "./.https://seanwilken.com/img/artwork/caution-very-hot.jpg"
                     Tagline      = Some "Handle with xero effort."
                     TechniqueHint = None
                     WidthPx  = None
@@ -127,7 +127,7 @@ module Designer =
                 {
                     Id           = Guid.NewGuid()
                     Name         = "Misfortune"
-                    ImageUrl     = "./../img/artwork/misfortune.png"
+                    ImageUrl     = "./.https://seanwilken.com/img/artwork/misfortune.png"
                     Tagline      = Some "It was always somewhere in the cards."
                     TechniqueHint = None
                     WidthPx  = None
@@ -136,7 +136,7 @@ module Designer =
                 {
                     Id           = Guid.NewGuid()
                     Name         = "Out for Blood"
-                    ImageUrl     = "./../img/artwork/out-for-blood.png"
+                    ImageUrl     = "./.https://seanwilken.com/img/artwork/out-for-blood.png"
                     Tagline      = Some "Always thirsty."
                     TechniqueHint = None
                     WidthPx  = None

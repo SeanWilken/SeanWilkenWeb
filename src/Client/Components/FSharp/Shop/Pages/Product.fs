@@ -85,6 +85,7 @@ module Product =
     let private distinctBy (f: 'a -> 'b) (xs: 'a list) =
         xs |> List.fold (fun acc x -> if acc |> List.exists (fun y -> f y = f x) then acc else acc @ [x]) []
 
+
     let private tryGetSelectedProductVariant (model: Model) (p: Shared.ShopProductViewer.ShopProductDetails) =
         let bySizeColor =
             match model.SelectedSize, model.SelectedColor with
@@ -96,14 +97,6 @@ module Product =
                     | _ -> false
                 )
                 |> List.tryFind (fun v -> v.Size = s && v.Color = c)
-            | None, Some c ->
-                p.Variants
-                |> List.filter (fun v -> 
-                    match v.Availability with
-                    | Some "active" -> true
-                    | _ -> false
-                )
-                |> List.tryFind (fun v -> v.Color = c)
             | _ -> None
 
         let byId =
@@ -549,7 +542,7 @@ module Product =
                                                     prop.children [
                                                         Html.p [ prop.text "Free shipping on orders over $100." ]
                                                         Html.p [ prop.text "30-day return policy. Items must be unworn and in original condition." ]
-                                                        Html.p [ prop.text "Processing time: 2–7 business days." ]
+                                                        Html.p [ prop.text "Processing time: 2-7 business days." ]
                                                     ]
                                                 ]
                                             ]
