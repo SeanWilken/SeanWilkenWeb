@@ -1,13 +1,5 @@
 module Client.Domain
 
-open System
-open Feliz.UseDeferred
-open Components.FSharp.About
-open Components.FSharp.Welcome
-open Components.FSharp.Contact
-open Components.FSharp.Portfolio
-open Components.FSharp.Shop
-
 module WebAppModels =
 
     type Theme =
@@ -85,7 +77,7 @@ module WebAppModels =
         | Help
         | Settings
         | Shop of Components.FSharp.Shop.Model
-        | Services of Components.FSharp.Services.Landing.Model
+        | Skills of Components.FSharp.Skills.Landing.Model
         | Portfolio of Components.FSharp.PortfolioLanding.Model
         | Resume
         | Welcome
@@ -101,7 +93,7 @@ module WebAppModels =
         | AboutMsg of Components.FSharp.About.Msg
         | PortfolioMsg of Components.FSharp.PortfolioLanding.Msg
         | ShopMsg of Components.FSharp.Shop.ShopMsg
-        | ServicesMsg of Components.FSharp.Services.Landing.Msg
+        | SkillsMsg of Components.FSharp.Skills.Landing.Msg
         | ErrorMsg of exn // WIP?
         | ChangeTheme of Theme
         // Don't need both?

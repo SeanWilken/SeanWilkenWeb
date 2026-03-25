@@ -6,26 +6,12 @@ open Bindings.LucideIcon
 open SharedViewModule.WebAppView
 open Client.Components.Shop.Common.Ui.Animations
 
-
-// ----------------------------------------------------------------------
-// Content (unchanged from your original – just reused in new layout)
-// ----------------------------------------------------------------------
 type Msg =
     | ToggleContent of int
     | SwitchSection of AppView
 
 type Model = {
     ActiveIndex : int
-}
-
-// add images
-// revert back to string list for bullet points?
-type ModalContent = {
-    Title: string
-    Image: string option
-    MainContent: string
-    PreviousLabel: string
-    NextLabel: string
 }
 
 let getInitialModel = { ActiveIndex = 0 }
@@ -46,42 +32,40 @@ type TileContent =
 
 let tileContents : TileContent list = [
     {
-        Title = "Website"
-        Summary = "Discover the story behind this site, the technology stack, and the philosophy that drives its design."
+        Title = "How I Work"
+        Summary = "How I approach software development, technical decisions, and building maintainable systems."
         Details = """
-            This site is a hands-on showcase of my approach to modern web development. Built from the ground up using the SAFE stack (Saturn, Azure, Fable, Elmish), it demonstrates how functional programming and strong typing can create robust, maintainable applications.
+            I tend to do my best work where product needs, system design, and implementation all meet. I like getting close to the problem, understanding the real constraints, and turning rough requirements into software that is clear, maintainable, and actually useful.
 
-            There is a mix of F# and Typescript components loaded throughout the website, to demonstrate the power of leveraging both languages complementary to one another through bindings.
-            
-            The deployment pipeline uses FAKE for automated builds and Azure for cloud hosting, ensuring reliability and scalability. Custom layouts, Elmish update loops, and a modular architecture make the site both flexible and easy to extend.
-            
-            Beyond the technical, this site reflects my commitment to clarity, usability, and developer experience. Every page is crafted to be both informative and interactive, with real code experiments and demos you can launch and explore.
+            My background spans full-stack applications, backend APIs, workflow-heavy systems, and user-facing product work. I care a lot about structure, naming, and keeping complexity manageable, especially in codebases that need to evolve over time.
+
+            I am most comfortable in environments where I can contribute across layers: shaping architecture, building features, refining workflows, and improving how a system behaves in practice. I value strong technical foundations, but I try to stay pragmatic about tradeoffs and delivery.
         """
         Icon = LucideIcon.BookOpen "w-10 h-10 mx-auto mb-6 opacity-60"
         Image = Some "https://seanwilken.com/img/josh-boak-unsplash-overview.jpg"
     }
     {
-        Title = "Industry"
-        Summary = "A look at my professional journey, the problems I've solved, and the impact I've made across teams and projects."
+        Title = "Professional Background"
+        Summary = "A look at the kinds of systems I've built and the problems I've worked on professionally."
         Details = """
-            My career spans full-stack development, architecture, and technical leadership. I've built tools that empower teams, designed systems that scale, and shipped products that solve real business challenges.
-            
-            From collaborating with clients to define requirements, to integrating complex backend services, my work is rooted in understanding both the technical and human sides of software. I thrive in environments where learning is constant and where the right solution matters more than the easy one.
-            
-            Whether it's mentoring junior developers, leading code reviews, or architecting new features, I bring a focus on quality, communication, and long-term value. My experience covers web, cloud, and desktop, with a passion for automation and developer tooling.
+            My work has primarily focused on full-stack engineering, backend systems, and workflow-driven applications across healthcare, e-commerce, and client platforms. I have worked on regulated healthcare software, custom backend services, validation and submission workflows, real-time systems, and user-facing web applications.
+
+            A lot of the work I enjoy sits at the intersection of product and systems: building APIs, shaping data and process flows, improving application structure, and helping teams deliver software that is both useful and maintainable.
+
+            I have also spent a meaningful part of my career helping guide implementation, mentoring other engineers, and improving technical direction when projects needed stronger structure or clearer execution.
         """
         Icon = LucideIcon.Briefcase "w-10 h-10 mx-auto mb-6 opacity-60"
         Image = Some "https://seanwilken.com/img/bernd-dittrich-unsplash-office.jpg"
     }
     {
-        Title = "Personal"
-        Summary = "Get to know the person behind the code: my interests, adventures, and what drives me outside of work."
+        Title = "Beyond Work"
+        Summary = "A bit about the curiosity, interests, and mindset I bring outside of software."
         Details = """
-            Curiosity and adaptability are at the heart of who I am. I love learning by doing, whether that's sailing across the Caribbean, driving coast-to-coast, or picking up a new technology just for fun.
-            
-            I believe in the value of challenge: every problem is an opportunity to grow, and every experience adds a new perspective. Outside of coding, you'll find me exploring the world, tinkering with side projects, or kicking back with my friends and family.
-            
-            My personal philosophy is simple: stay curious, help others, and never stop improving. Life is best lived with a sense of adventure and a willingness to try new things.
+            Outside of engineering, I tend to be drawn to things that involve exploration, making, and figuring things out by doing. That same curiosity shows up in how I approach side projects, game ideas, hardware concepts, design work, and new technologies.
+
+            I enjoy building things even when there is no immediate reason to, whether that means experimenting with a new stack, refining a project idea, or chasing down a problem just because it is interesting. A lot of my best learning has come from that kind of hands-on exploration.
+
+            More broadly, I try to stay adaptable, keep learning, and remain open to challenge. I value growth, good people, and work that feels thoughtful rather than purely performative.
         """
         Icon = LucideIcon.UserCircle "w-10 h-10 mx-auto mb-6 opacity-60"
         Image = Some "https://seanwilken.com/img/sailing-1.JPG"
@@ -89,25 +73,14 @@ let tileContents : TileContent list = [
 ]
 
 let tags = [
-    "F# / functional design"
-    "TypeScript & React"
-    "Elmish & state machines"
-    "AI & workflow automation"
+    "F# and typed systems"
+    "TypeScript and React"
+    "Backend APIs"
+    "Workflow-heavy applications"
+    "AI-assisted tooling"
     "Developer tooling"
-    "Data pipelines"
-    "Clean, readable UX"
+    "Maintainable UI systems"
 ]
-
-// Helper to pull the “Personal” long text for the personal section
-let private personalDetailsText =
-    tileContents
-    |> List.tryFind (fun t -> t.Title = "Personal")
-    |> Option.map (fun t -> t.Details.Trim())
-    |> Option.defaultValue """
-Curiosity and adaptability are at the heart of who I am. I love learning by doing, whether that's sailing across the Caribbean, driving coast-to-coast, or picking up a new technology just for fun. I believe in the value of challenge: every problem is an opportunity to grow, and every experience adds a new perspective.
-
-Outside of coding, you'll find me exploring the world, tinkering with side projects, or kicking back with my friends and family. My personal philosophy is simple: stay curious, help others, and never stop improving. Life is best lived with a sense of adventure and a willingness to try new things.
-"""
 
 // ----------------------------------------------------------------------
 // React components, matching the new mockup
@@ -122,7 +95,6 @@ let AboutHero selectedIndex setSelectedIndex =
                 prop.className "max-w-6xl mx-auto"
                 prop.children [
 
-                    // About badge (uses .about-badge CSS from mockup)
                     Html.div [
                         prop.className "flex justify-center mb-12 md:mb-16"
                         prop.children [
@@ -140,15 +112,15 @@ let AboutHero selectedIndex setSelectedIndex =
                     Html.h1 [
                         prop.className "cormorant-font text-4xl sm:text-5xl lg:text-6xl font-light text-center mb-8 leading-tight"
                         prop.children [
-                            Html.span "A developer, a systems thinker,"
+                            Html.span "Full-stack engineer with a focus on:"
                             Html.br [ prop.className "hidden sm:block" ]
-                            Html.span "and a perpetual tinkerer."
+                            Html.span "systems, workflows, and maintainable software"
                         ]
                     ]
 
                     Html.p [
                         prop.className "text-center text-sm opacity-60 mb-16 max-w-3xl mx-auto leading-loose"
-                        prop.text "This site is equal parts portfolio, playground, and living notebook. Here's a bit more about how I work, where I've been, and what keeps me curious."
+                        prop.text "This site brings together my professional experience, technical interests, and ongoing experiments. It is a place to see how I think about software, the kinds of systems I like building, and some of the work behind that."
                     ]
 
                     // Stat badges row (uses .stat-badge CSS)
@@ -162,7 +134,7 @@ let AboutHero selectedIndex setSelectedIndex =
                                     LucideIcon.Code2 "w-5 h-5 opacity-60"
                                     Html.span [
                                         prop.className "opacity-80 text-xs sm:text-sm"
-                                        prop.text "10+ years building products"
+                                        prop.text "10+ years building software"
                                     ]
                                 ]
                             ]
@@ -173,7 +145,7 @@ let AboutHero selectedIndex setSelectedIndex =
                                     LucideIcon.Cloud "w-5 h-5 opacity-60"
                                     Html.span [
                                         prop.className "opacity-80 text-xs sm:text-sm"
-                                        prop.text "F#, TypeScript, SAFE stack, Azure, AI"
+                                        prop.text "F#, TypeScript, React, Python, C#"
                                     ]
                                 ]
                             ]
@@ -184,7 +156,7 @@ let AboutHero selectedIndex setSelectedIndex =
                                     LucideIcon.Compass "w-5 h-5 opacity-60"
                                     Html.span [
                                         prop.className "opacity-80 text-xs sm:text-sm"
-                                        prop.text "Healthcare, e-commerce, automation and tooling"
+                                        prop.text "Healthcare, e-commerce, workflows, and tooling"
                                     ]
                                 ]
                             ]
@@ -202,7 +174,6 @@ let AboutHero selectedIndex setSelectedIndex =
                         ]
                     ]
 
-                    // Three info cards (Website / Industry / Personal)
                     Html.div [
                         prop.className "grid md:grid-cols-3 gap-6 mb-16 md:mb-24"
                         prop.children [
@@ -210,7 +181,7 @@ let AboutHero selectedIndex setSelectedIndex =
                             |> List.mapi (
                                 fun i tile ->
                                     Html.div [
-                                        prop.className "info-card text-center"
+                                        prop.className "info-card text-center cursor-pointer"
                                         prop.onClick ( fun _ -> setSelectedIndex i )
                                         prop.children [
                                             tile.Icon
@@ -311,7 +282,7 @@ let AboutWorkAndTech () =
                                     ]
                                     Html.p [
                                         prop.className "text-[0.78rem] sm:text-xs opacity-60 mb-4 md:mb-6 leading-relaxed"
-                                        prop.text "I'm happiest when I'm close to the problem, collaborating with people who care, and shipping things that actually get used. Strong opinions, loosely held. Clean code, pragmatically applied."
+                                        prop.text "I work best when I am close to the problem, collaborating with thoughtful people, and building things that actually get used. I care about clarity, maintainability, and making practical progress without overcomplicating the solution."
                                     ]
                                     Html.ul [
                                         prop.className "space-y-3 text-[0.78rem] sm:text-xs opacity-70"
@@ -327,14 +298,14 @@ let AboutWorkAndTech () =
                                                 prop.className "flex items-start gap-2"
                                                 prop.children [
                                                     Html.span [ prop.className "opacity-60 mt-1"; prop.text "•" ]
-                                                    Html.span "Balance rapid prototyping with a solid foundation."
+                                                    Html.span "Balance rapid iteration with strong technical foundations."
                                                 ]
                                             ]
                                             Html.li [
                                                 prop.className "flex items-start gap-2"
                                                 prop.children [
                                                     Html.span [ prop.className "opacity-60 mt-1"; prop.text "•" ]
-                                                    Html.span "Leave things better structured than I found them."
+                                                    Html.span "Leave systems more structured and maintainable than I found them."
                                                 ]
                                             ]
                                         ]
@@ -386,23 +357,23 @@ let AboutCta (dispatch: Msg -> unit) =
                 prop.children [
                     Html.p [
                         prop.className "text-sm opacity-60 mb-8 md:mb-10 leading-loose"
-                        prop.text "If you want to see how all of this shows up in code and products, the portfolio is where the fun starts, or dive right into the services offered."
+                        prop.text "If you want to see how this shows up in practice, take a look at my portfolio work, resume, or skills breakdown."
                     ]
                     Html.div [
                         prop.className "flex flex-col sm:flex-row gap-4 sm:gap-6 justify-center"
                         prop.children [
                             Html.button [
                                 prop.className "cta-btn"
-                                prop.text "Explore projects & demos"
+                                prop.text "Explore projects & Demos"
                                 prop.onClick (fun _ ->
                                     dispatch (SwitchSection PortfolioAppLandingView)
                                 )
                             ]
                             Html.button [
                                 prop.className "cta-btn"
-                                prop.text "Explore services offered"
+                                prop.text "View Skills Breakdown"
                                 prop.onClick (fun _ ->
-                                    dispatch (SwitchSection (ProfessionalServicesAppView ServicesLanding))
+                                    dispatch (SwitchSection (ProfessionalSkillsAppView SkillsLanding))
                                 )
                             ]
                         ]

@@ -1,30 +1,30 @@
 import React, { useState, useEffect, useRef } from "react";
 
-export function TagCloudList({ items }: { items: string[] }) {
-  if (!Array.isArray(items)) {
-    return null;
-  }
-  return (
-    <div className="flex flex-wrap gap-3 justify-center">
-      {items.map((item, idx) => (
-        <span
-          key={idx}
-          className="px-4 py-2.5 bg-transparent border border-base-content/8 
-            text-sm font-light tracking-wide transition-all duration-500
-            hover:border-base-content/20 hover:bg-base-100/50 
-            hover:-translate-y-1 hover:scale-105 cursor-default select-none
-            hover:shadow-lg hover:shadow-base-content/5"
-          style={{
-            animation: `fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${idx * 40}ms forwards`,
-            opacity: 0,
-          }}
-        >
-          {item}
-        </span>
-      ))}
-    </div>
-  );
-}
+// export function TagCloudList({ items }: { items: string[] }) {
+//   if (!Array.isArray(items)) {
+//     return null;
+//   }
+//   return (
+//     <div className="flex flex-wrap gap-3 justify-center">
+//       {items.map((item, idx) => (
+//         <span
+//           key={idx}
+//           className="px-4 py-2.5 bg-transparent border border-base-content/8 
+//             text-sm font-light tracking-wide transition-all duration-500
+//             hover:border-base-content/20 hover:bg-base-100/50 
+//             hover:-translate-y-1 hover:scale-105 cursor-default select-none
+//             hover:shadow-lg hover:shadow-base-content/5"
+//           style={{
+//             animation: `fadeInScale 0.6s cubic-bezier(0.4, 0, 0.2, 1) ${idx * 40}ms forwards`,
+//             opacity: 0,
+//           }}
+//         >
+//           {item}
+//         </span>
+//       ))}
+//     </div>
+//   );
+// }
 
 export function SectionList({ items }: { items: string[] }) {
   if (!Array.isArray(items)) {
@@ -52,113 +52,211 @@ export function SectionList({ items }: { items: string[] }) {
   );
 }
 
+// export type TimelineItem = {
+//   company: string;
+//   role: string;
+//   summary: string;
+//   startDateString: string;
+//   endDateString: string;
+//   responsibilities: string[];
+// };
+
+// export function Timeline({ items }: { items: TimelineItem[] }) {
+//   if (!Array.isArray(items)) return null;
+
+//   return (
+//     <ul className="timeline timeline-snap-icon max-md:timeline-compact timeline-vertical">
+//       {items.map((item, idx) => (
+//         <li key={idx} className="group">
+//           {idx !== 0 && <hr className="bg-base-content/8" />}
+          
+//           {/* Center icon */}
+//           <div className="timeline-middle">
+//             <div className="relative">
+//               <div className="bg-primary/20 text-primary rounded-full p-2 shadow-lg
+//                 transition-all duration-500 group-hover:bg-primary/40 group-hover:scale-125
+//                 ring-4 ring-base-100">
+//                 <svg
+//                   xmlns="http://www.w3.org/2000/svg"
+//                   viewBox="0 0 20 20"
+//                   fill="currentColor"
+//                   className="h-5 w-5"
+//                 >
+//                   <path
+//                     fillRule="evenodd"
+//                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
+//                     clipRule="evenodd"
+//                   />
+//                 </svg>
+//               </div>
+//               {/* Pulse ring on hover */}
+//               <div className="absolute inset-0 rounded-full bg-primary/20 
+//                 opacity-0 group-hover:opacity-100 group-hover:animate-ping" />
+//             </div>
+//           </div>
+          
+//           {/* Alternating content */}
+//           <div
+//             className={`timeline-${
+//               idx % 2 === 0 ? "start" : "end"
+//             } mb-10 md:mb-16 p-2 transition-all duration-700 group-hover:scale-[1.02]`}
+//             style={{
+//               animation: `fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${idx * 150}ms forwards`,
+//               opacity: 0,
+//             }}
+//           >
+//             <div
+//               className={`flex flex-col ${
+//                 idx % 2 === 0 ? "items-end text-right" : "items-start text-left"
+//               }`}
+//             >
+//               {/* Date */}
+//               <div className="font-mono text-xs tracking-widest uppercase text-base-content/40 mb-2
+//                 transition-all duration-300 group-hover:text-base-content/60">
+//                 {item.startDateString} — {item.endDateString}
+//               </div>
+              
+//               {/* Company */}
+//               <div className="text-2xl font-light mb-1 tracking-tight transition-all duration-300
+//                 group-hover:text-primary/80"
+//                 style={{ fontFamily: "'Cormorant Garamond', serif" }}>
+//                 {item.company}
+//               </div>
+              
+//               {/* Role */}
+//               <div className="text-base text-base-content/70 mb-3 font-light tracking-wide
+//                 transition-colors duration-300 group-hover:text-base-content/90">
+//                 {item.role}
+//               </div>
+//             </div>
+            
+//             {/* Summary */}
+//             <p className={`text-sm text-base-content/70 mb-4 leading-loose font-light
+//               transition-all duration-500 group-hover:text-base-content/90
+//               ${idx % 2 === 0 ? "text-right" : "text-left"}`}>
+//               {item.summary}
+//             </p>
+            
+//             {/* Responsibilities */}
+//             <ul className={`list-disc space-y-2 text-sm text-base-content
+//               ${idx % 2 === 0 ? "pl-0 pr-4 text-right list-inside" : "pl-4 text-left"}`}>
+//               {item.responsibilities.map((bullet, i) => (
+//                 <li 
+//                   key={i} 
+//                   className="font-light transition-all duration-500 hover:text-base-content/80"
+//                   style={{
+//                     animation: `fadeInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(idx * 150) + (i * 80)}ms forwards`,
+//                     opacity: 0,
+//                   }}
+//                 >
+//                   {bullet}
+//                 </li>
+//               ))}
+//             </ul>
+//           </div>
+          
+//           {idx !== items.length - 1 && <hr className="bg-base-content/8" />}
+//         </li>
+//       ))}
+//     </ul>
+//   );
+// }
+
 export type TimelineItem = {
   company: string;
   role: string;
-  summary: string;
+  summary?: string;
   startDateString: string;
   endDateString: string;
   responsibilities: string[];
+  location?: string;
 };
 
-export function Timeline({ items }: { items: TimelineItem[] }) {
-  if (!Array.isArray(items)) return null;
+export function ExperienceSection({ items }: { items: TimelineItem[] }) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
 
   return (
-    <ul className="timeline timeline-snap-icon max-md:timeline-compact timeline-vertical">
+    <div className="space-y-8">
       {items.map((item, idx) => (
-        <li key={idx} className="group">
-          {idx !== 0 && <hr className="bg-base-content/8" />}
-          
-          {/* Center icon */}
-          <div className="timeline-middle">
-            <div className="relative">
-              <div className="bg-primary/20 text-primary rounded-full p-2 shadow-lg
-                transition-all duration-500 group-hover:bg-primary/40 group-hover:scale-125
-                ring-4 ring-base-100">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                  className="h-5 w-5"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-              {/* Pulse ring on hover */}
-              <div className="absolute inset-0 rounded-full bg-primary/20 
-                opacity-0 group-hover:opacity-100 group-hover:animate-ping" />
+        <article
+          key={`${item.company}-${item.role}-${idx}`}
+          className="pb-8 border-b border-base-content/10 last:border-b-0 last:pb-0"
+        >
+          <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <h3 className="text-lg md:text-xl font-semibold text-base-content leading-tight">
+                {item.role}
+              </h3>
+
+              <p className="mt-1 text-sm md:text-base text-base-content/80 leading-relaxed">
+                <span className="font-medium text-base-content">{item.company}</span>
+                {item.location ? (
+                  <span className="text-base-content/60"> · {item.location}</span>
+                ) : null}
+              </p>
+            </div>
+
+            <div className="shrink-0 text-left md:text-right text-xs md:text-sm text-base-content/60 tracking-wide">
+              {item.startDateString} – {item.endDateString}
             </div>
           </div>
-          
-          {/* Alternating content */}
-          <div
-            className={`timeline-${
-              idx % 2 === 0 ? "start" : "end"
-            } mb-10 md:mb-16 p-2 transition-all duration-700 group-hover:scale-[1.02]`}
-            style={{
-              animation: `fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) ${idx * 150}ms forwards`,
-              opacity: 0,
-            }}
-          >
-            <div
-              className={`flex flex-col ${
-                idx % 2 === 0 ? "items-end text-right" : "items-start text-left"
-              }`}
-            >
-              {/* Date */}
-              <div className="font-mono text-xs tracking-widest uppercase text-base-content/40 mb-2
-                transition-all duration-300 group-hover:text-base-content/60">
-                {item.startDateString} — {item.endDateString}
-              </div>
-              
-              {/* Company */}
-              <div className="text-2xl font-light mb-1 tracking-tight transition-all duration-300
-                group-hover:text-primary/80"
-                style={{ fontFamily: "'Cormorant Garamond', serif" }}>
-                {item.company}
-              </div>
-              
-              {/* Role */}
-              <div className="text-base text-base-content/70 mb-3 font-light tracking-wide
-                transition-colors duration-300 group-hover:text-base-content/90">
-                {item.role}
-              </div>
-            </div>
-            
-            {/* Summary */}
-            <p className={`text-sm text-base-content/70 mb-4 leading-loose font-light
-              transition-all duration-500 group-hover:text-base-content/90
-              ${idx % 2 === 0 ? "text-right" : "text-left"}`}>
+
+          {item.summary ? (
+            <p className="mt-3 text-sm text-base-content/75 leading-6">
               {item.summary}
             </p>
-            
-            {/* Responsibilities */}
-            <ul className={`list-disc space-y-2 text-sm text-base-content
-              ${idx % 2 === 0 ? "pl-0 pr-4 text-right list-inside" : "pl-4 text-left"}`}>
-              {item.responsibilities.map((bullet, i) => (
-                <li 
-                  key={i} 
-                  className="font-light transition-all duration-500 hover:text-base-content/80"
-                  style={{
-                    animation: `fadeInRight 0.5s cubic-bezier(0.4, 0, 0.2, 1) ${(idx * 150) + (i * 80)}ms forwards`,
-                    opacity: 0,
-                  }}
+          ) : null}
+
+          {Array.isArray(item.responsibilities) && item.responsibilities.length > 0 ? (
+            <ul className="mt-4 space-y-2 pl-5 list-disc marker:text-base-content/50">
+              {item.responsibilities.map((bullet, bulletIdx) => (
+                <li
+                  key={`${item.company}-bullet-${bulletIdx}`}
+                  className="text-sm text-base-content/85 leading-6"
                 >
                   {bullet}
                 </li>
               ))}
             </ul>
-          </div>
-          
-          {idx !== items.length - 1 && <hr className="bg-base-content/8" />}
-        </li>
+          ) : null}
+        </article>
       ))}
-    </ul>
+    </div>
+  );
+}
+
+export function TagCloudList({
+  items,
+  label,
+}: {
+  items: string[];
+  label?: string;
+}) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
+  return (
+    <div className="space-y-3">
+      {label ? (
+        <div className="text-xs uppercase tracking-[0.2em] text-base-content/50">
+          {label}
+        </div>
+      ) : null}
+
+      <div className="flex flex-wrap gap-2">
+        {items.map((item, idx) => (
+          <span
+            key={`${item}-${idx}`}
+            className="inline-flex items-center rounded-md border border-base-content/10 bg-base-200/40 px-3 py-1.5 text-sm text-base-content/80"
+          >
+            {item}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -167,39 +265,10 @@ export type ResumeSection =
   | { label: string; kind: "timeline"; items: TimelineItem[] }
   | { label: string; kind: "tagcloud"; items: string[] };
 
-const RESUME_HTML_PATH = "./html/Resume.html";
+const RESUME_PDF_PATH = "./docs/Resume.pdf";
 
 interface ResumePageProps {
   sections: ResumeSection[];
-}
-
-export function openResumeForPrint() {
-  const win = window.open(RESUME_HTML_PATH, "_blank");
-  if (!win) {
-    window.location.href = RESUME_HTML_PATH;
-    return;
-  }
-
-  const checkReady = () => {
-    try {
-      if (win.document && win.document.readyState === "complete") {
-        win.focus();
-        win.print();
-        return true;
-      }
-    } catch {
-      return true;
-    }
-    return false;
-  };
-
-  if (checkReady()) return;
-
-  const interval = setInterval(() => {
-    if (!win || win.closed || checkReady()) {
-      clearInterval(interval);
-    }
-  }, 200);
 }
 
 const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
@@ -280,17 +349,6 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
             >
               Resume
             </h1>
-            <p 
-              className="text-sm text-base-content/60 leading-loose max-w-2xl mx-auto font-light
-                print:text-xs print:mb-2"
-              style={{
-                animation: 'fadeInUp 1s cubic-bezier(0.4, 0, 0.2, 1) 400ms forwards',
-                opacity: 0
-              }}
-            >
-              A comprehensive overview of my professional experience, technical skills, and the systems I've built. This page is entirely built in TypeScript, and leveraged using bindings through Fable.
-              Toggle reader mode for a traditional view, or explore interactively.
-            </p>
           </div>
 
           {/* Controls with entrance animation */}
@@ -303,7 +361,6 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
           >
             {/* Download Button with hover animation */}
             <button
-              onClick={openResumeForPrint}
               className="px-8 py-3.5 bg-transparent border border-base-content/20 
                 text-xs tracking-widest uppercase font-light
                 hover:bg-base-content hover:text-base-100 hover:border-base-content
@@ -314,7 +371,14 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full 
                 transition-transform duration-1000 bg-gradient-to-r from-transparent 
                 via-base-100/10 to-transparent" />
-              <span className="relative z-10">Download PDF</span>
+              <a 
+                href={RESUME_PDF_PATH}
+                target="_blank"
+                rel="noreferrer"
+                className="relative z-10"
+                download="SeanWilkenResume.pdf">
+                Download PDF
+              </a>
               <svg className="w-4 h-4 relative z-10 transition-transform duration-300 
                 group-hover:translate-y-1" 
                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -364,7 +428,7 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
             border border-base-content/8 rounded-lg overflow-hidden
             shadow-lg hover:shadow-xl transition-shadow duration-500 print:border-0 print:rounded-none print:shadow-none print:h-auto">
             <iframe
-              src={RESUME_HTML_PATH}
+              src={RESUME_PDF_PATH}
               title="Resume Reader View"
               className="w-full h-full"
             />
@@ -414,7 +478,7 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
                   {section.kind === "tagcloud" ? (
                     <TagCloudList items={section.items as string[]} />
                   ) : section.kind === "timeline" ? (
-                    <Timeline items={section.items as TimelineItem[]} />
+                    <ExperienceSection items={section.items as TimelineItem[]} />
                   ) : (
                     <SectionList items={section.items as string[]} />
                   )}

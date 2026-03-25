@@ -7,7 +7,6 @@ open SharedViewModule
 open Client.Components.Shop.Common.Ui.Animations
 
 // ---------- Types ----------
-
 type Msg =
     | SwitchSection of WebAppView.AppView
 
@@ -21,13 +20,11 @@ type ExploreTileProps = {
 type WelcomeProps = {| dispatch: Msg -> unit |}
 
 // ---------- Explore tile (card) ----------
-
 [<ReactComponent>]
 let ExploreTile (props: ExploreTileProps) =
     let title = WebAppView.appSectionStringTitle props.Section
 
     Html.div [
-        // scroll-fade classes hook into the IntersectionObserver CSS from your mockup
         prop.className "explore-card scroll-fade"
         prop.children [
             Html.div [
@@ -53,7 +50,7 @@ let ExploreTile (props: ExploreTileProps) =
                     ]
                     Html.button [
                         prop.className "card-btn"
-                        prop.text "Explore"
+                        prop.text "Explore My Work"
                         prop.onClick (fun _ -> props.Dispatch (SwitchSection props.Section))
                     ]
                 ]
@@ -62,7 +59,6 @@ let ExploreTile (props: ExploreTileProps) =
     ]
 
 // ---------- Hero section ----------
-
 [<ReactComponent>]
 let WelcomeHero (props: WelcomeProps) =
     Html.section [
@@ -77,19 +73,30 @@ let WelcomeHero (props: WelcomeProps) =
                     ]
                     Html.h1 [
                         prop.className "cormorant-font text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light mb-6 sm:mb-8 leading-tight"
-                        prop.text "FUNCTIONAL FORGE"
+                        prop.text "Senior Software Engineer"
                     ]
                     Html.p [
                         prop.className "text-sm sm:text-base lg:text-lg opacity-80 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4"
-                        prop.text "Discover where minimal effort meets maximum style. A curated collection of projects and services designed for those who value simplicity without compromising on quality."
+                        prop.text "I build full-stack applications, backend APIs, and workflow-heavy systems across industries including healthcare, e-commerce, and AI-enabled products."
                     ]
                     Html.div [
                         prop.className "flex flex-col sm:flex-row gap-4 justify-center px-4"
                         prop.children [
                             Html.button [
                                 prop.className "premium-btn"
-                                prop.text "Explore Work"
-                                // Send them into the Explore section – About is a good “first stop”
+                                prop.text "View Resume"
+                                prop.onClick (fun _ ->
+                                    props.dispatch (SwitchSection WebAppView.AppView.ResumeAppView)
+                                )
+                            ]
+                        ]
+                    ]
+                    Html.div [
+                        prop.className "flex flex-col sm:flex-row gap-4 justify-center px-4"
+                        prop.children [
+                            Html.button [
+                                prop.className "premium-btn"
+                                prop.text "View Portfolio"
                                 prop.onClick (fun _ ->
                                     props.dispatch (SwitchSection WebAppView.AppView.PortfolioAppLandingView)
                                 )
@@ -102,7 +109,6 @@ let WelcomeHero (props: WelcomeProps) =
     ]
 
 // ---------- “Explore the Site” section ----------
-
 [<ReactComponent>]
 let ExploreSection (props: WelcomeProps) =
     Html.section [
@@ -118,7 +124,7 @@ let ExploreSection (props: WelcomeProps) =
                         prop.children [
                             Html.h2 [
                                 prop.className "cormorant-font text-3xl sm:text-4xl lg:text-5xl font-light section-title inline-block"
-                                prop.text "Explore the Site"
+                                prop.text "Start Here"
                             ]
                         ]
                     ]
@@ -129,46 +135,47 @@ let ExploreSection (props: WelcomeProps) =
                         prop.children [
 
                             ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/ales-nesetril-unsplash-dev.jpg"
-                                Section     = WebAppView.AppView.AboutAppView
-                                Description = "About: Learn more about the site and its purpose."
-                                Dispatch    = props.dispatch
-                            }
-
-                            ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/ian-schneider-services-unsplash.jpg"
-                                Section     = WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.ServicesLanding
-                                Description = "Services: Learn more about what you can expect of me."
+                                ImgSrc      = "https://seanwilken.com/img/joao-ferrao-resume-unsplash.jpg"
+                                Section     = WebAppView.AppView.ResumeAppView
+                                Description = "Resume: Professional experience, technical strengths, and selected accomplishments."
                                 Dispatch    = props.dispatch
                             }
 
                             ExploreTile {
                                 ImgSrc      = "https://seanwilken.com/img/walkator-unsplash-code.jpg"
                                 Section     = WebAppView.AppView.PortfolioAppCodeView
-                                Description = "Code: Check out some mini games or code gists."
+                                Description = "Code: Engineering-focused portfolio work, experiments, and implementation details."
+                                Dispatch    = props.dispatch
+                            }
+
+                            ExploreTile {
+                                ImgSrc      = "https://seanwilken.com/img/ales-nesetril-unsplash-dev.jpg"
+                                Section     = WebAppView.AppView.AboutAppView
+                                Description = "About: Who I am, what I build, and the kind of work I enjoy doing."
+                                Dispatch    = props.dispatch
+                            }
+
+                            ExploreTile {
+                                ImgSrc      = "https://seanwilken.com/img/ian-schneider-services-unsplash.jpg"
+                                Section     = WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.SkillsLanding
+                                Description = "Skills: Engineering strengths across frontend, backend, workflow systems, and delivery."
                                 Dispatch    = props.dispatch
                             }
 
                             ExploreTile {
                                 ImgSrc      = "https://seanwilken.com/img/ann-artroom-unsplash.jpg"
                                 Section     = WebAppView.AppView.PortfolioAppDesignView
-                                Description = "Designs: Check out some drawings I've done recently."
+                                Description = "Designs: UI explorations, visual work, and selected creative projects."
                                 Dispatch    = props.dispatch
                             }
 
                             ExploreTile {
                                 ImgSrc      = "https://seanwilken.com/img/nikola-duza-unsplash-shop.jpg"
                                 Section     = WebAppView.AppView.ShopAppView
-                                Description = "Shop: Designs + Product = Store."
+                                Description = "Shop: Creative products, prints, and apparel connected to my projects."
                                 Dispatch    = props.dispatch
                             }
 
-                            ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/joao-ferrao-resume-unsplash.jpg"
-                                Section     = WebAppView.AppView.ResumeAppView
-                                Description = "Resume: See what I've been up to professionally."
-                                Dispatch    = props.dispatch
-                            }
 
                         ]
                     ]
@@ -177,44 +184,60 @@ let ExploreSection (props: WelcomeProps) =
         ]
     ]
 
-// ---------- Services / Stack / Coming Soon sections ----------
-
+// ---------- Skills / Stack / Coming Soon sections ----------
 [<ReactComponent>]
-let ServicesSection (props: WelcomeProps) =
+let SkillsSection (props: WelcomeProps) =
     Html.section [
         prop.className "py-16 sm:py-20 lg:py-32 px-4 sm:px-6 lg:px-8 bg-base-100 w-full"
         prop.children [
             Html.div [
                 prop.className "max-w-7xl mx-auto"
                 prop.children [
-
-                    // Use your existing SectionGrid component for the cards
                     SectionGrid {
-                        Title = "🛠️ Services 🛠️"
+                        Title = "Engineering Strengths"
                         Items = [
-                            // WEBSITE
-                            { Heading = "Web Development"; Icon = "🌐"; Description = "Building responsive and performant web applications."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Website) |> props.dispatch }
-                            { Heading = "UI/UX Design";   Icon = "🎨"; Description = "Designing clear, user-friendly interfaces and flows."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Website) |> props.dispatch }
-                            { Heading = "E-Commerce Sites"; Icon = "🛒"; Description = "Online stores and product pages that actually convert."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Website) |> props.dispatch }
-
-                            // SALES PLATFORM
-                            { Heading = "Sales & CRM Platforms"; Icon = "📈"; Description = "CRM, pipelines, and automations that support your sales motion."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.SalesPlatform) |> props.dispatch }
-
-                            // AI
-                            { Heading = "AI Solutions"; Icon = "🤖"; Description = "AI agents and workflows embedded into your existing tools."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.AI) |> props.dispatch }
-                            { Heading = "LLM Training & Tuning"; Icon = "📚"; Description = "Training and tuning LLMs around your data and processes."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.AI) |> props.dispatch }
-
-                            // AUTOMATION
-                            { Heading = "Automation & Workflows"; Icon = "⚙️"; Description = "Automating multi-step business processes across systems."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Automation) |> props.dispatch }
-
-                            // INTEGRATION
-                            { Heading = "Software Integration"; Icon = "🔗"; Description = "Connecting CRMs, ERPs, EMRs, and other core systems."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Integration) |> props.dispatch }
-                            { Heading = "API Development";      Icon = "🔃"; Description = "Designing and implementing robust APIs for your platform."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Integration) |> props.dispatch }
-
-                            // DEVELOPMENT / PLATFORM
-                            { Heading = "Cloud & Platform Delivery"; Icon = "☁️"; Description = "Deploying and running your applications in the cloud."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Development) |> props.dispatch }
-                            { Heading = "Analytics & Reporting";      Icon = "📊"; Description = "Dashboards and reporting for your product or operations."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Development) |> props.dispatch }
-                            { Heading = "Performance & Security";     Icon = "⚡"; Description = "Hardening, profiling, and tuning existing applications."; NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalServicesAppView WebAppView.ProfessionalServicesView.Development) |> props.dispatch }
+                            {
+                                Heading = "Full-Stack Engineering"
+                                Icon = "🧩"
+                                Description = "Building production applications across frontend, backend, APIs, and delivery."
+                                NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.FullStack) |> props.dispatch
+                            }
+                            {
+                                Heading = "Backend APIs & Systems"
+                                Icon = "🛠️"
+                                Description = "Custom servers, validation pipelines, document workflows, and client-facing APIs."
+                                NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.Backend) |> props.dispatch
+                            }
+                            {
+                                Heading = "Frontend Development"
+                                Icon = "🖥️"
+                                Description = "Responsive interfaces, typed client architecture, and maintainable UI systems."
+                                NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.Frontend) |> props.dispatch
+                            }
+                            {
+                                Heading = "Workflow Automation"
+                                Icon = "⚙️"
+                                Description = "Stateful processing, validation, notifications, and operational tooling."
+                                NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.Automation) |> props.dispatch
+                            }
+                            {
+                                Heading = "AI & LLM Integrations"
+                                Icon = "🤖"
+                                Description = "Document analysis, retrieval-driven workflows, and AI-assisted product features."
+                                NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.AI) |> props.dispatch
+                            }
+                            {
+                                Heading = "Leadership & Mentorship"
+                                Icon = "🧭"
+                                Description = "Hands-on technical leadership, mentoring engineers, and guiding implementation quality."
+                                NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.Leadership) |> props.dispatch
+                            }
+                            {
+                                Heading = "Cloud & Platform Delivery"
+                                Icon = "☁️"
+                                Description = "Containers, CI/CD, cloud deployment, and operational reliability."
+                                NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.PlatformDelivery) |> props.dispatch
+                            }
                         ]
                     }
                 ]
@@ -223,34 +246,7 @@ let ServicesSection (props: WelcomeProps) =
     ]
 
 [<ReactComponent>]
-let SiteStackSection (_: WelcomeProps) =
-    Html.section [
-        prop.className "py-16 sm:py-20 lg:py-32 px-4 sm:px-6 lg:px-8 bg-base-200 w-full"
-        prop.children [
-            Html.div [
-                prop.className "max-w-6xl mx-auto"
-                prop.children [
-
-                    SectionList {
-                        Title = "🖥️ Site Stack 🖥️"
-                        Items = [
-                            "F#"
-                            "Fable"
-                            "TypeScript"
-                            "Tailwind"
-                            "DaisyUI"
-                            "Azure"
-                            "Digital Ocean"
-                            "Kubernetes"
-                        ]
-                    }
-                ]
-            ]
-        ]
-    ]
-
-[<ReactComponent>]
-let ComingSoonSection (_: WelcomeProps) =
+let FocusAreaSection (_: WelcomeProps) =
     Html.section [
         prop.className "py-16 sm:py-20 lg:py-32 px-4 sm:px-6 lg:px-8 bg-base-100 w-full"
         prop.children [
@@ -258,32 +254,27 @@ let ComingSoonSection (_: WelcomeProps) =
                 prop.className "max-w-6xl mx-auto"
                 prop.children [
                     SectionCarousel {| 
-                        Title = "📰 Coming Soon 📰"
+                        Title = "Where I've Applied These Skills"
                         Items = [
                             {
-                                IconElement = LucideIcon.BrainCircuit "w-6 h-6"
-                                Title       = "Site AI Chat"
-                                Description = "Chatbot and AI services to assist you in finding what you're looking for."
+                                IconElement = LucideIcon.HeartPulse "w-6 h-6"
+                                Title       = "Healthcare & Regulated Systems"
+                                Description = "Workflow-heavy applications, document processing, validation systems, and platform work in regulated environments."
                             }
                             {
                                 IconElement = LucideIcon.ShoppingCart "w-6 h-6"
-                                Title       = "Integration with Webshop"
-                                Description = "Integration with webshops to sell prints, digital art, and other merchandise."
+                                Title       = "E-Commerce Platforms"
+                                Description = "Storefronts, product systems, fulfillment flows, and operational tooling for commerce-focused applications."
                             }
                             {
-                                IconElement = LucideIcon.JoyStick "w-6 h-6"
-                                Title       = "More Interactive Demos"
-                                Description = "More interactive code demos and mini-games."
+                                IconElement = LucideIcon.Briefcase "w-6 h-6"
+                                Title       = "Internal Tools & Operations"
+                                Description = "Systems that support intake, reporting, processing, review, and day-to-day operational workflows."
                             }
                             {
-                                IconElement = LucideIcon.MegaPhone "w-6 h-6"
-                                Title       = "Testimonials"
-                                Description = "User testimonials and success stories."
-                            }
-                            {
-                                IconElement = LucideIcon.BookOpenText "w-6 h-6"
-                                Title       = "Blog"
-                                Description = "Insights, tutorials, and updates on what's cooking."
+                                IconElement = LucideIcon.Activity "w-6 h-6"
+                                Title       = "Real-Time Applications"
+                                Description = "Live updates, interactive experiences, and state-aware workflows backed by responsive application logic."
                             }
                         ]
                     |}
@@ -293,11 +284,9 @@ let ComingSoonSection (_: WelcomeProps) =
     ]
 
 // ---------- Root Welcome View ----------
-
 [<ReactComponent>]
 let Welcome (props: WelcomeProps) =
     Html.div [
-        // Let each section control its own width/background; this keeps layout clean & responsive
         prop.className "flex flex-col w-full"
         prop.children [
             WelcomeHero props
@@ -312,24 +301,18 @@ let Welcome (props: WelcomeProps) =
                 Variant   = ScaleUp
                 Delay     = 0.08
                 Threshold = 0.45
-                Children = ServicesSection props
+                Children = SkillsSection props
             |}
-            ScrollReveal {|
-                Variant   = SlideRight
-                Delay     = 0.08
-                Threshold = 0.45
-                Children = SiteStackSection props
-            |}
+            
             ScrollReveal {|
                 Variant   = FadeUp
                 Delay     = 0.08
                 Threshold = 0.45
-                Children = ComingSoonSection props
+                Children = FocusAreaSection props
             |}
         ]
     ]
 
-// Keep backwards-compatible entry point for Elmish-style calls
 [<ReactComponent>]
 let View (dispatch: Msg -> unit) : ReactElement =
     Welcome {| dispatch = dispatch |}

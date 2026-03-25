@@ -10,7 +10,7 @@ open Client.Domain
 open Components.FSharp.Portfolio.CodeGallery
 open Shared.StoreProductViewer
 open Components.FSharp
-open Components.FSharp.Services.Landing
+open Components.FSharp.Skills.Landing
 open Client.Domain.WebAppModels
 open SharedViewModule.WebAppView
 open Client.Components.Shop
@@ -43,7 +43,7 @@ let toPath =
         | DesignGallery -> "/projects/designs/" 
         | DesignViewer id -> $"/projects/design/{id}" 
     | Some Resume -> "/resume"
-    | Some ( Services section ) -> section.toUrlString
+    | Some ( Skills section ) -> section.toUrlString
     | Some (Shop ShopLanding) -> "/shop/"
     | Some (Shop CollectionBrowser) -> "/shop/collection"
     | Some (Shop ProductDesigner) -> "/shop/designer"
@@ -123,15 +123,16 @@ let portfolioParser : Parser<PortfolioSection->Page,_> =
         map (fun ds -> Design ds) (s "designs" </> designParser)
     ]
 
-let servicesParser : Parser<ProfessionalServicesView->Page,_> =
+let skillsParser : Parser<ProfessionalSkillsView->Page,_> =
     oneOf [
-        map ProfessionalServicesView.ServicesLanding (s "")
-        map AI (s "ai-services")
-        map Automation (s "automation-services")
-        map Development (s "development-services")
-        map Integration (s "integration-services")
-        map SalesPlatform (s "sales-services")
-        map Website (s "web-services")
+        map ProfessionalSkillsView.SkillsLanding (s "")
+        map AI (s "ai-skills")
+        map Automation (s "automation-skills")
+        map Backend (s "backend-skills")
+        map Frontend (s "frontend-skills")
+        map FullStack (s "fullstack-skills")
+        map Leadership (s "leadership-skills")
+        map PlatformDelivery (s "platform-skills")
     ]
 
 let pageParser : Parser<Page -> Page,_> =
@@ -142,7 +143,7 @@ let pageParser : Parser<Page -> Page,_> =
         map Page.Welcome (s "welcome")
         map Page.Portfolio (s "projects" </> portfolioParser)
         map Page.Shop (s "shop" </> shopParser)
-        map Page.Services (s "services" </> servicesParser)
+        map Page.Skills (s "skills" </> skillsParser)
     ]
 
 let urlParser location = parsePath pageParser location
@@ -181,8 +182,8 @@ let urlUpdate (result: Page option) (model: WebAppModels.WebAppModel) : WebAppMo
     | Some (Portfolio _) ->
         { model with CurrentAreaModel = WebAppModels.Portfolio PortfolioLanding.Model.PortfolioGallery },
         Cmd.none
-    | Some (Services section) ->
-        { model with CurrentAreaModel = WebAppModels.Services (getInitialModel section) },
+    | Some (Skills section) ->
+        { model with CurrentAreaModel = WebAppModels.Skills (getInitialModel section) },
         Cmd.none
     | Some Resume ->
         { model with CurrentAreaModel = WebAppModels.Resume },

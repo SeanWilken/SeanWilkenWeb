@@ -62,16 +62,16 @@ let steps : Step array =
           Output = "packages installed successfully"
           AfterOutputDelayMs = 2000 }
 
-        { Command = "dotnet run deploy"
-          Output = "Building... OK ✅"
+        { Command = "Starting API and client"
+          Output = "OK ✅"
+          AfterOutputDelayMs = 2000 }
+
+        { Command = "Loading portfolio modules"
+          Output = "Finished loading all modules"
           AfterOutputDelayMs = 2000 }
 
         { Command = ""
-          Output = "Deploying to the cloud 🚀"
-          AfterOutputDelayMs = 2000 }
-
-        { Command = ""
-          Output = "Done!"
+          Output = "Full-stack systems ready!"
           AfterOutputDelayMs = 0 }
     |]
 
@@ -261,41 +261,15 @@ let GithubProfileCard () =
 
                     Html.p [
                         prop.className "text-xs opacity-60 mb-6 leading-relaxed"
-                        prop.text "F# / TypeScript engineer building healthcare systems, tools, and playful experiments."
-                    ]
-
-                    Html.div [
-                        prop.className "space-y-3 mb-6"
-                        prop.children [
-                            Html.div [
-                                prop.className "flex items-center gap-2 text-xs"
-                                prop.children [
-                                    Html.span [ prop.className "opacity-50"; prop.text "Likes" ]
-                                    Html.span [ prop.className "font-medium"; prop.text "61K" ]
-                                ]
-                            ]
-                            Html.div [
-                                prop.className "flex items-center gap-2 text-xs"
-                                prop.children [
-                                    Html.span [ prop.className "opacity-50"; prop.text "Projects" ]
-                                    Html.span [ prop.className "font-medium"; prop.text "87 collections" ]
-                                ]
-                            ]
-                            Html.div [
-                                prop.className "flex items-center gap-2 text-xs"
-                                prop.children [
-                                    Html.span [ prop.className "opacity-50"; prop.text "Currently Building" ]
-                                ]
-                            ]
-                        ]
+                        prop.text "Senior software engineer focused on F#, TypeScript, React, Python, and C#. Interested in workflow-heavy systems, backend APIs, typed frontend architecture, and practical product development."
                     ]
 
                     Html.ul [
                         prop.className "space-y-2 text-xs opacity-60 mb-8"
                         prop.children [
-                            Html.li [ prop.text "• Clinical AI agents & chart review tools" ]
-                            Html.li [ prop.text "• AI-powered automation & workflows" ]
-                            Html.li [ prop.text "• Interactive portfolios & code demos" ]
+                            Html.li [ prop.text "• Healthcare and regulated systems" ]
+                            Html.li [ prop.text "• Full-stack applications and internal tools" ]
+                            Html.li [ prop.text "• Interactive portfolio experiments and creative work" ]
                         ]
                     ]
 
@@ -304,7 +278,7 @@ let GithubProfileCard () =
                         prop.href "https://github.com/seanwilken"
                         prop.target "_blank"
                         prop.children [
-                            Html.span [ prop.text "View GitHub profile" ]
+                            Html.span [ prop.text "View GitHub" ]
                         ]
                     ]
                 ]
@@ -366,7 +340,7 @@ let BrowseByFocusSection (dispatch) =
                             ]
                             Html.p [
                                 prop.className "text-sm md:text-[0.9rem] text-base-content/60"
-                                prop.text "Pick a lens or tag (browse shop → tech gallery) about the core model/principles."
+                                prop.text "Choose a portfolio area to explore implementation-focused code work or visual/design projects."
                             ]
                         ]
                     ]
@@ -383,15 +357,15 @@ let BrowseByFocusSection (dispatch) =
                                     FocusTile
                                         (fun _ -> LoadSection AppView.PortfolioAppCodeView |> dispatch)
                                         (Html.span "</>")
-                                        "Code Experiments"
-                                        "Interactive demos, tools, and prototypes. Play with the UI and read the source behind it."
+                                        "Code Projects"
+                                        "Interactive demos, implementation-focused projects, tools, and experiments that reflect how I build software."
                                         "Open-code experiments gallery →"
 
                                     FocusTile
                                         (fun _ -> LoadSection AppView.PortfolioAppDesignView |> dispatch)
                                         (Html.span "✎")
                                         "Design & Drawings"
-                                        "Visual explorations, studies, and sketches that inform how I think about UI and products."
+                                        "Visual explorations, sketches, and design studies that shape how I think about interfaces and product direction."
                                         "Open Design & Drawings gallery →"
                                 ]
                             ]
@@ -428,31 +402,31 @@ let View (model: Model) dispatch =
                                         prop.children [
                                             Html.h1 [
                                                 prop.className "serif text-5xl lg:text-6xl font-light mb-8 leading-tight"
-                                                prop.text "Ideas that evolve."
+                                                prop.text "Engineering work"
                                             ]
                                             Html.h1 [
                                                 prop.className "serif text-5xl lg:text-6xl font-light mb-8 leading-tight"
-                                                prop.text "Code that matters."
+                                                prop.text "Code experiments"
                                             ]
                                             Html.h1 [
                                                 prop.className "serif text-5xl lg:text-6xl font-light mb-12 leading-tight"
-                                                prop.text "Sketches that breathe."
+                                                prop.text "Design explorations"
                                             ]
 
                                             Html.p [
                                                 prop.className "text-sm opacity-60 mb-12 leading-loose max-w-lg"
                                                 prop.text
-                                                    "A living collection of the things I build: production-grade F# systems, playful code experiments, and hand-drawn artwork. Browse by what you care about most, or dive straight into the galleries."
+                                                    "A portfolio of full-stack engineering work, interactive code experiments, and selected visual projects. Explore production-oriented systems, implementation details, and creative studies in one place."
                                             ]
 
                                             Html.div [
                                                 prop.className "flex flex-wrap gap-3 text-xs opacity-50"
                                                 prop.children [
-                                                    Html.span [ prop.text "10+ years shipping production systems" ]
+                                                    Html.span [ prop.text "10+ years building software" ]
                                                     Html.span [ prop.text "•" ]
-                                                    Html.span [ prop.text "F#, TypeScript, SAFE stack" ]
+                                                    Html.span [ prop.text "F#, React, TypeScript, Python, C#" ]
                                                     Html.span [ prop.text "•" ]
-                                                    Html.span [ prop.text "Healthcare • AI • Tools" ]
+                                                    Html.span [ prop.text "Healthcare • workflows • tools • interactive systems" ]
                                                 ]
                                             ]
                                         ]

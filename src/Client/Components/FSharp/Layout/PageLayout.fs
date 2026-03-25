@@ -25,7 +25,7 @@ let PageLayout (props: PageLayoutProps) =
                 | Model.About _     -> "About"
                 | Model.Portfolio _ -> "Projects"
                 | Model.Resume      -> "Resume"
-                | Model.Services _  -> "Services"
+                | Model.Skills _  -> "Skills"
                 | Model.Contact     -> "Contact"
                 | Model.Shop _      -> "Shop"
                 | Model.Help        -> "Help"
@@ -51,8 +51,8 @@ let PageLayout (props: PageLayoutProps) =
             props.dispatch (SwitchToOtherApp ResumeAppView)
         | "Contact" ->
             props.dispatch (SwitchToOtherApp ContactAppView)
-        | "Services" ->
-            props.dispatch (SwitchToOtherApp (ProfessionalServicesAppView ServicesLanding))
+        | "Skills" ->
+            props.dispatch (SwitchToOtherApp (ProfessionalSkillsAppView SkillsLanding))
         | "Shop" ->
             props.dispatch (SwitchToOtherApp ShopAppView)
         | _ -> ()

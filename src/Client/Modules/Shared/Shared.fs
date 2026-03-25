@@ -23,25 +23,27 @@ module Env =
 
 module WebAppView =
 
-    type ProfessionalServicesView =
-        | ServicesLanding
+    type ProfessionalSkillsView =
+        | SkillsLanding
         | AI
         | Automation
-        | Integration
-        | Website
-        | SalesPlatform
-        | Development
+        | Backend
+        | Frontend
+        | FullStack
+        | Leadership
+        | PlatformDelivery
 
             member x.toUrlString  =
                 match x with
-                | ServicesLanding -> "/services/"
-                | AI -> "/services/ai-services"
-                | Automation -> "/services/automation-services"
-                | Integration -> "/services/integration-services"
-                | Website -> "/services/web-services"
-                | SalesPlatform -> "/services/sales-services"
-                | Development -> "/services/development-services"
-            
+                | SkillsLanding -> "/skills/"
+                | AI -> "/skills/ai-skills"
+                | Automation -> "/skills/automation-skills"
+                | Backend -> "/skills/backend-skills"
+                | Frontend -> "/skills/frontend-skills"
+                | FullStack -> "/skills/fullstack-skills"
+                | Leadership -> "/skills/leadership-skills"
+                | PlatformDelivery -> "/skills/platform-skills"
+
     type CodeSection =
         | CodeLanding
         | GoalRoll
@@ -76,7 +78,7 @@ module WebAppView =
         | About
         | Contact
         | Portfolio of PortfolioSection
-        | Services of ProfessionalServicesView
+        | Skills of ProfessionalSkillsView
         | Resume
         | Shop of ShopSection
         | Welcome
@@ -85,7 +87,7 @@ module WebAppView =
     type AppView =
         | AboutAppView
         | ContactAppView
-        | ProfessionalServicesAppView of ProfessionalServicesView
+        | ProfessionalSkillsAppView of ProfessionalSkillsView
         | ShopAppView
         | PortfolioAppLandingView
         | PortfolioAppCodeView
@@ -98,7 +100,7 @@ module WebAppView =
         | AboutAppView -> "About"
         | PortfolioAppCodeView -> "Code"
         | ContactAppView -> "Contact"
-        | ProfessionalServicesAppView _ -> "Services"
+        | ProfessionalSkillsAppView _ -> "Skills"
         | PortfolioAppDesignView -> "Design"
         | PortfolioAppLandingView -> "Projects"
         | ResumeAppView -> "Resume"

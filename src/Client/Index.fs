@@ -49,13 +49,13 @@ let update ( msg: WebAppMsg ) ( model: WebAppModel ): WebAppModel * Cmd<WebAppMs
         | _ -> 
             let updatedModel, com = Shop.update msg shopModel
             { model with CurrentAreaModel = Model.Shop updatedModel }, Cmd.map ShopMsg com
-    | ServicesMsg msg, Model.Services serviceModel ->
+    | SkillsMsg msg, Model.Skills serviceModel ->
         match msg with
-        | Services.Landing.Msg.LoadApp appView -> model, Cmd.ofMsg (SwitchToOtherApp appView)
-        | Services.Landing.Msg.GoToSection section ->
-            let updatedModel, _ = Services.Landing.update msg serviceModel
-            { model with CurrentAreaModel = Model.Services updatedModel },
-            Cmd.ofMsg (NavigatePage ( Services section ))
+        | Skills.Landing.Msg.LoadApp appView -> model, Cmd.ofMsg (SwitchToOtherApp appView)
+        | Skills.Landing.Msg.GoToSection section ->
+            let updatedModel, _ = Skills.Landing.update msg serviceModel
+            { model with CurrentAreaModel = Model.Skills updatedModel },
+            Cmd.ofMsg (NavigatePage ( Skills section ))
 
     // PORTFOLIO PAGE
     | PortfolioMsg msg, Model.Portfolio pm ->
@@ -93,7 +93,7 @@ let update ( msg: WebAppMsg ) ( model: WebAppModel ): WebAppModel * Cmd<WebAppMs
         | PortfolioAppDesignView -> model, Cmd.ofMsg ( NavigatePage ( Portfolio (Design DesignGallery) ) )
         | PortfolioAppLandingView -> model, Cmd.ofMsg ( NavigatePage ( Portfolio PortfolioLanding ) )
         | ResumeAppView -> model, Cmd.ofMsg ( NavigatePage Resume )
-        | ProfessionalServicesAppView section   -> model, Cmd.ofMsg ( NavigatePage (Services section) )
+        | ProfessionalSkillsAppView section   -> model, Cmd.ofMsg ( NavigatePage (Skills section) )
         | WelcomeAppView -> model, Cmd.ofMsg ( NavigatePage Welcome )
 
     | NavigatePage page, _ ->
@@ -122,7 +122,7 @@ let View (model: WebAppModel) (dispatch: WebAppMsg -> unit) =
                     | Settings
                     | Model.Welcome -> Welcome.View (WelcomeMsg >> dispatch)
                     | Model.About aboutModel -> About.View aboutModel (AboutMsg >> dispatch)
-                    | Model.Services serviceModel -> Services.Landing.View serviceModel (ServicesMsg >> dispatch)
+                    | Model.Skills serviceModel -> Skills.Landing.View serviceModel (SkillsMsg >> dispatch)
                     | Model.Contact -> Contact.View ()
                     // Shop
                     | Model.Shop shopModel -> Shop.ShopView shopModel (ShopMsg >> dispatch)

@@ -43,13 +43,13 @@ let View () =
                                                         prop.children [
                                                             Html.h1 [
                                                                 prop.className "serif text-4xl md:text-5xl lg:text-6xl font-light leading-tight"
-                                                                prop.text "Looking to tell me something?"
+                                                                prop.text "Get in touch"
                                                             ]
 
                                                             Html.p [
                                                                 prop.className "text-sm md:text-base opacity-70 leading-relaxed max-w-md"
                                                                 prop.text
-                                                                    "Drop a line to the appropriate persona. Whether it's engineering, creative, or brand inquiries, this is the front door."
+                                                                    "For professional opportunities, project discussions, creative inquiries, or general questions, feel free to reach out. Sean Wilken is the primary contact for engineering and professional outreach, while Xero Effort is available for brand or creative inquiries."
                                                             ]
 
                                                             Html.div [
@@ -57,7 +57,7 @@ let View () =
                                                                 prop.children [
                                                                     Html.p [
                                                                         prop.className "text-xs opacity-60"
-                                                                        prop.text "For reference, same person — choose the lane that matches the inquiry:"
+                                                                        prop.text "Choose the best contact path"
                                                                     ]
 
                                                                     // Sean option (selected)
@@ -74,7 +74,7 @@ let View () =
                                                                             ]
                                                                             Html.p [
                                                                                 prop.className "text-sm"
-                                                                                prop.text "Any creative or professional outreach → Sean Wilken"
+                                                                                prop.text "Sean Wilken is the main contact for engineering, software roles, and professional outreach."
                                                                             ]
                                                                         ]
                                                                     ]
@@ -93,7 +93,7 @@ let View () =
                                                                             ]
                                                                             Html.p [
                                                                                 prop.className "text-sm opacity-80"
-                                                                                prop.text "Any creative or brand inquiries → Xero Effort"
+                                                                                prop.text "Xero Effort is for creative or brand-related inquiries."
                                                                             ]
                                                                         ]
                                                                     ]
@@ -139,7 +139,7 @@ let View () =
                                                                                         ]
                                                                                         Html.p [
                                                                                             prop.className "text-xs opacity-60"
-                                                                                            prop.text "Engineering systems & professional outreach"
+                                                                                            prop.text "Software engineering, technical opportunities, and professional outreach"
                                                                                         ]
                                                                                     ]
                                                                                 ]
@@ -180,7 +180,7 @@ let View () =
                                                                                         ]
                                                                                         Html.p [
                                                                                             prop.className "text-xs opacity-60"
-                                                                                            prop.text "Any creative work & brand inquiries"
+                                                                                            prop.text "Creative, design, and brand-related inquiries"
                                                                                         ]
                                                                                     ]
                                                                                 ]
@@ -200,7 +200,7 @@ let View () =
 
                                                             Html.p [
                                                                 prop.className "text-xs opacity-50 pt-2"
-                                                                prop.text "Replies usually within ~24 hours."
+                                                                prop.text "Most messages receive a response within 24 hours."
                                                             ]
                                                         ]
                                                     ]
@@ -223,7 +223,7 @@ let View () =
                         prop.children [
                             Html.p [
                                 prop.className "text-[0.65rem] tracking-[0.2em] uppercase opacity-60 text-center mb-10"
-                                prop.text "How to reach out"
+                                prop.text "What to include"
                             ]
 
                             Html.div [
@@ -240,20 +240,20 @@ let View () =
                                                     LucideIcon.FileCode2 "w-7 h-7 opacity-70"
                                                     Html.h3 [
                                                         prop.className "serif text-2xl font-light"
-                                                        prop.text "Dev / Resume"
+                                                        prop.text "Software / Roles"
                                                     ]
                                                 ]
                                             ]
                                             Html.p [
                                                 prop.className "text-sm opacity-70 mb-5 leading-relaxed"
-                                                prop.text "Engineering, system reviews, contracting, or product help."
+                                                prop.text "Software engineering roles, product discussions, consulting inquiries, or technical collaboration."
                                             ]
                                             Html.ul [
                                                 prop.className "space-y-2 text-xs opacity-60"
                                                 prop.children [
-                                                    Html.li "• Share a quick overview of your project or role."
-                                                    Html.li "• Include tech stack, timelines, and how you prefer to work."
-                                                    Html.li "• Attach links: GitHub, job posting, brief if you have them."
+                                                    Html.li "• A brief overview of the role, project, or opportunity."
+                                                    Html.li "• Relevant context such as stack, scope, timeline, or team setup."
+                                                    Html.li "• Links to a job post, repo, product, or supporting materials if available."
                                                 ]
                                             ]
                                         ]
@@ -269,20 +269,20 @@ let View () =
                                                     LucideIcon.PenTool "w-7 h-7 opacity-70"
                                                     Html.h3 [
                                                         prop.className "serif text-2xl font-light"
-                                                        prop.text "Art / Brand"
+                                                        prop.text "Creative / Brand"
                                                     ]
                                                 ]
                                             ]
                                             Html.p [
                                                 prop.className "text-sm opacity-70 mb-5 leading-relaxed"
-                                                prop.text "Commissions, design, merch collab, or casual identity."
+                                                prop.text "Design, merchandise, visual collaboration, or brand-related outreach."
                                             ]
                                             Html.ul [
                                                 prop.className "space-y-2 text-xs opacity-60"
                                                 prop.children [
-                                                    Html.li "• Tell me what you're making, or the vibe you're going for."
-                                                    Html.li "• Mention format (digital, print, apparel, etc.)."
-                                                    Html.li "• Share any links, references, or mood boards."
+                                                    Html.li "• A short description of what you are making or exploring."
+                                                    Html.li "• Any preferred format, medium, or deliverable."
+                                                    Html.li "• References, examples, or visual direction if helpful."
                                                 ]
                                             ]
                                         ]
@@ -298,20 +298,20 @@ let View () =
                                                     LucideIcon.MessageSquare "w-7 h-7 opacity-70"
                                                     Html.h3 [
                                                         prop.className "serif text-2xl font-light"
-                                                        prop.text "Something else"
+                                                        prop.text "General Inquiries"
                                                     ]
                                                 ]
                                             ]
                                             Html.p [
                                                 prop.className "text-sm opacity-70 mb-5 leading-relaxed"
-                                                prop.text "Collabs, weird ideas, questions about the site, or code."
+                                                prop.text "Questions, collaborations, site-related notes, or anything else that does not fit the categories above."
                                             ]
                                             Html.ul [
                                                 prop.className "space-y-2 text-xs opacity-60"
                                                 prop.children [
-                                                    Html.li "• Let me know how you found me."
-                                                    Html.li "• Give a bit of context and what you're hoping for."
-                                                    Html.li "• If it's time-sensitive, mention that too (politely)."
+                                                    Html.li "• A bit of context about why you are reaching out."
+                                                    Html.li "• What you are hoping to discuss or learn more about."
+                                                    Html.li "• Any timing considerations if the message is time-sensitive."
                                                 ]
                                             ]
                                         ]
@@ -354,7 +354,7 @@ let View () =
                                                     ]
                                                     Html.p [
                                                         prop.className "text-sm opacity-70 leading-relaxed"
-                                                        prop.text "Your message lands in the right inbox based on which email you choose."
+                                                        prop.text "Your message goes to the appropriate inbox based on the contact path you choose."
                                                     ]
                                                 ]
                                             ]
@@ -372,7 +372,7 @@ let View () =
                                                     ]
                                                     Html.p [
                                                         prop.className "text-sm opacity-70 leading-relaxed"
-                                                        prop.text "I scan for urgency, fit, and where I can actually be helpful."
+                                                        prop.text "I review for fit, context, and how I can respond most helpfully."
                                                     ]
                                                 ]
                                             ]
@@ -390,7 +390,7 @@ let View () =
                                                     ]
                                                     Html.p [
                                                         prop.className "text-sm opacity-70 leading-relaxed"
-                                                        prop.text "Most messages get a thoughtful response within ~24 hours."
+                                                        prop.text "Most messages receive a response within 24 hours."
                                                     ]
                                                 ]
                                             ]
@@ -430,16 +430,16 @@ let View () =
                                                             LucideIcon.CheckCircle2 "w-5 h-5 text-primary"
                                                             Html.h3 [
                                                                 prop.className "serif text-2xl font-light"
-                                                                prop.text "Best messages include..."
+                                                                prop.text "Helpful context"
                                                             ]
                                                         ]
                                                     ]
                                                     Html.ul [
                                                         prop.className "text-sm opacity-70 space-y-2"
                                                         prop.children [
-                                                            Html.li "• A bit of context about you or your company."
-                                                            Html.li "• What you're hoping to explore or solve."
-                                                            Html.li "• Any timelines, constraints, or links that help."
+                                                            Html.li "• A bit of background about you, your team, or your company."
+                                                            Html.li "• What you are hoping to explore, build, or discuss."
+                                                            Html.li "• Any relevant links, constraints, or timing information."
                                                         ]
                                                     ]
                                                 ]
@@ -454,16 +454,16 @@ let View () =
                                                             LucideIcon.Info "w-5 h-5 text-secondary"
                                                             Html.h3 [
                                                                 prop.className "serif text-2xl font-light"
-                                                                prop.text "A few small disclaimers"
+                                                                prop.text "Good to know"
                                                             ]
                                                         ]
                                                     ]
                                                     Html.ul [
                                                         prop.className "text-sm opacity-70 space-y-2"
                                                         prop.children [
-                                                            Html.li "• I can't take on every project, but I do read everything."
-                                                            Html.li "• If your note is deeply personal or urgent, please say so."
-                                                            Html.li "• Absolutely no spam or scripted marketing lists, please."
+                                                            Html.li "• I read everything, even if I cannot take on every opportunity."
+                                                            Html.li "• If your message is time-sensitive, please mention that clearly."
+                                                            Html.li "• Please avoid unsolicited marketing or bulk outreach."
                                                         ]
                                                     ]
                                                 ]

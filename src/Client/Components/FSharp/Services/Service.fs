@@ -3,123 +3,87 @@ module Components.FSharp.Service
 open Feliz
 open Components.FSharp
 
-// --------- Small layout helpers ----------
+type Msg =
+    | NavigateTo of SharedViewModule.WebAppView.ProfessionalSkillsView
 
-type ServiceFeature = { Title: string; Description: string }
-
-type ServiceTier = { Name: string; Items: string list }
-
-type EstimateBullet = { Title: string; Detail: string }
-
-type EstimateSection = {
+type SkillFeature = {
     Title: string
-    Subtitle: string
-    Highlights: EstimateBullet list
-    TimelineHint: string option
-    CtaLabel: string
+    Description: string
+    Icon: string option
 }
 
-
-type StatTrend =
-    | Up
-    | Down
-
-type ServiceStat = {
-    Label: string
-    Value: string
-    Trend: StatTrend
-}
-
-type ServiceIndustry = {
-    Name: string
-    Summary: string
-    Outcomes: string list
-}
-
-type ServiceCapability = {
-    Heading: string
-    Icon: string // emoji for now
+type SkillCapability = {
+    Title: string
     Description: string
 }
 
-type ServicePageModel = {|
+type SkillDomain = {
+    Name: string
+    Description: string
+}
+
+type SkillTechnologyGroup = {
+    GroupName: string
+    Items: string list
+}
+
+type SkillOutcome = {
+    Label: string
+    Value: string
+    Context: string option
+}
+
+type RelatedSkillLink = {
+    Name: string
+    Route: string
+    Description: string option
+}
+
+type SkillPageModel = {|
     Id: string
     Name: string
+
     HeroTitle: string
     HeroSubtitle: string
     HeroBadge: string option
     HeroGradientClass: string
 
     CoreSectionTitle: string
-    CoreFeatures: ServiceFeature list
+    CoreAreas: SkillFeature list
 
-    TierSectionTitle: string
-    Tiers: ServiceTier list
+    FocusSectionTitle: string option
+    FocusAreas: SkillCapability list
 
-    Estimate : EstimateSection
+    DomainsSectionTitle: string option
+    Domains: SkillDomain list
 
-    StatsSectionTitle: string
-    Stats: ServiceStat list
+    TechnologiesSectionTitle: string option
+    Technologies: SkillTechnologyGroup list
 
-    IndustriesSectionTitle: string option
-    Industries: ServiceIndustry list
+    OutcomesSectionTitle: string option
+    Outcomes: SkillOutcome list
 
-    CapabilitiesSectionTitle: string option
-    Capabilities: ServiceCapability list
-
-    CtaText: string
+    RelatedSectionTitle: string option
+    RelatedPages: RelatedSkillLink list
 |}
 
-
-let private heroMetricCard (stat: ServiceStat) =
-    let arrow, colorClass, bgClass =
-        match stat.Trend with
-        | Up -> "↑", "text-accent", "bg-accent/10"
-        | Down -> "↓", "text-error", "bg-error/10"
-
-    Html.div [
-        prop.className "rounded-2xl bg-base-100/90 border border-base-300/70 p-4 shadow-sm flex items-center gap-3"
-        prop.children [
-
-            // Arrow
-            Html.div [
-                prop.className ("w-11 h-11 rounded-full flex items-center justify-center " + bgClass)
-                prop.children [
-                    Html.span [ prop.className ("text-2xl font-semibold " + colorClass); prop.text arrow ]
-                ]
-            ]
-
-            // Label + value
-            Html.div [
-                prop.className "flex-1"
-                prop.children [
-                    Html.div [
-                        prop.className "text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-base-content/60"
-                        prop.text stat.Label
-                    ]
-                    Html.div [
-                        prop.className ("mt-1 text-xl font-semibold " + colorClass)
-                        prop.text stat.Value
-                    ]
-                ]
-            ]
-        ]
-    ]
-
-let private capabilityCard (cap: ServiceCapability) =
+let private capabilityCard (cap: SkillFeature) =
     Html.div [
         prop.className
             "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-4 flex items-start gap-3 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
         prop.children [
-            Html.div [
-                prop.className "w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-base"
-                prop.text cap.Icon
-            ]
+            match cap.Icon with
+            | None -> Html.none
+            | Some ico ->
+                Html.div [
+                    prop.className "w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-base"
+                    prop.text ico
+                ]
             Html.div [
                 prop.children [
                     Html.h4 [
                         prop.className "text-sm font-semibold text-base-content"
-                        prop.text cap.Heading
+                        prop.text cap.Title
                     ]
                     Html.p [
                         prop.className "mt-1 text-xs md:text-sm text-base-content/70 leading-relaxed"
@@ -130,95 +94,210 @@ let private capabilityCard (cap: ServiceCapability) =
         ]
     ]
 
-let private industryCard (ind: ServiceIndustry) =
+
+let private sectionHeader (title: string) (subtitle: string option) =
     Html.div [
-        prop.className "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-5 text-left space-y-2"
+        prop.className "text-center mb-10 sm:mb-12"
         prop.children [
-            Html.h3 [
-                prop.className "cormorant-font text-lg font-medium text-base-content"
-                prop.text ind.Name
+            Html.h2 [
+                prop.className "cormorant-font text-3xl sm:text-4xl lg:text-5xl font-light section-title inline-block"
+                prop.text title
             ]
-            Html.p [
-                prop.className "text-xs md:text-sm text-base-content/70 leading-relaxed"
-                prop.text ind.Summary
-            ]
-            Html.ul [
-                prop.className "list-disc pl-4 text-xs md:text-sm text-base-content/75 space-y-1"
-                prop.children [
-                    for o in ind.Outcomes do
-                        Html.li o
+            match subtitle with
+            | Some text when not (System.String.IsNullOrWhiteSpace text) ->
+                Html.p [
+                    prop.className "mt-4 text-sm sm:text-base text-base-content/70 max-w-3xl mx-auto leading-relaxed"
+                    prop.text text
                 ]
-            ]
+            | _ -> Html.none
         ]
     ]
 
-let private estimateCard (e: EstimateSection) =
-  Html.div [
-      prop.className "rounded-3xl bg-base-100 border border-base-300/70 shadow-sm p-7 md:p-8"
-      prop.children [
-          Html.div [
-              prop.className "flex flex-col md:flex-row md:items-start md:justify-between gap-5"
-              prop.children [
-                  Html.div [
-                      prop.className "space-y-2 max-w-2xl"
-                      prop.children [
-                          Html.span [
-                              prop.className "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
-                              prop.text "Estimate"
-                          ]
-                          Html.h2 [
-                              prop.className "cormorant-font text-2xl md:text-3xl font-light text-base-content"
-                              prop.text e.Title
-                          ]
-                          Html.p [
-                              prop.className "text-xs md:text-sm text-base-content/70 leading-relaxed"
-                              prop.text e.Subtitle
-                          ]
-                      ]
-                  ]
+[<ReactComponent>]
+let DomainSection (title: string) (subtitle: string option) (domains: SkillDomain list) =
+    if List.isEmpty domains then
+        Html.none
+    else
+        Html.section [
+            prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
+            prop.children [
+                Html.div [
+                    prop.className "max-w-7xl mx-auto"
+                    prop.children [
+                        sectionHeader title subtitle
 
-                  Html.button [
-                      prop.className "btn btn-sm md:btn-md btn-secondary shadow-lg shadow-secondary/30 tracking-[0.18em] uppercase text-[0.72rem]"
-                      prop.text e.CtaLabel
-                  ]
-              ]
-          ]
-
-          Html.div [
-              prop.className "mt-6 grid grid-cols-1 md:grid-cols-3 gap-4"
-              prop.children [
-                  for h in e.Highlights do
-                      Html.div [
-                          prop.className "rounded-2xl bg-base-200/40 border border-base-300/60 p-4"
-                          prop.children [
-                              Html.div [
-                                  prop.className "text-sm font-semibold text-base-content"
-                                  prop.text h.Title
-                              ]
-                              Html.div [
-                                  prop.className "mt-1 text-xs md:text-sm text-base-content/70 leading-relaxed"
-                                  prop.text h.Detail
-                              ]
-                          ]
-                      ]
-              ]
-          ]
-
-          match e.TimelineHint with
-          | Some t ->
-              Html.div [
-                  prop.className "mt-5 text-[0.75rem] md:text-xs text-base-content/60"
-                  prop.text t
-              ]
-          | None -> Html.none
-      ]
-  ]
-
-
-// --------- Main page layout ----------
+                        Html.div [
+                            prop.className "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+                            prop.children [
+                                for domain in domains do
+                                    Html.article [
+                                        prop.key domain.Name
+                                        prop.className "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-6"
+                                        prop.children [
+                                            Html.h3 [
+                                                prop.className "text-lg font-semibold text-base-content"
+                                                prop.text domain.Name
+                                            ]
+                                            Html.p [
+                                                prop.className "mt-3 text-sm leading-relaxed text-base-content/75"
+                                                prop.text domain.Description
+                                            ]
+                                        ]
+                                    ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
 
 [<ReactComponent>]
-let ServicePage (model: ServicePageModel) =
+let TechnologiesSection (title: string) (subtitle: string option) (groups: SkillTechnologyGroup list) =
+    if List.isEmpty groups then
+        Html.none
+    else
+        Html.section [
+            prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12 bg-base-200/50"
+            prop.children [
+                Html.div [
+                    prop.className "max-w-7xl mx-auto"
+                    prop.children [
+                        sectionHeader title subtitle
+
+                        Html.div [
+                            prop.className "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                            prop.children [
+                                for group in groups do
+                                    Html.article [
+                                        prop.key group.GroupName
+                                        prop.className "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-6"
+                                        prop.children [
+                                            Html.h3 [
+                                                prop.className "text-lg font-semibold text-base-content"
+                                                prop.text group.GroupName
+                                            ]
+
+                                            Html.div [
+                                                prop.className "mt-4 flex flex-wrap gap-2"
+                                                prop.children [
+                                                    for item in group.Items do
+                                                        Html.span [
+                                                            prop.key (group.GroupName + "-" + item)
+                                                            prop.className "px-3 py-1.5 rounded-full text-sm bg-base-200 border border-base-300/70 text-base-content/80"
+                                                            prop.text item
+                                                        ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+[<ReactComponent>]
+let OutcomesSection (title: string) (subtitle: string option) (outcomes: SkillOutcome list) =
+    if List.isEmpty outcomes then
+        Html.none
+    else
+        Html.section [
+            prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
+            prop.children [
+                Html.div [
+                    prop.className "max-w-7xl mx-auto"
+                    prop.children [
+                        sectionHeader title subtitle
+
+                        Html.div [
+                            prop.className "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+                            prop.children [
+                                for outcome in outcomes do
+                                    Html.article [
+                                        prop.key outcome.Label
+                                        prop.className "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-6"
+                                        prop.children [
+                                            Html.div [
+                                                prop.className "text-3xl sm:text-4xl font-semibold text-base-content"
+                                                prop.text outcome.Value
+                                            ]
+                                            Html.h3 [
+                                                prop.className "mt-2 text-base font-medium text-base-content"
+                                                prop.text outcome.Label
+                                            ]
+                                            match outcome.Context with
+                                            | Some context when not (System.String.IsNullOrWhiteSpace context) ->
+                                                Html.p [
+                                                    prop.className "mt-3 text-sm leading-relaxed text-base-content/70"
+                                                    prop.text context
+                                                ]
+                                            | _ -> Html.none
+                                        ]
+                                    ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+[<ReactComponent>]
+let RelatedPagesSection (title: string) (subtitle: string option) (pages: RelatedSkillLink list) (relatedPageCallback: SharedViewModule.WebAppView.ProfessionalSkillsView -> unit) =
+    if List.isEmpty pages then
+        Html.none
+    else
+        Html.section [
+            prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12 bg-base-200/40"
+            prop.children [
+                Html.div [
+                    prop.className "max-w-7xl mx-auto"
+                    prop.children [
+                        sectionHeader title subtitle
+
+                        Html.div [
+                            prop.className "grid grid-cols-1 md:grid-cols-2 gap-6"
+                            prop.children [
+                                for page in pages do
+                                    Html.a [
+                                        prop.key page.Name
+                                        prop.onClick (fun _ -> Browser.Dom.window.location.href <- page.Route)
+                                        prop.className "group block rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-6 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                                        prop.children [
+                                            Html.div [
+                                                prop.className "flex items-start justify-between gap-4"
+                                                prop.children [
+                                                    Html.div [
+                                                        Html.h3 [
+                                                            prop.className "text-lg font-semibold text-base-content group-hover:text-primary transition-colors"
+                                                            prop.text page.Name
+                                                        ]
+                                                        match page.Description with
+                                                        | Some desc when not (System.String.IsNullOrWhiteSpace desc) ->
+                                                            Html.p [
+                                                                prop.className "mt-3 text-sm leading-relaxed text-base-content/70"
+                                                                prop.text desc
+                                                            ]
+                                                        | _ -> Html.none
+                                                    ]
+
+                                                    Html.span [
+                                                        prop.className "text-base-content/40 group-hover:text-primary transition-colors"
+                                                        prop.text "→"
+                                                    ]
+                                                ]
+                                            ]
+                                        ]
+                                    ]
+                            ]
+                        ]
+                    ]
+                ]
+            ]
+        ]
+
+[<ReactComponent>]
+let ServicePage (model: SkillPageModel) dispatch =
     Html.div [
         // Let the surrounding layout decide height; keep this page flexible
         prop.className "w-full text-base-content"
@@ -281,42 +360,6 @@ let ServicePage (model: ServicePageModel) =
                                                 prop.text model.HeroSubtitle
                                             ]
 
-                                            Html.div [
-                                                prop.className "mt-4 flex flex-wrap gap-3 items-center"
-                                                prop.children [
-                                                    Html.button [
-                                                        // Intentional: you can wire onClick → Contact page or Calendly later
-                                                        prop.className
-                                                            "btn btn-sm md:btn-md btn-secondary shadow-lg shadow-secondary/40 tracking-[0.18em] uppercase text-[0.72rem]"
-                                                        prop.text model.CtaText
-                                                    ]
-                                                    Html.div [
-                                                        prop.className
-                                                            "inline-flex items-center gap-2 text-[0.72rem] md:text-xs text-base-100/85"
-                                                        prop.children [
-                                                            Html.span "Avg first-month ROI:"
-                                                            Html.span [
-                                                                prop.className "font-semibold text-accent"
-                                                                prop.text "3–5×"
-                                                            ]
-                                                        ]
-                                                    ]
-                                                ]
-                                            ]
-                                        ]
-                                    ]
-
-                                    // Metrics
-                                    Html.div [
-                                        prop.className "flex-1 md:pl-4 lg:pl-8"
-                                        prop.children [
-                                            Html.div [
-                                                prop.className "grid grid-cols-2 gap-3"
-                                                prop.children [
-                                                    for s in model.Stats |> List.truncate 6 do
-                                                        heroMetricCard s
-                                                ]
-                                            ]
                                         ]
                                     ]
                                 ]
@@ -324,7 +367,6 @@ let ServicePage (model: ServicePageModel) =
                         ]
                     ]
 
-                    // CORE MODULES
                     Html.section [
                         prop.children [
                             Html.div [
@@ -335,19 +377,22 @@ let ServicePage (model: ServicePageModel) =
                                             Html.span [
                                                 prop.className
                                                     "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
-                                                prop.text "Product Modules"
+                                                prop.text "Engineering Focus"
                                             ]
-                                            Html.h2 [
-                                                prop.className
-                                                    "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content"
-                                                prop.text model.CoreSectionTitle
-                                            ]
+                                            match model.FocusSectionTitle with
+                                            | None -> Html.none
+                                            | Some title ->
+                                                Html.h2 [
+                                                    prop.className
+                                                        "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content"
+                                                    prop.text title
+                                                ]
                                         ]
                                     ]
                                     Html.span [
                                         prop.className
                                             "hidden md:block text-xs md:text-sm text-right text-base-content/60"
-                                        prop.text "Everything you need to capture, qualify, and close."
+                                        prop.text "key areas of expertise and focus"
                                     ]
                                 ]
                             ]
@@ -355,7 +400,7 @@ let ServicePage (model: ServicePageModel) =
                             Html.div [
                                 prop.className "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5"
                                 prop.children [
-                                    for f in model.CoreFeatures do
+                                    for f in model.FocusAreas do
                                         Html.div [
                                             prop.className
                                                 "group relative rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-5 text-left transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
@@ -383,109 +428,9 @@ let ServicePage (model: ServicePageModel) =
 
                     Html.hr [ prop.className "border-base-300/60" ]
 
-                    // INTEGRATION TIERS
-                    Html.section [
-                        prop.children [
-                            Html.div [
-                                prop.className "flex items-center justify-between gap-4 mb-4"
-                                prop.children [
-                                    Html.div [
-                                        prop.children [
-                                            Html.span [
-                                                prop.className
-                                                    "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
-                                                prop.text "Implementation Levels"
-                                            ]
-                                            Html.h2 [
-                                                prop.className
-                                                    "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content"
-                                                prop.text model.TierSectionTitle
-                                            ]
-                                        ]
-                                    ]
-                                    Html.span [
-                                        prop.className
-                                            "hidden md:block text-xs md:text-sm text-right text-base-content/60"
-                                        prop.text "Choose the level of automation that fits your team today."
-                                    ]
-                                ]
-                            ]
-
-                            Html.div [
-                                prop.className "grid grid-cols-1 md:grid-cols-3 gap-6"
-                                prop.children [
-                                    model.Tiers
-                                    |> List.mapi (fun idx tier ->
-                                        let isFeatured = idx = 1
-
-                                        Html.div [
-                                            prop.className (
-                                                "relative rounded-2xl p-6 bg-base-100 border transition-transform duration-200 shadow-sm hover:-translate-y-1 hover:shadow-xl "
-                                                + (if isFeatured then
-                                                       "border-secondary/70 ring-1 ring-secondary/25"
-                                                   else
-                                                       "border-base-300/70")
-                                            )
-                                            prop.children [
-                                                if isFeatured then
-                                                    Html.div [
-                                                        prop.className
-                                                            "absolute -top-3 -right-3 px-3 py-1 rounded-full bg-secondary text-[0.7rem] font-semibold text-base-100 shadow-sm"
-                                                        prop.text "Most Popular"
-                                                    ]
-
-                                                Html.h3 [
-                                                    prop.className
-                                                        "mt-2 text-base font-semibold text-base-content mb-2"
-                                                    prop.text tier.Name
-                                                ]
-                                                Html.ul [
-                                                    prop.className
-                                                        "list-disc pl-4 text-xs md:text-sm text-base-content/75 space-y-1 leading-relaxed"
-                                                    prop.children [
-                                                        for i in tier.Items do
-                                                            Html.li i
-                                                    ]
-                                                ]
-                                            ]
-                                        ])
-                                    |> React.fragment
-                                ]
-                            ]
-                        ]
-                    ]
-
-                    Html.hr [ prop.className "border-base-300/60" ]
-
-                    // INDUSTRIES
-                    match model.IndustriesSectionTitle, model.Industries with
-                    | Some title, _ :: _ ->
-                        Html.section [
-                            prop.children [
-                                Html.span [
-                                    prop.className
-                                        "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
-                                    prop.text "Industries"
-                                ]
-                                Html.h2 [
-                                    prop.className
-                                        "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content mb-4"
-                                    prop.text title
-                                ]
-                                Html.div [
-                                    prop.className "grid grid-cols-1 md:grid-cols-2 gap-5"
-                                    prop.children [
-                                        for ind in model.Industries do
-                                            industryCard ind
-                                    ]
-                                ]
-                            ]
-                        ]
-                    | _ -> Html.none
-
                     // CAPABILITIES
-                    match model.CapabilitiesSectionTitle, model.Capabilities with
-                    | Some title, _ :: _ ->
+                    match model.CoreSectionTitle, model.CoreAreas with
+                    | title, _ :: _ ->
                         Html.section [
                             prop.children [
                                 Html.span [
@@ -499,9 +444,9 @@ let ServicePage (model: ServicePageModel) =
                                     prop.text title
                                 ]
                                 Html.div [
-                                    prop.className "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                                    prop.className "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4"
                                     prop.children [
-                                        for cap in model.Capabilities do
+                                        for cap in model.CoreAreas do
                                             capabilityCard cap
                                     ]
                                 ]
@@ -511,1129 +456,823 @@ let ServicePage (model: ServicePageModel) =
 
                     Html.hr [ prop.className "border-base-300/60" ]
 
-                    // PRICING
-                    estimateCard model.Estimate
+                    DomainSection
+                        (defaultArg model.DomainsSectionTitle "Domains")
+                        (Some "Where I've applied these skills professionally.")
+                        model.Domains
 
                     Html.hr [ prop.className "border-base-300/60" ]
 
-                    // STATS / ROI
-                    Html.section [
-                        prop.children [
-                            Html.span [
-                                prop.className
-                                    "text-[0.7rem] font-semibold tracking-[0.22em] uppercase text-base-content/55"
-                                prop.text "Impact"
-                            ]
-                            Html.h2 [
-                                prop.className
-                                    "mt-1 cormorant-font text-2xl md:text-3xl font-light text-base-content mb-4"
-                                prop.text model.StatsSectionTitle
-                            ]
-                            Html.div [
-                                prop.className "grid grid-cols-2 md:grid-cols-3 gap-4"
-                                prop.children [
-                                    for s in model.Stats do
-                                        Html.div [
-                                            prop.className
-                                                "rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-4"
-                                            prop.children [
-                                                Html.div [
-                                                    prop.className
-                                                        "text-[0.7rem] font-semibold uppercase tracking-wide text-base-content/60"
-                                                    prop.text s.Label
-                                                ]
-                                                Html.div [
-                                                    prop.className "mt-1 text-2xl font-semibold text-accent"
-                                                    prop.text s.Value
-                                                ]
-                                            ]
-                                        ]
-                                ]
-                            ]
-                        ]
-                    ]
+                    TechnologiesSection
+                        (defaultArg model.TechnologiesSectionTitle "Languages, Skills & Tools")
+                        (Some "A broader view of the languages, frameworks, platforms, and tools I've worked with across full-stack, backend, frontend, and platform-focused engineering work.")
+                        model.Technologies
+                    
+                    Html.hr [ prop.className "border-base-300/60" ]
 
-                    // CTA FOOTER
-                    Html.section [
-                        prop.children [
-                            Html.div [
-                                prop.className
-                                    "rounded-2xl bg-gradient-to-r from-primary to-secondary text-base-100 px-6 md:px-8 py-6 md:py-7 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_18px_45px_rgba(15,23,42,0.55)]"
-                                prop.children [
-                                    Html.div [
-                                        prop.className "text-left space-y-1"
-                                        prop.children [
-                                            Html.h3 [
-                                                prop.className "text-lg md:text-2xl font-semibold"
-                                                prop.text "Ready to see this in your business?"
-                                            ]
-                                            Html.p [
-                                                prop.className
-                                                    "text-xs md:text-sm text-base-100/85 max-w-xl leading-relaxed"
-                                                prop.text
-                                                    "Walk through your current process, identify quick wins, and leave with an implementation plan tailored to your operations."
-                                            ]
-                                        ]
-                                    ]
-                                    Html.button [
-                                        prop.className
-                                            "btn btn-sm md:btn-md bg-base-100 text-primary border-none shadow-lg hover:bg-base-200 tracking-[0.18em] uppercase text-[0.72rem]"
-                                        prop.text model.CtaText
-                                    ]
-                                ]
-                            ]
-                        ]
-                    ]
+                    // OutcomesSection
+                    //     (defaultArg model.OutcomesSectionTitle "Selected Outcomes")
+                    //     (Some "A few representative outcomes tied to this area of work.")
+                    //     model.Outcomes
+                    
+                    // Html.hr [ prop.className "border-base-300/60" ]
+
+                    RelatedPagesSection
+                        (defaultArg model.RelatedSectionTitle "Related Areas")
+                        (Some "Other skill areas that connect naturally with this work.")
+                        model.RelatedPages
+                        (fun view -> dispatch (NavigateTo view))
                 ]
             ]
         ]
     ]
 
 
-// --- AI SALES & OPS ---
 
-let aiFeatures: ServiceFeature list = [
+let commonDomains: SkillDomain list = [
     {
-        Title = "Receptionist Agent"
-        Description = "24/7 AI calls & chat, instant lead capture and routing."
+        Name = "Healthcare & Regulated Systems"
+        Description = "Built workflow-heavy applications, validation systems, and document processing pipelines for regulated healthcare environments with complex domain rules."
     }
     {
-        Title = "Scheduler & Dispatch Agent"
-        Description = "Auto-booking, route planning, and crew balancing across calendars."
+        Name = "E-Commerce Platforms"
+        Description = "Worked across storefronts, product systems, fulfillment flows, and operational tooling for commerce-focused applications."
     }
     {
-        Title = "Follow-Up Agent"
-        Description = "Automated quotes, reminders, upsells, reviews, and nurture sequences."
+        Name = "Internal Tools & Operational Workflows"
+        Description = "Built systems that support intake, processing, review, reporting, and day-to-day operational workflows."
     }
     {
-        Title = "Analytics & Insights"
-        Description = "Real-time KPIs, attribution, and ROI reporting in one dashboard."
+        Name = "Real-Time & Interactive Applications"
+        Description = "Developed systems with live updates, status tracking, and responsive client interactions backed by state-aware backend processing."
     }
 ]
 
-let aiTiers: ServiceTier list = [
+let relatedSkillLinks: RelatedSkillLink list = [
     {
-        Name = "Basic Integration"
-        Items = [ "Calendar & CRM sync"; "AI-driven Receptionist"; "Lead capture + tagging" ]
+        Name = "Full-Stack Engineering"
+        Route = "/skills/full-stack-engineering"
+        Description = Some "Application architecture across frontend, backend, and delivery."
     }
     {
-        Name = "Advanced Automation"
-        Items = [ "Full crew dispatch"; "Invoicing reminders"; "Simple RAG knowledge base" ]
+        Name = "Backend APIs & Systems"
+        Route = "/skills/backend-apis-systems"
+        Description = Some "Custom servers, APIs, processing pipelines, and integrations."
     }
     {
-        Name = "Fully Managed Turnkey"
-        Items = [
-            "End-to-end funnel automation"
-            "Training & docs for your team"
-            "Optional ongoing optimization retainer"
-        ]
+        Name = "Frontend Development"
+        Route = "/skills/frontend-development"
+        Description = Some "Responsive application UIs, component systems, and client-side architecture."
+    }
+    {
+        Name = "Workflow Automation"
+        Route = "/skills/workflow-automation"
+        Description = Some "Stateful workflows, validation, notifications, and operational tooling."
+    }
+    {
+        Name = "AI & LLM Integrations"
+        Route = "/skills/ai-llm-integrations"
+        Description = Some "AI-assisted features, retrieval workflows, and document processing."
+    }
+    {
+        Name = "Cloud & Platform Delivery"
+        Route = "/skills/cloud-platform-delivery"
+        Description = Some "Deployment, containers, CI/CD, infrastructure, and platform reliability."
     }
 ]
 
-let aiEstimate : EstimateSection =
-    { Title = "Contact for an Estimate"
-      Subtitle = "Every business has a different call volume, tech stack, and workflow complexity. We'll scope your automations and provide a clear plan with an implementation estimate."
-      Highlights =
-        [ { Title = "What impacts cost"
-            Detail = "Call volume, number of systems (CRM/calendar/invoicing), and how much of dispatch + follow-up is automated." }
-          { Title = "What you get"
-            Detail = "A scoped build plan, integration map, and rollout steps (with guardrails + monitoring)." }
-          { Title = "How we scope it"
-            Detail = "30-minute discovery, quick process audit, then a written estimate and timeline." } ]
-      TimelineHint = Some "Typical: estimate delivered in 1-3 business days after discovery."
-      CtaLabel = "Get an Estimate" }
+let backendCoreAreas: SkillFeature list = [
+    {
+        Title = "Custom Backend Services"
+        Description = "Designing and deploying custom servers and application services to support operational workflows and product features."
+        Icon = None
+    }
+    {
+        Title = "API Design"
+        Description = "Building backend endpoints and contracts that support validation, processing, submission, and frontend integration."
+        Icon = None
+    }
+    {
+        Title = "Document & Data Processing"
+        Description = "Implementing ingestion, transformation, validation, and processing pipelines for structured and semi-structured workflows."
+        Icon = None
+    }
+    {
+        Title = "State-Aware Systems"
+        Description = "Handling status transitions, duplicate prevention, retries, and review/resubmission flows in long-running processes."
+        Icon = None
+    }
+]
 
+let backendFocusAreas: SkillCapability list = [
+    {
+        Title = "Backend API Development"
+        Description = "Building application backends for client access, data workflows, and domain-specific operations."
+    }
+    {
+        Title = "Validation & Submission Pipelines"
+        Description = "Designing systems that check data quality, surface discrepancies, and support reliable downstream submission."
+    }
+    {
+        Title = "Real-Time Workflow State"
+        Description = "Using WebSockets and state-safe processing patterns to expose progress and completion state to the client."
+    }
+    {
+        Title = "Integration-Driven Backend Work"
+        Description = "Connecting internal and third-party systems through APIs, webhooks, and controlled data movement."
+    }
+]
 
-let aiStats: ServiceStat list = [
+let backendTechnologies: SkillTechnologyGroup list = [
     {
-        Label = "Missed Calls"
-        Value = "30%"
-        Trend = Down
+        GroupName = "Languages"
+        Items = [ "F#"; "TypeScript"; "Python"; "C#" ]
     }
     {
-        Label = "Lead Conversion"
-        Value = "20%"
-        Trend = Up
+        GroupName = "Backend"
+        Items = [ ".NET"; "Node.js"; "Express"; "REST APIs"; "GraphQL"; "WebSockets" ]
     }
     {
-        Label = "Admin Hours"
-        Value = "25%"
-        Trend = Down
+        GroupName = "Data"
+        Items = [ "PostgreSQL"; "SQL Server"; "MongoDB"; "Redis" ]
     }
     {
-        Label = "Customer Satisfaction"
+        GroupName = "Infrastructure"
+        Items = [ "Docker"; "Kubernetes"; "Azure"; "DigitalOcean" ]
+    }
+]
+
+let backendOutcomes: SkillOutcome list = [
+    {
+        Label = "Chart Review Reduction"
         Value = "60%"
-        Trend = Up
+        Context = Some "Through automation and backend processing pipelines."
     }
     {
-        Label = "Ops Errors"
-        Value = "40%"
-        Trend = Down
+        Label = "Data Processing Improvement"
+        Value = "79%"
+        Context = Some "Through performance optimization and workflow refinement."
     }
     {
-        Label = "Owner Focus Time"
-        Value = "50%"
-        Trend = Up
+        Label = "Submission Accuracy"
+        Value = "High"
+        Context = Some "Validation and discrepancy reporting across registry workflows."
     }
 ]
 
-// Industries this service is tailored for
-let aiIndustries: ServiceIndustry list = [
+let backendModel: SkillPageModel = {|
+    Id = "backend-apis-systems"
+    Name = "Backend APIs & Systems"
+    HeroTitle = "Backend systems for APIs, processing pipelines, and workflow-heavy applications"
+    HeroSubtitle = "Strong backend experience building custom servers, validation systems, state-aware processing flows, and client-facing APIs for operational software."
+    HeroBadge = Some "Backend APIs & Systems"
+    HeroGradientClass = "from-accent to-primary"
+
+    CoreSectionTitle = "Core Areas"
+    CoreAreas = backendCoreAreas
+
+    FocusSectionTitle = Some "Technical Focus"
+    FocusAreas = backendFocusAreas
+
+    DomainsSectionTitle = Some "Domains"
+    Domains = commonDomains
+
+    TechnologiesSectionTitle = Some "Core Technologies"
+    Technologies = backendTechnologies
+
+    OutcomesSectionTitle = Some "Selected Outcomes"
+    Outcomes = backendOutcomes
+
+    RelatedSectionTitle = Some "Related Areas"
+    RelatedPages = relatedSkillLinks
+|}
+let BackendPage (backButtonComponent: ReactElement) = ServicePage backendModel
+
+
+let frontendCoreAreas: SkillFeature list = [
     {
-        Name = "Home Services & Contractors"
-        Summary = "Perfect for HVAC, plumbing, electrical, and other trades with inbound calls and dispatch."
-        Outcomes = [
-            "Auto-answers and qualifies every inbound call."
-            "Reminders and follow-ups when bids go quiet."
-            "Route-balanced schedules for techs and crews."
-        ]
+        Title = "Application UI Development"
+        Description = "Building responsive application interfaces that support complex workflows without overwhelming the user."
+        Icon = None
     }
     {
-        Name = "Healthcare & Clinics"
-        Summary = "Reduce front-desk load while keeping patient communication personal."
-        Outcomes = [
-            "Intake, reminders, and reschedules handled by agents."
-            "Triage questions routed to the right staff."
-            "Post-visit surveys and review requests automated."
-        ]
+        Title = "Component Systems"
+        Description = "Creating reusable UI patterns and consistent structure that scale across pages, features, and states."
+        Icon = None
     }
     {
-        Name = "Legal & Professional Services"
-        Summary = "Never miss a lead while you're in court or with clients."
-        Outcomes = [
-            "Call screening and intake forms without extra staff."
-            "Smart follow-ups to reduce no-shows and ghosting."
-            "Automated reminders around key dates and documents."
-        ]
+        Title = "Typed Frontend Architecture"
+        Description = "Using React, TypeScript, and F#-based client patterns to keep state and behavior predictable."
+        Icon = None
     }
     {
-        Name = "Retail, Salons & Memberships"
-        Summary = "Drive repeat visits, memberships, and reviews without manual outreach."
-        Outcomes = [
-            "Abandoned inquiry follow-ups and reactivation campaigns."
-            "Review and referral requests after each visit."
-            "Membership and package renewal nudges."
-        ]
+        Title = "Responsive & Maintainable Design"
+        Description = "Improving layout, usability, and structure while keeping the codebase clean and adaptable."
+        Icon = None
     }
 ]
 
-// AI / LLM-specific capabilities
-let aiCapabilities: ServiceCapability list = [
+let frontendFocusAreas: SkillCapability list = [
     {
-        Heading = "LLM-Powered Phone & Chat Agents"
-        Icon = "🤖"
-        Description = "Voice and chat agents tailored to your scripts, playbooks, and compliance needs."
+        Title = "React-Based Application Development"
+        Description = "Building client-side experiences for product workflows, form-heavy applications, dashboards, and interactive tools."
     }
     {
-        Heading = "RAG Knowledge Bases"
-        Icon = "📚"
-        Description = "Ground models in your SOPs, PDFs, contracts, and EMR/CRM data instead of generic internet text."
+        Title = "State Management & Client Logic"
+        Description = "Structuring UI behavior and view state in a way that remains maintainable as applications grow."
     }
     {
-        Heading = "Generative Outreach & Follow-Up"
-        Icon = "✉️"
-        Description = "Context-aware emails, SMS, and messages that match your brand and tone—no templates required."
+        Title = "Design-to-Code Implementation"
+        Description = "Translating rough concepts, mocks, or evolving design direction into polished and usable interfaces."
     }
     {
-        Heading = "LLM Workflow Orchestration"
-        Icon = "🧠"
-        Description = "Chain multiple agents and tools together to complete multi-step workflows end-to-end."
-    }
-    {
-        Heading = "Model & Prompt Tuning"
-        Icon = "🎯"
-        Description = "Prompt, system message, and parameter tuning so responses stay on-brand, safe, and reliable."
-    }
-    {
-        Heading = "Analytics & Guardrails"
-        Icon = "📊"
-        Description = "Monitor performance, catches, and errors with human-in-the-loop controls where needed."
+        Title = "Frontend Performance & Usability"
+        Description = "Improving perceived speed, responsiveness, and interaction quality across device sizes and application states."
     }
 ]
 
-let aiSalesModel : ServicePageModel =
-  {|
-    Id = "ai-sales-automation"
-    Name = "AI Sales & Operations Automation"
-    HeroTitle = "Scale Your Business with AI-Driven Automation"
-    HeroSubtitle = "Never miss a lead, eliminate scheduling headaches, and automate follow-ups — all in one unified platform."
-    HeroBadge = Some "AI Automation"
+let frontendTechnologies: SkillTechnologyGroup list = [
+    {
+        GroupName = "Languages"
+        Items = [ "TypeScript"; "JavaScript"; "F#" ]
+    }
+    {
+        GroupName = "Frontend"
+        Items = [ "React"; "JSX"; "TSX"; "Fable"; "Elmish"; "HTML"; "CSS" ]
+    }
+    {
+        GroupName = "Styling"
+        Items = [ "Tailwind CSS"; "DaisyUI"; "Bootstrap"; "Bulma" ]
+    }
+    {
+        GroupName = "Supporting Work"
+        Items = [ "REST APIs"; "GraphQL"; "Responsive Design"; "Component Architecture" ]
+    }
+]
+
+let frontendOutcomes: SkillOutcome list = [
+    {
+        Label = "Telehealth & Form Systems"
+        Value = "Multi-State"
+        Context = Some "Built dynamic frontend workflows with state-specific regulatory logic."
+    }
+    {
+        Label = "Interactive Systems"
+        Value = "50K+ Users"
+        Context = Some "Frontend work supporting real-time product interactions."
+    }
+]
+
+let frontendModel: SkillPageModel = {|
+    Id = "frontend-development"
+    Name = "Frontend Development"
+    HeroTitle = "Frontend development focused on responsive applications and maintainable UI systems"
+    HeroSubtitle = "Experience building product UIs, workflow-heavy interfaces, and component-driven frontends with React, TypeScript, F#, and modern styling systems."
+    HeroBadge = Some "Frontend Development"
     HeroGradientClass = "from-primary to-secondary"
 
-    CoreSectionTitle = "Core Modules"
-    CoreFeatures = aiFeatures
+    CoreSectionTitle = "Core Areas"
+    CoreAreas = frontendCoreAreas
 
-    TierSectionTitle = "Integration & Automation Tiers"
-    Tiers = aiTiers
+    FocusSectionTitle = Some "Technical Focus"
+    FocusAreas = frontendFocusAreas
 
-    StatsSectionTitle = "Typical First-Month Impact"
-    Stats = aiStats
+    DomainsSectionTitle = Some "Domains"
+    Domains = commonDomains
 
-    IndustriesSectionTitle = Some "Who This Service Works Best For"
-    Industries = aiIndustries
+    TechnologiesSectionTitle = Some "Core Technologies"
+    Technologies = frontendTechnologies
 
-    CapabilitiesSectionTitle = Some "AI & LLM Capabilities"
-    Capabilities = aiCapabilities
+    OutcomesSectionTitle = Some "Selected Outcomes"
+    Outcomes = frontendOutcomes
 
-    Estimate = aiEstimate
+    RelatedSectionTitle = Some "Related Areas"
+    RelatedPages = relatedSkillLinks
+|}
+let FrontendPage (backButtonComponent: ReactElement) = ServicePage frontendModel
 
-    CtaText = "Book Your 30-Minute Demo" 
-  |}
-
-
-
-[<ReactComponent>]
-let AiSalesPage () = ServicePage aiSalesModel
-
-let engineeringCapabilities: ServiceCapability list = [
+let fullStackCoreAreas: SkillFeature list = [
     {
-        Heading = "Web Development"
-        Icon = "🌐"
-        Description = "Responsive, performant SPAs and full-stack web apps."
+        Title = "Production Web Applications"
+        Description = "Building maintainable applications with clear boundaries across frontend, backend, and shared domain logic."
+        Icon = None
     }
     {
-        Heading = "UI/UX Design"
-        Icon = "🎨"
-        Description = "Wireframes, design systems, and polished front-ends."
+        Title = "End-to-End Feature Delivery"
+        Description = "Owning features from data model and API design through UI implementation, testing, and deployment."
+        Icon = None
     }
     {
-        Heading = "Software Integration"
-        Icon = "🔗"
-        Description = "Connecting CRMs, ERPs, EMRs, and third-party tools."
+        Title = "System Design & Architecture"
+        Description = "Structuring applications to remain understandable, scalable, and adaptable as requirements evolve."
+        Icon = None
     }
     {
-        Heading = "E-Commerce"
-        Icon = "🛒"
-        Description = "Online stores, product catalogs, and custom checkout flows."
-    }
-    {
-        Heading = "API Development"
-        Icon = "🔃"
-        Description = "REST/GraphQL APIs with clear contracts and docs."
-    }
-    {
-        Heading = "Performance Optimization"
-        Icon = "⚡"
-        Description = "Profiling, query tuning, and front-end performance passes."
-    }
-    {
-        Heading = "Security Enhancements"
-        Icon = "🔒"
-        Description = "Hardening auth, RBAC, and data access paths."
-    }
-    {
-        Heading = "Cloud Deployment"
-        Icon = "☁️"
-        Description = "CI/CD, containers, and cloud-native deployments."
-    }
-    {
-        Heading = "Maintenance & Support"
-        Icon = "🛠️"
-        Description = "Retainers for fixes, small features, and upgrades."
+        Title = "Cross-Stack Problem Solving"
+        Description = "Working across client, server, database, and infrastructure layers to unblock delivery and improve reliability."
+        Icon = None
     }
 ]
 
-let engineeringFeatures: ServiceFeature list = [
+let fullStackFocusAreas: SkillCapability list = [
     {
-        Title = "Modern Web Apps"
-        Description = "F#, TypeScript, and React-based applications that stay maintainable over time."
+        Title = "Typed Application Development"
+        Description = "Using strongly typed languages and predictable patterns to reduce ambiguity and improve maintainability."
     }
     {
-        Title = "Design-to-Code"
-        Description = "Partner with designers or take your rough sketches to polished interfaces."
+        Title = "Frontend / Backend Integration"
+        Description = "Designing APIs and client contracts that support clean application flow and reliable feature delivery."
     }
     {
-        Title = "Platform Glue"
-        Description = "Bridge legacy systems and new tooling without rewriting everything at once."
+        Title = "Workflow-Heavy Systems"
+        Description = "Building applications that manage intake, validation, processing, review, and user-facing status updates."
     }
     {
-        Title = "Data & Reporting"
-        Description = "Dashboards and exports that give teams the numbers they actually care about."
-    }
-]
-
-let engineeringTiers: ServiceTier list = [
-    {
-        Name = "Project Foundations"
-        Items = [
-            "Architecture & technical plan"
-            "Design system + component library"
-            "Initial implementation"
-        ]
-    }
-    {
-        Name = "Product Delivery"
-        Items = [
-            "End-to-end feature delivery"
-            "Backend + frontend integration"
-            "QA, testing, and rollout"
-        ]
-    }
-    {
-        Name = "Platform Partnership"
-        Items = [
-            "Ongoing roadmap support"
-            "Performance and reliability passes"
-            "On-call for product and engineering"
-        ]
+        Title = "Performance & Reliability"
+        Description = "Improving responsiveness, reducing failure points, and tightening the feedback loop between product and engineering."
     }
 ]
 
-let engineeringEstimate : EstimateSection =
-    { Title = "Contact for an Estimate"
-      Subtitle = "Whether you need a feature owner, integration lead, or delivery partner — scope depends on requirements, systems, and desired timeline."
-      Highlights =
-        [ { Title = "Good fits"
-            Detail = "Feature delivery, refactors, migrations, integration work, and reliability improvements." }
-          { Title = "Estimate includes"
-            Detail = "Phased plan, risk callouts, and tradeoffs (speed vs scope vs maintainability)." }
-          { Title = "Engagement style"
-            Detail = "Project-based or retainer partnership depending on your needs." } ]
-      TimelineHint = Some "Typical: a scoped estimate after 1 discovery call + brief technical review."
-      CtaLabel = "Request an Estimate" }
-
-
-let engineeringStats: ServiceStat list = [
+let fullStackTechnologies: SkillTechnologyGroup list = [
     {
-        Label = "Delivery Speed"
-        Value = "2-3x"
-        Trend = Up
+        GroupName = "Languages"
+        Items = [ "F#"; "TypeScript"; "JavaScript"; "Python"; "C#" ]
     }
     {
-        Label = "Production Incidents"
-        Value = "50%"
-        Trend = Down
+        GroupName = "Frontend"
+        Items = [ "React"; "Fable"; "Elmish"; "HTML"; "CSS"; "Tailwind CSS"; "DaisyUI" ]
     }
     {
-        Label = "Developer Happiness"
-        Value = "40%"
-        Trend = Up
+        GroupName = "Backend"
+        Items = [ ".NET"; "Node.js"; "Express"; "REST APIs"; "GraphQL" ]
+    }
+    {
+        GroupName = "Data & Infrastructure"
+        Items = [ "PostgreSQL"; "SQL Server"; "MongoDB"; "Docker"; "Kubernetes" ]
     }
 ]
 
-let engineeringIndustries: ServiceIndustry list = [
+let fullStackOutcomes: SkillOutcome list = [
     {
-        Name = "SaaS & B2B Platforms"
-        Summary = "For teams that need a senior engineer to own complex features or integrations."
-        Outcomes = [
-            "Ship complex features without ballooning team size."
-            "Have a sounding board for architecture decisions."
-            "Unblock frontend-backend integration quickly."
-        ]
+        Label = "Patient Records Processed"
+        Value = "2M+"
+        Context = Some "Diagnostic automation and healthcare workflow systems."
     }
     {
-        Name = "Healthcare & Regulated"
-        Summary = "Great fit when you need careful handling of PHI or domain-heavy logic."
-        Outcomes = [
-            "Map messy domain concepts into clear types and workflows."
-            "Integrate with registries, clearinghouses, or vendor APIs."
-            "Improve reliability and observability around critical flows."
-        ]
+        Label = "Medical Facilities Supported"
+        Value = "50+"
+        Context = Some "Platform delivery across regulated healthcare environments."
+    }
+    {
+        Label = "Concurrent Users Supported"
+        Value = "50K+"
+        Context = Some "Real-time and interactive application work."
     }
 ]
 
-let engineeringModel: ServicePageModel = {|
-    Id = "engineering-services"
-    Name = "Engineering & Integration Services"
-    HeroTitle = "Ship the Right Features, the Right Way"
-    HeroSubtitle =
-        "From greenfield builds to legacy integrations, get a senior engineer who can own the messy middle and deliver."
-    HeroBadge = Some "Engineering & Integration"
+let fullStackModel: SkillPageModel = {|
+    Id = "full-stack-engineering"
+    Name = "Full-Stack Engineering"
+    HeroTitle = "Full-stack engineering across product, platform, and workflow-heavy systems"
+    HeroSubtitle = "Experience building production web applications across healthcare, e-commerce, and internal platforms, with strength across frontend, backend, APIs, and delivery."
+    HeroBadge = Some "Full-Stack Engineering"
     HeroGradientClass = "from-secondary to-accent"
 
-    CoreSectionTitle = "Ways We Can Help"
-    CoreFeatures = engineeringFeatures
+    CoreSectionTitle = "Core Areas"
+    CoreAreas = fullStackCoreAreas
 
-    TierSectionTitle = "Engagement Models"
-    Tiers = engineeringTiers
+    FocusSectionTitle = Some "Technical Focus"
+    FocusAreas = fullStackFocusAreas
 
-    Estimate = engineeringEstimate
+    DomainsSectionTitle = Some "Domains"
+    Domains = commonDomains
 
-    StatsSectionTitle = "Impact on Your Team"
-    Stats = engineeringStats
+    TechnologiesSectionTitle = Some "Core Technologies"
+    Technologies = fullStackTechnologies
 
-    IndustriesSectionTitle = Some "Who This Service Is a Great Fit For"
-    Industries = engineeringIndustries
+    OutcomesSectionTitle = Some "Selected Outcomes"
+    Outcomes = fullStackOutcomes
 
-    CapabilitiesSectionTitle = Some "Capabilities"
-    Capabilities = engineeringCapabilities
-
-    CtaText = "Talk About Your Roadmap"
+    RelatedSectionTitle = Some "Related Areas"
+    RelatedPages = relatedSkillLinks
 |}
+let FullstackPage (backButtonComponent: ReactElement) = ServicePage fullStackModel
 
-[<ReactComponent>]
-let EngineeringPage () = ServicePage engineeringModel
 
-// ----------------------
-// AUTOMATION
-// ----------------------
 
-let automationFeatures: ServiceFeature list = [
+let automationCoreAreas: SkillFeature list = [
     {
-        Title = "Workflow Automation"
-        Description = "Automate cross-app workflows so teams stop living in spreadsheets and email."
+        Title = "Operational Workflow Design"
+        Description = "Building systems that move work forward through intake, validation, processing, review, and completion."
+        Icon = None
     }
     {
-        Title = "Internal Tools & Dashboards"
-        Description = "Lightweight internal apps that wrap your existing systems instead of replacing them."
+        Title = "Automation with Oversight"
+        Description = "Automating repetitive work while keeping meaningful checkpoints for users and teams."
+        Icon = None
     }
     {
-        Title = "Notification & Alerting"
-        Description = "Smart alerts for SLAs, approvals, and exceptions that actually matter."
+        Title = "Notifications & Status Handling"
+        Description = "Surfacing the right state, alerts, and completion signals so users know what happened and what comes next."
+        Icon = None
     }
     {
-        Title = "Backoffice Bots"
-        Description = "Bots that handle repetitive admin tasks while your team handles edge cases."
+        Title = "Internal Tooling"
+        Description = "Creating focused tools and process layers around existing systems instead of forcing unnecessary platform replacement."
+        Icon = None
     }
 ]
 
-let automationTiers: ServiceTier list = [
+let automationFocusAreas: SkillCapability list = [
     {
-        Name = "Discovery & Design"
-        Items = [
-            "Current process mapping"
-            "Automation opportunity report"
-            "Prioritized roadmap"
-        ]
+        Title = "Workflow State Management"
+        Description = "Designing systems that manage long-running operations, retries, status visibility, and safe transitions."
     }
     {
-        Name = "Automation Build-Out"
-        Items = [
-            "Workflow design & implementation"
-            "Integrations & data sync"
-            "Monitoring & logging"
-        ]
+        Title = "Validation & Review Loops"
+        Description = "Supporting discrepancy checks, review steps, and controlled resubmission in data-heavy processes."
     }
     {
-        Name = "Automation Care Plan"
-        Items = [
-            "Ongoing tuning & monitoring"
-            "New workflow rollouts"
-            "Quarterly optimization review"
-        ]
+        Title = "Operational Efficiency"
+        Description = "Reducing manual effort by automating repeatable tasks while preserving reliability and visibility."
+    }
+    {
+        Title = "Cross-System Process Automation"
+        Description = "Connecting inputs, data transformations, and downstream actions across APIs and internal tools."
     }
 ]
 
-let automationEstimate : EstimateSection =
-    { Title = "Contact for an Estimate"
-      Subtitle = "Automation work ranges from simple routing + alerts to multi-system workflows with approvals, dashboards, and exception handling."
-      Highlights =
-        [ { Title = "Scope drivers"
-            Detail = "How many tools, how many workflows, and how strict the approval / audit requirements are." }
-          { Title = "Deliverables"
-            Detail = "Workflow map, implementation plan, monitoring/alerts, and handoff documentation." }
-          { Title = "Rollout approach"
-            Detail = "Start with 1-2 workflows, then expand once value is proven." } ]
-      TimelineHint = Some "Typical: scoping + estimate in 2-5 business days depending on complexity."
-      CtaLabel = "Get Automation Estimate" }
-
-
-let automationStats: ServiceStat list = [
+let automationTechnologies: SkillTechnologyGroup list = [
     {
-        Label = "Manual Clicks Removed"
-        Value = "40-70%"
-        Trend = Down
+        GroupName = "Backend & Workflow"
+        Items = [ ".NET"; "Node.js"; "REST APIs"; "WebSockets"; "Background Processing" ]
     }
     {
-        Label = "Process Throughput"
-        Value = "2-4x"
-        Trend = Up
+        GroupName = "Data"
+        Items = [ "PostgreSQL"; "SQL Server"; "MongoDB"; "Redis" ]
     }
     {
-        Label = "Error Rate"
-        Value = "30-60%"
-        Trend = Down
+        GroupName = "Automation & AI"
+        Items = [ "OpenAI API"; "RAG Workflows"; "n8n"; "Zapier" ]
     }
 ]
 
-// Industries where this shines
-let automationIndustries: ServiceIndustry list = [
+let automationOutcomes: SkillOutcome list = [
     {
-        Name = "Home Services & Field Ops"
-        Summary = "For teams where scheduling, dispatch, and follow-up are still handled manually."
-        Outcomes = [
-            "Reduce time spent on scheduling and dispatch."
-            "Standardize follow-up sequences so no work order gets dropped."
-            "Give owners a clear view of workload and bottlenecks."
-        ]
-    }
-    {
-        Name = "Healthcare & Clinics"
-        Summary = "Automate the repetitive coordination around appointments, reminders, and paperwork."
-        Outcomes = [
-            "Reduce front-desk load without losing human touch."
-            "Automate reminders, reschedules, and simple pre-visit intake."
-            "Flag exceptions and edge cases for staff instead of handling every case manually."
-        ]
-    }
-    {
-        Name = "Backoffice & Accounting"
-        Summary = "Great fit for finance and ops teams drowning in checklists and spreadsheets."
-        Outcomes = [
-            "Automate status changes and document routing."
-            "Ensure approvals and reviews follow a consistent path."
-            "Improve auditability with clear logs and traces."
-        ]
-    }
-]
-
-// Capabilities (for the capabilities section)
-let automationCapabilities: ServiceCapability list = [
-    {
-        Heading = "Process Mapping & Design"
-        Icon = "🧭"
-        Description =
-            "Map your current workflows, then design automated versions that keep the right approvals in place."
-    }
-    {
-        Heading = "Task & Ticket Automation"
-        Icon = "📌"
-        Description = "Create, update, and route tasks in tools like Jira, Trello, Asana, or custom systems."
-    }
-    {
-        Heading = "Approval Flows"
-        Icon = "✅"
-        Description = "Automate approvals while keeping human review for high-risk or high-value decisions."
-    }
-    {
-        Heading = "Backoffice Bots"
-        Icon = "🤖"
-        Description = "Bots that handle repetitive admin work like status updates, reminders, and document checks."
-    }
-    {
-        Heading = "Monitoring & Guardrails"
-        Icon = "🛡️"
-        Description = "Dashboards and alerts so you can see what automations are doing and step in when needed."
-    }
-    {
-        Heading = "Human-in-the-Loop Design"
-        Icon = "🧑‍💻"
-        Description =
-            "Keep people in control of exceptions, escalations, and edge cases instead of trying to automate everything."
-    }
-]
-
-let automationModel: ServicePageModel = {|
-    Id = "automation-services"
-    Name = "Business & Ops Automation"
-    HeroTitle = "Automate the Busywork, Keep the Control"
-    HeroSubtitle =
-        "Codify your best processes into automations so your team can focus on the exceptions, not the routine."
-    HeroBadge = Some "Automation"
-    HeroGradientClass = "from-primary to-secondary"
-    CoreSectionTitle = "Automation Building Blocks"
-    CoreFeatures = automationFeatures
-    TierSectionTitle = "How We Engage"
-    Tiers = automationTiers
-    Estimate = automationEstimate
-    StatsSectionTitle = "Typical Operations Impact"
-    Stats = automationStats
-    IndustriesSectionTitle = Some "Who This Service Works Best For"
-    Industries = automationIndustries
-    CapabilitiesSectionTitle = Some "Automation Capabilities"
-    Capabilities = automationCapabilities
-    CtaText = "Schedule an Automation Review"
-|}
-
-[<ReactComponent>]
-let AutomationPage () = ServicePage automationModel
-
-
-// ----------------------
-// INTEGRATION
-// ----------------------
-
-let integrationFeatures: ServiceFeature list = [
-    {
-        Title = "API & Webhook Integrations"
-        Description = "Connect CRMs, ERPs, EMRs, and SaaS tools with robust, monitored integrations."
-    }
-    {
-        Title = "Data Sync & ETL"
-        Description = "Move data reliably between systems with proper mapping, validation, and logging."
-    }
-    {
-        Title = "Event-Driven Workflows"
-        Description = "Trigger downstream actions when the right events happen in your systems."
-    }
-    {
-        Title = "Vendor & Partner Platforms"
-        Description = "Implement vendor APIs and specs so your team doesn't have to reverse-engineer them."
-    }
-]
-
-let integrationTiers: ServiceTier list = [
-    {
-        Name = "Single Integration"
-        Items = [
-            "One source ↔ destination"
-            "Field mapping & validation"
-            "Monitoring & alerts"
-        ]
-    }
-    {
-        Name = "Integration Bundle"
-        Items = [
-            "Multiple systems connected"
-            "Shared logging & observability"
-            "Error handling playbooks"
-        ]
-    }
-    {
-        Name = "Integration Platform"
-        Items = [
-            "Reusable integration layer"
-            "Docs & onboarding for your devs"
-            "Optional ongoing support"
-        ]
-    }
-]
-
-let integrationEstimate : EstimateSection =
-    { Title = "Contact for an Estimate"
-      Subtitle = "Integration pricing depends on authentication, data mapping complexity, rate limits, and reliability requirements."
-      Highlights =
-        [ { Title = "Scope drivers"
-            Detail = "Number of systems, field mapping, sync direction, and error handling depth." }
-          { Title = "Reliability-first"
-            Detail = "Monitoring, retries, dead-letter handling, and playbooks are included — not an afterthought." }
-          { Title = "What you get"
-            Detail = "A documented integration plan + estimate, then a build and rollout schedule." } ]
-      TimelineHint = Some "Typical: estimate after a review of API docs + sample payloads."
-      CtaLabel = "Request Integration Estimate" }
-
-
-let integrationStats: ServiceStat list = [
-    {
-        Label = "Manual Data Entry"
-        Value = "70%"
-        Trend = Down
-    }
-    {
-        Label = "Sync Reliability"
-        Value = "99%+"
-        Trend = Up
-    }
-    {
-        Label = "Time to Onboard New Tools"
-        Value = "50%"
-        Trend = Down
-    }
-]
-
-let integrationIndustries: ServiceIndustry list = [
-    {
-        Name = "SaaS & B2B Platforms"
-        Summary = "When customers demand integrations with the tools they already use."
-        Outcomes = [
-            "Ship integrations without burning out your core product team."
-            "Standardize how you connect to CRMs, billing, and data warehouses."
-            "Improve retention by making your product fit into existing stacks."
-        ]
-    }
-    {
-        Name = "Healthcare & Regulated Data"
-        Summary = "For EMRs, registries, and clearinghouse-style integrations that require extra care."
-        Outcomes = [
-            "Respect compliance requirements while still moving quickly."
-            "Create clear mapping between systems so data is trustworthy."
-            "Own logging and error handling instead of relying on vendor UI."
-        ]
-    }
-    {
-        Name = "Operations & Logistics"
-        Summary = "Perfect when you rely on multiple vendors, carriers, or systems to move work along."
-        Outcomes = [
-            "Get real-time updates between systems without CSV imports."
-            "Reduce mismatches between order, inventory, and delivery data."
-            "Give operations a single, consistent view of the state of work."
-        ]
-    }
-]
-
-let integrationCapabilities: ServiceCapability list = [
-    {
-        Heading = "API Design & Integration"
-        Icon = "🔗"
-        Description = "Build and consume REST or GraphQL APIs with clear contracts, auth, and versioning."
-    }
-    {
-        Heading = "Webhooks & Event Buses"
-        Icon = "📡"
-        Description = "Trigger downstream workflows reliably when important events occur in your systems."
-    }
-    {
-        Heading = "ETL & Data Pipelines"
-        Icon = "📊"
-        Description = "Extract, transform, and load data into CRMs, warehouses, or analytics tools with validation."
-    }
-    {
-        Heading = "Schema Mapping"
-        Icon = "🧬"
-        Description = "Map messy, real-world data into sane shapes with explicit rules and safeguards."
-    }
-    {
-        Heading = "Monitoring & Observability"
-        Icon = "👀"
-        Description = "Logs, dashboards, and alerts so you know when integrations are misbehaving before customers do."
-    }
-    {
-        Heading = "Vendor Collaboration"
-        Icon = "🤝"
-        Description = "Work directly with vendor teams and docs so your internal team doesn't have to."
-    }
-]
-
-let integrationModel: ServicePageModel = {|
-    Id = "integration-services"
-    Name = "API & Systems Integration"
-    HeroTitle = "Make Your Tools Actually Talk to Each Other"
-    HeroSubtitle =
-        "Connect the platforms you already use so data flows cleanly without brittle scripts and manual exports."
-    HeroBadge = Some "Integration"
-    HeroGradientClass = "from-accent to-primary"
-    CoreSectionTitle = "Integration Capabilities"
-    CoreFeatures = integrationFeatures
-    TierSectionTitle = "Integration Packages"
-    Tiers = integrationTiers
-    Estimate = integrationEstimate
-    StatsSectionTitle = "Integration Outcomes"
-    Stats = integrationStats
-    IndustriesSectionTitle = Some "Who This Is a Great Fit For"
-    Industries = integrationIndustries
-    CapabilitiesSectionTitle = Some "Integration Capabilities"
-    Capabilities = integrationCapabilities
-    CtaText = "Map Your Integrations"
-|}
-
-[<ReactComponent>]
-let IntegrationPage () = ServicePage integrationModel
-
-// ----------------------
-// WEBSITE / FRONTEND
-// ----------------------
-
-let websiteFeatures: ServiceFeature list = [
-    {
-        Title = "Marketing & Brochure Sites"
-        Description = "Fast, modern sites that clearly explain what you do and why it matters."
-    }
-    {
-        Title = "Product & App Shells"
-        Description = "Frontends that make complex products feel simple and approachable."
-    }
-    {
-        Title = "Design Systems"
-        Description = "Reusable components and styles across marketing and app surfaces."
-    }
-    {
-        Title = "Performance & Accessibility"
-        Description = "Core Web Vitals, accessibility, and SEO-conscious structure baked in."
-    }
-]
-
-let websiteTiers: ServiceTier list = [
-    {
-        Name = "Launch Site"
-        Items = [ "1-3 core pages"; "Simple CMS or static"; "Contact / lead capture" ]
-    }
-    {
-        Name = "Growth Site"
-        Items = [
-            "Multi-page marketing site"
-            "Blog or resources"
-            "Analytics & experimentation ready"
-        ]
-    }
-    {
-        Name = "Design System"
-        Items = [ "Component library"; "Docs and usage guidelines"; "Design-to-code workflow" ]
-    }
-]
-
-let websiteEstimate : EstimateSection =
-    { Title = "Contact for an Estimate"
-      Subtitle = "Sites vary widely based on pages, CMS needs, animations, custom components, and conversion flows."
-      Highlights =
-        [ { Title = "Scope drivers"
-            Detail = "Pages + content volume, design complexity, CMS, SEO needs, and performance goals." }
-          { Title = "What you get"
-            Detail = "Clear page plan, design/dev approach, and an estimate with milestones." }
-          { Title = "Fast wins"
-            Detail = "We can start with a strong launch page, then expand into full site + content pipeline." } ]
-      TimelineHint = Some "Typical: estimate after reviewing your current site (or references) + goals."
-      CtaLabel = "Get Website Estimate" }
-
-
-let websiteStats: ServiceStat list = [
-    {
-        Label = "Page Load Time"
-        Value = "50-70%"
-        Trend = Down
-    }
-    {
-        Label = "Demo / Lead Conversion"
-        Value = "15-30%"
-        Trend = Up
-    }
-    {
-        Label = "Design Debt"
-        Value = "40%"
-        Trend = Down
-    }
-]
-
-let websiteIndustries: ServiceIndustry list = [
-    {
-        Name = "Consultants & Solo Founders"
-        Summary = "When your current site undersells what you can actually do."
-        Outcomes = [
-            "Tell a clear story about what you offer."
-            "Make it easy for the right clients to book a call."
-            "Have a site you're proud to send people to."
-        ]
-    }
-    {
-        Name = "SaaS & B2B Products"
-        Summary = "Marketing sites that match the polish and sophistication of your product."
-        Outcomes = [
-            "Clarify positioning and who the product is for."
-            "Support demo, trial, and onboarding flows."
-            "Create consistency between marketing and in-app UI."
-        ]
-    }
-    {
-        Name = "Service Businesses"
-        Summary = "Local or niche services that win when the site feels trustworthy and modern."
-        Outcomes = [
-            "Make it painless to contact or book."
-            "Highlight reviews, outcomes, and social proof."
-            "Stand out from generic template sites in your space."
-        ]
-    }
-]
-
-let websiteCapabilities: ServiceCapability list = [
-    {
-        Heading = "Responsive Layouts"
-        Icon = "📱"
-        Description = "Layouts that look and feel right across desktop, tablet, and mobile."
-    }
-    {
-        Heading = "Component Libraries"
-        Icon = "🧩"
-        Description = "Reusable components wired into your design tokens and theme."
-    }
-    {
-        Heading = "Content-First Structure"
-        Icon = "✍️"
-        Description = "Sections and flows built around the story you want to tell, not just visuals."
-    }
-    {
-        Heading = "Performance & SEO"
-        Icon = "⚡"
-        Description = "Good Core Web Vitals and markup that search engines can actually understand."
-    }
-    {
-        Heading = "Analytics & Experimentation"
-        Icon = "📊"
-        Description = "Hook in analytics, event tracking, and simple A/B tests from day one."
-    }
-    {
-        Heading = "Design Handoff"
-        Icon = "🎨"
-        Description = "Work directly from Figma or sketches with tight design / dev feedback loops."
-    }
-]
-
-let websiteModel: ServicePageModel = {|
-    Id = "website-services"
-    Name = "Websites & Frontend Experience"
-    HeroTitle = "Give Your Product the Frontend It Deserves"
-    HeroSubtitle = "From quick marketing sites to full design systems, make your product look as good as it works."
-    HeroBadge = Some "Web Development"
-    HeroGradientClass = "from-primary to-pink-500"
-    CoreSectionTitle = "What We Build"
-    CoreFeatures = websiteFeatures
-    TierSectionTitle = "Site Packages"
-    Tiers = websiteTiers
-    Estimate = websiteEstimate
-    StatsSectionTitle = "Frontend Impact"
-    Stats = websiteStats
-    IndustriesSectionTitle = Some "Who This Is For"
-    Industries = websiteIndustries
-    CapabilitiesSectionTitle = Some "Web & Frontend Capabilities"
-    Capabilities = websiteCapabilities
-    CtaText = "Plan Your Next Release"
-|}
-
-[<ReactComponent>]
-let WebsitePage () = ServicePage websiteModel
-
-
-// ----------------------
-// SALES PLATFORM / REVOPS
-// ----------------------
-
-let salesFeatures: ServiceFeature list = [
-    {
-        Title = "CRM & Pipeline Setup"
-        Description = "Clean pipelines, fields, and views so reps know exactly what to do next."
-    }
-    {
-        Title = "Playbooks & Sequences"
-        Description = "Codify your best outreach into reusable, trackable sequences."
-    }
-    {
-        Title = "Reporting & RevOps"
-        Description = "Dashboards that highlight what actually moves revenue, not vanity metrics."
-    }
-    {
-        Title = "AI Sales Assist"
-        Description = "AI helpers for research, call notes, and follow-up drafting."
-    }
-]
-
-let salesTiers: ServiceTier list = [
-    {
-        Name = "CRM Cleanup"
-        Items = [
-            "Pipeline & stage design"
-            "Field audit & simplification"
-            "Basic dashboards"
-        ]
-    }
-    {
-        Name = "Playbooks + Automation"
-        Items = [ "Inbound/outbound playbooks"; "Sequences & triggers"; "Handoff workflows" ]
-    }
-    {
-        Name = "RevOps Partnership"
-        Items = [
-            "Monthly reporting & analysis"
-            "Experiment design"
-            "Ongoing tuning & support"
-        ]
-    }
-]
-
-let salesEstimate : EstimateSection =
-    { Title = "Contact for an Estimate"
-      Subtitle = "RevOps work depends on CRM state, data cleanliness, pipeline complexity, and what you want automated."
-      Highlights =
-        [ { Title = "Scope drivers"
-            Detail = "CRM cleanup depth, playbooks/sequences, reporting needs, and automation complexity." }
-          { Title = "What you get"
-            Detail = "Pipeline design, reporting plan, automation map, and an estimate with phases." }
-          { Title = "Best approach"
-            Detail = "Start with cleanup + visibility, then add automation once the foundation is solid." } ]
-      TimelineHint = Some "Typical: estimate after a quick stack + process audit call."
-      CtaLabel = "Request RevOps Estimate" }
-
-
-let salesStats: ServiceStat list = [
-    {
-        Label = "Time to First Response"
+        Label = "Manual Review Reduction"
         Value = "60%"
-        Trend = Down
+        Context = Some "Workflow automation in healthcare processing systems."
     }
     {
-        Label = "Qualified Opportunities"
-        Value = "30-50%"
-        Trend = Up
-    }
-    {
-        Label = "Owner / Leader Visibility"
+        Label = "Trial Workflow Automation"
         Value = "80%"
-        Trend = Up
+        Context = Some "Automated conversion and messaging workflow work."
     }
 ]
 
-let salesIndustries: ServiceIndustry list = [
+let automationModel: SkillPageModel = {|
+    Id = "workflow-automation"
+    Name = "Workflow Automation"
+    HeroTitle = "Workflow automation for validation, processing, and operational systems"
+    HeroSubtitle = "Experience building systems that reduce repetitive work, track processing state, and support human review where reliability matters."
+    HeroBadge = Some "Workflow Automation"
+    HeroGradientClass = "from-info to-secondary"
+
+    CoreSectionTitle = "Core Areas"
+    CoreAreas = automationCoreAreas
+
+    FocusSectionTitle = Some "Technical Focus"
+    FocusAreas = automationFocusAreas
+
+    DomainsSectionTitle = Some "Domains"
+    Domains = commonDomains
+
+    TechnologiesSectionTitle = Some "Core Technologies"
+    Technologies = automationTechnologies
+
+    OutcomesSectionTitle = Some "Selected Outcomes"
+    Outcomes = automationOutcomes
+
+    RelatedSectionTitle = Some "Related Areas"
+    RelatedPages = relatedSkillLinks
+|}
+let AutomationPage (backButtonComponent: ReactElement) = ServicePage automationModel
+
+let aiCoreAreas: SkillFeature list = [
     {
-        Name = "B2B Sales Teams"
-        Summary = "When deals slip through the cracks because the stack and process aren't aligned."
-        Outcomes = [
-            "Cleaner pipelines and next steps for every deal."
-            "Consistent follow-up cadences that match your brand."
-            "Reporting that lets leaders coach and forecast, not guess."
-        ]
+        Title = "AI-Assisted Product Features"
+        Description = "Adding AI-backed features where they improve workflow quality, speed, or user assistance inside real products."
+        Icon = None
     }
     {
-        Name = "Agencies & Service Businesses"
-        Summary = "Align sales and delivery so you stop overpromising or under-scoping."
-        Outcomes = [
-            "Lead intake that captures the details delivery actually needs."
-            "Visibility from first touch through active projects and renewals."
-            "Automated nudges around renewals, upsells, and referrals."
-        ]
+        Title = "Document Analysis & Extraction"
+        Description = "Using LLMs and structured processing to support analysis, extraction, and interpretation of document-driven workflows."
+        Icon = None
     }
     {
-        Name = "Founder-Led Sales"
-        Summary = "Perfect when the founder or small team is still doing most of the selling."
-        Outcomes = [
-            "Document your best sales motion into playbooks."
-            "Get out of inbox-only chaos into a clear system."
-            "Know which channels and messages actually close deals."
-        ]
+        Title = "Retrieval-Based Workflows"
+        Description = "Combining LLM behavior with retrieval and domain-specific context to keep outputs more grounded and useful."
+        Icon = None
+    }
+    {
+        Title = "Human-in-the-Loop Systems"
+        Description = "Designing AI flows that support review, correction, and controlled use rather than treating automation as fully autonomous by default."
+        Icon = None
     }
 ]
 
-let salesCapabilities: ServiceCapability list = [
+let aiFocusAreas: SkillCapability list = [
     {
-        Heading = "CRM Architecture"
-        Icon = "📂"
-        Description = "Design pipelines, fields, and objects that match how you actually sell."
+        Title = "LLM Integration"
+        Description = "Integrating OpenAI-powered workflows into applications, internal tools, and backend processes."
     }
     {
-        Heading = "Playbooks & Sequences"
-        Icon = "📨"
-        Description = "Email, SMS, and task sequences wired to your stages and personas."
+        Title = "RAG & Context-Aware Systems"
+        Description = "Building retrieval-driven flows that improve output relevance and reduce unsupported responses."
     }
     {
-        Heading = "AI Sales Assist"
-        Icon = "🤖"
-        Description = "Call summaries, follow-up drafts, and research helpers tuned to your voice."
+        Title = "Document-Centric AI Work"
+        Description = "Using AI to support analysis, coding suggestions, validation support, and user-facing workflow assistance."
     }
     {
-        Heading = "RevOps Dashboards"
-        Icon = "📈"
-        Description = "Dashboards and reports for owners, leaders, and reps that cut through noise."
-    }
-    {
-        Heading = "Handoff & Delivery Flows"
-        Icon = "🔁"
-        Description = "Structured process when a deal closes so delivery starts off on the right foot."
-    }
-    {
-        Heading = "Experimentation & Tuning"
-        Icon = "🧪"
-        Description = "Iterate on messaging, channels, and sequences with real data, not guesses."
+        Title = "Practical AI Product Design"
+        Description = "Applying AI where it supports the product experience and operational workflow instead of forcing it in as a gimmick."
     }
 ]
 
-let salesModel: ServicePageModel = {|
+let aiTechnologies: SkillTechnologyGroup list = [
+    {
+        GroupName = "AI"
+        Items = [ "OpenAI API"; "RAG Systems"; "LangChain"; "Prompt Design" ]
+    }
+    {
+        GroupName = "Application Stack"
+        Items = [ "F#"; "TypeScript"; "Python"; ".NET"; "Node.js" ]
+    }
+    {
+        GroupName = "Data & Workflow"
+        Items = [ "REST APIs"; "Document Processing"; "Validation Pipelines"; "Operational Tooling" ]
+    }
+]
 
-    Id = "sales-platform-services"
-    Name = "Sales & Customer Platforms"
-    HeroTitle = "Turn Your Sales Stack into a Revenue Engine"
-    HeroSubtitle =
-        "Align CRM, automations, and analytics so every lead gets the right next step—without manual wrangling."
-    HeroBadge = Some "Sales Platform"
+let aiOutcomes: SkillOutcome list = [
+    {
+        Label = "Document Processing Support"
+        Value = "Production"
+        Context = Some "Applied in healthcare and operational workflows."
+    }
+    {
+        Label = "Trial Conversion Lift"
+        Value = "35%"
+        Context = Some "From LLM-assisted personalization in messaging workflows."
+    }
+]
+
+let aiModel: SkillPageModel = {|
+    Id = "ai-llm-integrations"
+    Name = "AI & LLM Integrations"
+    HeroTitle = "AI and LLM integrations grounded in real workflow and product needs"
+    HeroSubtitle = "Experience integrating LLM-powered and retrieval-based tooling into applications for document analysis, workflow support, personalization, and product assistance."
+    HeroBadge = Some "AI & LLM Integrations"
     HeroGradientClass = "from-fuchsia-500 to-primary"
-    CoreSectionTitle = "Sales Platform Building Blocks"
-    CoreFeatures = salesFeatures
-    TierSectionTitle = "Engagement Options"
-    Tiers = salesTiers
-    Estimate = salesEstimate
-    StatsSectionTitle = "Sales & RevOps Outcomes"
-    Stats = salesStats
-    IndustriesSectionTitle = Some "Who This Is Ideal For"
-    Industries = salesIndustries
-    CapabilitiesSectionTitle = Some "Sales & RevOps Capabilities"
-    Capabilities = salesCapabilities
-    CtaText = "Tune Your Sales Platform"
+
+    CoreSectionTitle = "Core Areas"
+    CoreAreas = aiCoreAreas
+
+    FocusSectionTitle = Some "Technical Focus"
+    FocusAreas = aiFocusAreas
+
+    DomainsSectionTitle = Some "Domains"
+    Domains = commonDomains
+
+    TechnologiesSectionTitle = Some "Core Technologies"
+    Technologies = aiTechnologies
+
+    OutcomesSectionTitle = Some "Selected Outcomes"
+    Outcomes = aiOutcomes
+
+    RelatedSectionTitle = Some "Related Areas"
+    RelatedPages = relatedSkillLinks
+|}
+let AIPage (backButtonComponent: ReactElement) = ServicePage aiModel
+
+
+let leadershipCoreAreas: SkillFeature list = [
+    {
+        Title = "Technical Leadership"
+        Description = "Leading implementation across systems and teams by shaping architecture, guiding delivery, and keeping engineering work aligned with real product needs."
+        Icon = None
+    }
+    {
+        Title = "Mentorship & Developer Growth"
+        Description = "Supporting engineers through code review, pairing, architectural guidance, and helping them build confidence in unfamiliar parts of the stack."
+        Icon = None
+    }
+    {
+        Title = "Cross-Functional Collaboration"
+        Description = "Working closely with product, operations, and stakeholders to translate evolving requirements into practical software solutions."
+        Icon = None
+    }
+    {
+        Title = "Engineering Standards & Quality"
+        Description = "Improving maintainability, clarity, and delivery quality through stronger technical patterns, better structure, and thoughtful review."
+        Icon = None
+    }
+]
+
+let leadershipFocusAreas: SkillCapability list = [
+    {
+        Title = "Architecture Guidance"
+        Description = "Helping shape application structure, system boundaries, and implementation direction so projects remain scalable and understandable."
+    }
+    {
+        Title = "Hands-On Leadership"
+        Description = "Leading by building alongside the team, unblocking implementation, and taking ownership of difficult technical areas when needed."
+    }
+    {
+        Title = "Code Review & Technical Coaching"
+        Description = "Providing actionable feedback that improves code quality while helping other engineers grow in judgment, confidence, and execution."
+    }
+    {
+        Title = "Process & Delivery Support"
+        Description = "Improving how teams ship by reducing ambiguity, clarifying priorities, and creating workflows that support consistent progress."
+    }
+]
+
+let leadershipDomains: SkillDomain list = [
+    {
+        Name = "Healthcare Platforms"
+        Description = "Led engineering work across regulated systems where reliability, workflow clarity, and operational correctness mattered."
+    }
+    {
+        Name = "Client & Consulting Environments"
+        Description = "Worked across multiple client contexts, helping teams make progress quickly while adapting to different technical and organizational constraints."
+    }
+    {
+        Name = "Product & Platform Development"
+        Description = "Balanced technical execution with longer-term product and platform needs across full-stack systems."
+    }
+]
+
+let leadershipTechnologies: SkillTechnologyGroup list = [
+    {
+        GroupName = "Primary Stack"
+        Items = [ "F#"; "TypeScript"; "React"; "Python"; "C#" ]
+    }
+    {
+        GroupName = "Leadership in Practice"
+        Items = [ "Architecture"; "Code Review"; "System Design"; "Technical Planning"; "Cross-Functional Delivery" ]
+    }
+    {
+        GroupName = "Implementation Areas"
+        Items = [ "Frontend"; "Backend APIs"; "Workflow Systems"; "Cloud Delivery"; "AI Integrations" ]
+    }
+]
+
+let leadershipOutcomes: SkillOutcome list = [
+    {
+        Label = "Medical Facilities Supported"
+        Value = "50+"
+        Context = Some "Engineering leadership across a deployed healthcare platform."
+    }
+    {
+        Label = "Patient Records Processed"
+        Value = "2M+"
+        Context = Some "Built and guided systems supporting large-scale healthcare workflows."
+    }
+    {
+        Label = "Deployment Reliability Improvement"
+        Value = "60%"
+        Context = Some "Improved engineering delivery and operational reliability across client work."
+    }
+]
+
+let leadershipModel: SkillPageModel = {|
+    Id = "leadership-mentorship"
+    Name = "Leadership & Mentorship"
+    HeroTitle = "Technical leadership through hands-on engineering, mentorship, and delivery ownership"
+    HeroSubtitle = "Experience leading implementation, mentoring engineers, and helping teams build maintainable systems across healthcare, client work, and full-stack product development."
+    HeroBadge = Some "Leadership & Mentorship"
+    HeroGradientClass = "from-warning to-primary"
+
+    CoreSectionTitle = "Core Areas"
+    CoreAreas = leadershipCoreAreas
+
+    FocusSectionTitle = Some "Technical Focus"
+    FocusAreas = leadershipFocusAreas
+
+    DomainsSectionTitle = Some "Domains"
+    Domains = leadershipDomains
+
+    TechnologiesSectionTitle = Some "How I Lead"
+    Technologies = leadershipTechnologies
+
+    OutcomesSectionTitle = Some "Selected Outcomes"
+    Outcomes = leadershipOutcomes
+
+    RelatedSectionTitle = Some "Related Areas"
+    RelatedPages = relatedSkillLinks
 |}
 
 [<ReactComponent>]
-let SalesPlatformPage () = ServicePage salesModel
+let LeadershipPage (backButtonComponent: ReactElement) = ServicePage leadershipModel
+
+let cloudCoreAreas: SkillFeature list = [
+    {
+        Title = "Containerized Delivery"
+        Description = "Packaging and deploying applications with consistent environments across development and production."
+        Icon = None
+    }
+    {
+        Title = "Infrastructure & Environment Setup"
+        Description = "Working through the practical details of environments, secrets, deployment configuration, and runtime behavior."
+        Icon = None
+    }
+    {
+        Title = "CI/CD & Release Flow"
+        Description = "Improving delivery reliability and reducing friction around changes, deployment, and iteration."
+        Icon = None
+    }
+    {
+        Title = "Operational Stability"
+        Description = "Supporting systems with an eye toward uptime, recoverability, and maintainable deployment patterns."
+        Icon = None
+    }
+]
+
+let cloudFocusAreas: SkillCapability list = [
+    {
+        Title = "Docker & Kubernetes"
+        Description = "Using containers and orchestration to package, deploy, and operate applications more reliably."
+    }
+    {
+        Title = "Deployment Workflow Design"
+        Description = "Improving how applications move from development to production through repeatable release flow and environment management."
+    }
+    {
+        Title = "Cloud Platform Work"
+        Description = "Hands-on experience deploying and supporting systems on Azure and DigitalOcean."
+    }
+    {
+        Title = "Reliability-Oriented Delivery"
+        Description = "Reducing deployment failures and improving operational confidence through better delivery and runtime setup."
+    }
+]
+
+let cloudTechnologies: SkillTechnologyGroup list = [
+    {
+        GroupName = "Cloud & Infra"
+        Items = [ "Azure"; "DigitalOcean"; "Docker"; "Kubernetes"; "Terraform"; "Helm" ]
+    }
+    {
+        GroupName = "Delivery"
+        Items = [ "GitHub Actions"; "CI/CD"; "Environment Configuration"; "Deployment Pipelines" ]
+    }
+    {
+        GroupName = "Supporting Stack"
+        Items = [ ".NET"; "Node.js"; "F#"; "PostgreSQL"; "MongoDB" ]
+    }
+]
+
+let cloudOutcomes: SkillOutcome list = [
+    {
+        Label = "Deployment Failure Reduction"
+        Value = "60%"
+        Context = Some "Improved CI/CD reliability across client platforms."
+    }
+    {
+        Label = "Downtime Reduction"
+        Value = "95%"
+        Context = Some "Platform modernization and operational improvement work."
+    }
+]
+
+let platformDeliveryModel: SkillPageModel = {|
+    Id = "cloud-platform-delivery"
+    Name = "Cloud & Platform Delivery"
+    HeroTitle = "Cloud and platform delivery focused on deployment, reliability, and maintainable infrastructure"
+    HeroSubtitle = "Experience shipping and supporting applications with containers, CI/CD pipelines, and cloud infrastructure across product and platform work."
+    HeroBadge = Some "Cloud & Platform Delivery"
+    HeroGradientClass = "from-sky-500 to-primary"
+
+    CoreSectionTitle = "Core Areas"
+    CoreAreas = cloudCoreAreas
+
+    FocusSectionTitle = Some "Technical Focus"
+    FocusAreas = cloudFocusAreas
+
+    DomainsSectionTitle = Some "Domains"
+    Domains = commonDomains
+
+    TechnologiesSectionTitle = Some "Core Technologies"
+    Technologies = cloudTechnologies
+
+    OutcomesSectionTitle = Some "Selected Outcomes"
+    Outcomes = cloudOutcomes
+
+    RelatedSectionTitle = Some "Related Areas"
+    RelatedPages = relatedSkillLinks
+|}
+
+let PlatformDeliveryPage (backButtonComponent: ReactElement) = ServicePage platformDeliveryModel
+

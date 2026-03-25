@@ -25,7 +25,7 @@ let UnifiedNavigation (props: UnifiedNavProps) =
            {| id = "Contact";  label = "Contact";  icon = "◌" |}
            {| id = "Projects"; label = "Projects"; icon = "◈" |}
            {| id = "Resume";   label = "Resume";   icon = "▢" |}
-           {| id = "Services"; label = "Services"; icon = "◇" |}
+           {| id = "Skills"; label = "Skills"; icon = "◇" |}
            {| id = "Shop";     label = "Shop";     icon = "⊙" |} 
         |]
 
