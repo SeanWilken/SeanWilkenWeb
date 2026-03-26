@@ -323,7 +323,7 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
       {/* Scroll progress bar */}
       <div className="fixed top-0 left-0 right-0 h-0.5 bg-base-content/5 z-50 print:hidden">
         <div 
-          className="h-full bg-gradient-to-r from-primary/40 to-secondary/40 transition-all duration-300"
+          className="h-full bg-linear-to-r from-primary/40 to-secondary/40 transition-all duration-300"
           style={{ width: `${scrollProgress}%` }}
         />
       </div>
@@ -369,7 +369,7 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
             >
               {/* Shimmer effect on hover */}
               <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full 
-                transition-transform duration-1000 bg-gradient-to-r from-transparent 
+                transition-transform duration-1000 bg-linear-to-r from-transparent 
                 via-base-100/10 to-transparent" />
               <a 
                 href={RESUME_PDF_PATH}
@@ -511,7 +511,7 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
                 aria-label={`Scroll to ${section.label}`}
               >
                 {activeSection === section.label && (
-                  <div className="absolute inset-0 bg-gradient-to-r from-primary/40 to-secondary/40 
+                  <div className="absolute inset-0 bg-linear-to-r from-primary/40 to-secondary/40 
                     animate-shimmer" />
                 )}
               </button>

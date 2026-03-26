@@ -9,6 +9,7 @@ let inline private icon (name: string) (classes: string) =
 
 [<Erase>]
 type LucideIcon =
+    static member inline Zap          (classes: string) = icon "Zap" classes
     static member inline Activity          (classes: string) = icon "Activity" classes
     static member inline HeartPulse          (classes: string) = icon "HeartPulse" classes
     static member inline Home          (classes: string) = icon "Home" classes

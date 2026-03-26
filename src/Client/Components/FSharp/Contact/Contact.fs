@@ -31,7 +31,7 @@ let View () =
                                         prop.className "grid gap-10 lg:grid-cols-2 items-start"
                                         prop.children [
 
-                                            // LEFT: big serif heading + radios
+                                            // LEFT: big cormorant-font heading + radios
                                             ScrollReveal {|
                                                 Variant   = SlideRight
                                                 Delay     = 0.08
@@ -42,21 +42,21 @@ let View () =
                                                         prop.className "space-y-8"
                                                         prop.children [
                                                             Html.h1 [
-                                                                prop.className "serif text-4xl md:text-5xl lg:text-6xl font-light leading-tight"
+                                                                prop.className "cormorant-font text-4xl md:text-5xl lg:text-6xl font-light leading-tight"
                                                                 prop.text "Get in touch"
                                                             ]
 
                                                             Html.p [
-                                                                prop.className "text-sm md:text-base opacity-70 leading-relaxed max-w-md"
+                                                                prop.className "text-md md:text-base opacity-70 leading-relaxed max-w-md"
                                                                 prop.text
                                                                     "For professional opportunities, project discussions, creative inquiries, or general questions, feel free to reach out. Sean Wilken is the primary contact for engineering and professional outreach, while Xero Effort is available for brand or creative inquiries."
                                                             ]
 
                                                             Html.div [
-                                                                prop.className "space-y-4 text-sm"
+                                                                prop.className "space-y-4"
                                                                 prop.children [
                                                                     Html.p [
-                                                                        prop.className "text-xs opacity-60"
+                                                                        prop.className "cormorant-font text-sm opacity-60"
                                                                         prop.text "Choose the best contact path"
                                                                     ]
 
@@ -112,7 +112,7 @@ let View () =
                                                         prop.className "space-y-6"
                                                         prop.children [
                                                             Html.p [
-                                                                prop.className "text-[0.65rem] tracking-[0.2em] uppercase opacity-60"
+                                                                prop.className "cormorant-font text-[0.65rem] tracking-[0.2em] uppercase opacity-60"
                                                                 prop.text "Route your message"
                                                             ]
 
@@ -129,12 +129,12 @@ let View () =
                                                                                 prop.className "flex items-center gap-3"
                                                                                 prop.children [
                                                                                     Html.div [
-                                                                                        prop.className "w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium"
+                                                                                        prop.className "cormorant-font p-3 rounded-full bg-linear-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white text-sm font-medium"
                                                                                         prop.text "SW"
                                                                                     ]
                                                                                     Html.div [
                                                                                         Html.h4 [
-                                                                                            prop.className "serif text-base font-medium"
+                                                                                            prop.className "cormorant-font text-base font-medium"
                                                                                             prop.text "Sean Wilken"
                                                                                         ]
                                                                                         Html.p [
@@ -160,7 +160,7 @@ let View () =
                                                             // Xero card
                                                             Html.a [
                                                                 prop.href "mailto:xeroeffortclub@gmail.com"
-                                                                prop.className "persona-card block rounded-2xl border border-base-200 bg-base-100 px-4 py-4 lg:px-5 lg:py-4 hover:border-secondary/40 hover:-translate-y-[2px] transition-all"
+                                                                prop.className "persona-card block rounded-2xl border border-base-200 bg-base-100 px-4 py-4 lg:px-5 lg:py-4 hover:border-secondary/40 hover:-translate-y-0.5 transition-all"
                                                                 prop.children [
                                                                     Html.div [
                                                                         prop.className "flex items-center justify-between gap-4"
@@ -170,12 +170,12 @@ let View () =
                                                                                 prop.className "flex items-center gap-3"
                                                                                 prop.children [
                                                                                     Html.div [
-                                                                                        prop.className "w-10 h-10 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-sm font-medium"
+                                                                                        prop.className "cormorant-font p-3 rounded-full bg-linear-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white text-sm font-medium"
                                                                                         prop.text "XE"
                                                                                     ]
                                                                                     Html.div [
                                                                                         Html.h4 [
-                                                                                            prop.className "serif text-base font-medium"
+                                                                                            prop.className "cormorant-font text-base font-medium"
                                                                                             prop.text "Xero Effort"
                                                                                         ]
                                                                                         Html.p [
@@ -197,11 +197,6 @@ let View () =
                                                                     ]
                                                                 ]
                                                             ]
-
-                                                            Html.p [
-                                                                prop.className "text-xs opacity-50 pt-2"
-                                                                prop.text "Most messages receive a response within 24 hours."
-                                                            ]
                                                         ]
                                                     ]
                                             |}
@@ -222,7 +217,7 @@ let View () =
                         prop.className "max-w-6xl mx-auto"
                         prop.children [
                             Html.p [
-                                prop.className "text-[0.65rem] tracking-[0.2em] uppercase opacity-60 text-center mb-10"
+                                prop.className "cormorant-font text-lg tracking-[0.2em] uppercase opacity-60 text-center mb-10"
                                 prop.text "What to include"
                             ]
 
@@ -239,7 +234,7 @@ let View () =
                                                 prop.children [
                                                     LucideIcon.FileCode2 "w-7 h-7 opacity-70"
                                                     Html.h3 [
-                                                        prop.className "serif text-2xl font-light"
+                                                        prop.className "cormorant-font text-xl font-light"
                                                         prop.text "Software / Roles"
                                                     ]
                                                 ]
@@ -249,7 +244,7 @@ let View () =
                                                 prop.text "Software engineering roles, product discussions, consulting inquiries, or technical collaboration."
                                             ]
                                             Html.ul [
-                                                prop.className "space-y-2 text-xs opacity-60"
+                                                prop.className "space-y-2 text-sm opacity-60"
                                                 prop.children [
                                                     Html.li "• A brief overview of the role, project, or opportunity."
                                                     Html.li "• Relevant context such as stack, scope, timeline, or team setup."
@@ -268,7 +263,7 @@ let View () =
                                                 prop.children [
                                                     LucideIcon.PenTool "w-7 h-7 opacity-70"
                                                     Html.h3 [
-                                                        prop.className "serif text-2xl font-light"
+                                                        prop.className "cormorant-font text-xl font-light"
                                                         prop.text "Creative / Brand"
                                                     ]
                                                 ]
@@ -278,7 +273,7 @@ let View () =
                                                 prop.text "Design, merchandise, visual collaboration, or brand-related outreach."
                                             ]
                                             Html.ul [
-                                                prop.className "space-y-2 text-xs opacity-60"
+                                                prop.className "space-y-2 text-sm opacity-60"
                                                 prop.children [
                                                     Html.li "• A short description of what you are making or exploring."
                                                     Html.li "• Any preferred format, medium, or deliverable."
@@ -297,7 +292,7 @@ let View () =
                                                 prop.children [
                                                     LucideIcon.MessageSquare "w-7 h-7 opacity-70"
                                                     Html.h3 [
-                                                        prop.className "serif text-2xl font-light"
+                                                        prop.className "cormorant-font text-xl font-light"
                                                         prop.text "General Inquiries"
                                                     ]
                                                 ]
@@ -307,7 +302,7 @@ let View () =
                                                 prop.text "Questions, collaborations, site-related notes, or anything else that does not fit the categories above."
                                             ]
                                             Html.ul [
-                                                prop.className "space-y-2 text-xs opacity-60"
+                                                prop.className "space-y-2 text-sm opacity-60"
                                                 prop.children [
                                                     Html.li "• A bit of context about why you are reaching out."
                                                     Html.li "• What you are hoping to discuss or learn more about."
@@ -333,7 +328,7 @@ let View () =
                                 prop.className "max-w-6xl mx-auto"
                                 prop.children [
                                     Html.p [
-                                        prop.className "text-[0.65rem] tracking-[0.2em] uppercase opacity-60 text-center mb-10"
+                                        prop.className "cormorant-font text-lg tracking-[0.2em] uppercase opacity-60 text-center mb-10"
                                         prop.text "What to expect"
                                     ]
 
@@ -349,7 +344,7 @@ let View () =
                                                         prop.children [ LucideIcon.Inbox "w-9 h-9 opacity-70" ]
                                                     ]
                                                     Html.p [
-                                                        prop.className "text-[0.7rem] tracking-[0.15em] uppercase opacity-60 mb-3"
+                                                        prop.className "text-md tracking-[0.15em] uppercase opacity-60 mb-3"
                                                         prop.text "1. Received"
                                                     ]
                                                     Html.p [
@@ -367,7 +362,7 @@ let View () =
                                                         prop.children [ LucideIcon.Eye "w-9 h-9 opacity-70" ]
                                                     ]
                                                     Html.p [
-                                                        prop.className "text-[0.7rem] tracking-[0.15em] uppercase opacity-60 mb-3"
+                                                        prop.className "text-md tracking-[0.15em] uppercase opacity-60 mb-3"
                                                         prop.text "2. Reviewed"
                                                     ]
                                                     Html.p [
@@ -385,7 +380,7 @@ let View () =
                                                         prop.children [ LucideIcon.Reply "w-9 h-9 opacity-70" ]
                                                     ]
                                                     Html.p [
-                                                        prop.className "text-[0.7rem] tracking-[0.15em] uppercase opacity-60 mb-3"
+                                                        prop.className "text-md tracking-[0.15em] uppercase opacity-60 mb-3"
                                                         prop.text "3. Replied"
                                                     ]
                                                     Html.p [
@@ -413,7 +408,7 @@ let View () =
                                 prop.className "max-w-6xl mx-auto"
                                 prop.children [
                                     Html.p [
-                                        prop.className "text-[0.65rem] tracking-[0.2em] uppercase opacity-60 text-center mb-10"
+                                        prop.className "cormorant-font text-lg tracking-[0.2em] uppercase opacity-60 text-center mb-10"
                                         prop.text "Quick notes"
                                     ]
 
@@ -429,7 +424,7 @@ let View () =
                                                         prop.children [
                                                             LucideIcon.CheckCircle2 "w-5 h-5 text-primary"
                                                             Html.h3 [
-                                                                prop.className "serif text-2xl font-light"
+                                                                prop.className "cormorant-font text-lg font-light"
                                                                 prop.text "Helpful context"
                                                             ]
                                                         ]
@@ -453,7 +448,7 @@ let View () =
                                                         prop.children [
                                                             LucideIcon.Info "w-5 h-5 text-secondary"
                                                             Html.h3 [
-                                                                prop.className "serif text-2xl font-light"
+                                                                prop.className "cormorant-font text-lg font-light"
                                                                 prop.text "Good to know"
                                                             ]
                                                         ]

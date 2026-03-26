@@ -29,10 +29,6 @@ let UnifiedNavigation (props: UnifiedNavProps) =
            {| id = "Shop";     label = "Shop";     icon = "⊙" |} 
         |]
 
-    // If we later want Lucide icons here, we can swap out `icon` strings.
-    let utilityButtons =
-        [| ("account", "◉", "Account", None) |]
-
     Html.div [
         prop.className "nav-container cormorant-font"
         prop.children [
@@ -99,22 +95,6 @@ let UnifiedNavigation (props: UnifiedNavProps) =
                                 prop.className "flex items-center gap-2 md:hidden"
                                 prop.children [
 
-                                    // Cart
-                                    // Html.button [
-                                    //     prop.key "m-cart"
-                                    //     prop.className "utility-btn"
-                                    //     prop.ariaLabel "Cart"
-                                    //     prop.onClick (fun _ -> props.onCartClick ())
-                                    //     prop.children [
-                                    //         Html.span [ prop.text "⊙" ]
-                                    //         if props.cartCount > 0 then
-                                    //             Html.div [
-                                    //                 prop.className "badge"
-                                    //                 prop.text (string props.cartCount)
-                                    //             ]
-                                    //     ]
-                                    // ]
-
                                     // Theme
                                     Html.button [
                                         prop.key "m-theme"
@@ -141,6 +121,7 @@ let UnifiedNavigation (props: UnifiedNavProps) =
                                             ]
                                         ]
                                     ]
+
                                 ]
                             ]
                         ]

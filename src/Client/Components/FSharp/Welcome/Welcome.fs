@@ -15,6 +15,7 @@ type ExploreTileProps = {
     Section     : WebAppView.AppView
     Description : string
     Dispatch    : Msg -> unit
+    ButtonLabel : string
 }
 
 type WelcomeProps = {| dispatch: Msg -> unit |}
@@ -45,12 +46,12 @@ let ExploreTile (props: ExploreTileProps) =
                         prop.text title
                     ]
                     Html.p [
-                        prop.className "text-xs sm:text-sm opacity-60 mb-6 leading-relaxed"
+                        prop.className "text-md sm:text-md opacity-60 mb-6 leading-relaxed"
                         prop.text props.Description
                     ]
                     Html.button [
                         prop.className "card-btn"
-                        prop.text "Explore My Work"
+                        prop.text props.ButtonLabel
                         prop.onClick (fun _ -> props.Dispatch (SwitchSection props.Section))
                     ]
                 ]
@@ -62,44 +63,47 @@ let ExploreTile (props: ExploreTileProps) =
 [<ReactComponent>]
 let WelcomeHero (props: WelcomeProps) =
     Html.section [
-        prop.className "gradient-dark-to-light min-h-[70vh] flex items-center justify-center pt-24 px-4 sm:px-6 lg:px-8 w-full"
+        prop.className "gradient-dark-to-light min-h-[72svh] md:min-h-[78svh] flex items-center justify-center pt-24 md:pt-28 px-4 sm:px-6 lg:px-8 w-full"
         prop.children [
             Html.div [
-                prop.className "max-w-4xl mx-auto text-center w-full"
+                prop.className "max-w-5xl mx-auto text-center w-full inter-font"
                 prop.children [
-                    Html.p [
-                        prop.className "text-xs sm:text-sm tracking-[0.2em] uppercase opacity-60 mb-6"
+                    Html.h2 [
+                        prop.className "cormorant-font text-base sm:text-lg lg:text-xl tracking-[0.18em] uppercase mb-5 md:mb-6"
                         prop.text "SEAN WILKEN"
                     ]
                     Html.h1 [
-                        prop.className "cormorant-font text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-light mb-6 sm:mb-8 leading-tight"
+                        prop.className "text-4xl sm:text-5xl md:text-6xl lg:text-7xl xl:text-8xl text-base-content/60  font-light mb-6 sm:mb-8 leading-tight"
                         prop.text "Senior Software Engineer"
                     ]
                     Html.p [
-                        prop.className "text-sm sm:text-base lg:text-lg opacity-80 mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed px-4"
+                        prop.className "text-base sm:text-lg sm:mb-12 lg:text-lg opacity-80 mb-8 max-w-2xl mx-auto leading-relaxed px-4"
                         prop.text "I build full-stack applications, backend APIs, and workflow-heavy systems across industries including healthcare, e-commerce, and AI-enabled products."
                     ]
                     Html.div [
                         prop.className "flex flex-col sm:flex-row gap-4 justify-center px-4"
                         prop.children [
-                            Html.button [
-                                prop.className "premium-btn"
-                                prop.text "View Resume"
-                                prop.onClick (fun _ ->
-                                    props.dispatch (SwitchSection WebAppView.AppView.ResumeAppView)
-                                )
+                            Html.div [
+                                prop.children [
+                                    Html.button [
+                                        prop.className "premium-btn w-full sm:w-auto"
+                                        prop.text "View Portfolio"
+                                        prop.onClick (fun _ ->
+                                            props.dispatch (SwitchSection WebAppView.AppView.PortfolioAppLandingView)
+                                        )
+                                    ]
+                                ]
                             ]
-                        ]
-                    ]
-                    Html.div [
-                        prop.className "flex flex-col sm:flex-row gap-4 justify-center px-4"
-                        prop.children [
-                            Html.button [
-                                prop.className "premium-btn"
-                                prop.text "View Portfolio"
-                                prop.onClick (fun _ ->
-                                    props.dispatch (SwitchSection WebAppView.AppView.PortfolioAppLandingView)
-                                )
+                            Html.div [
+                                prop.children [
+                                    Html.button [
+                                        prop.className "premium-btn w-full sm:w-auto"
+                                        prop.text "View Resume"
+                                        prop.onClick (fun _ ->
+                                            props.dispatch (SwitchSection WebAppView.AppView.ResumeAppView)
+                                        )
+                                    ]
+                                ]
                             ]
                         ]
                     ]
@@ -112,7 +116,7 @@ let WelcomeHero (props: WelcomeProps) =
 [<ReactComponent>]
 let ExploreSection (props: WelcomeProps) =
     Html.section [
-        prop.className "py-16 sm:py-20 lg:py-32 px-4 sm:px-6 lg:px-8 bg-base-200 w-full"
+        prop.className "inter-font py-16 sm:py-20 lg:py-32 px-4 sm:px-6 lg:px-8 bg-base-200 w-full"
         prop.children [
             Html.div [
                 prop.className "max-w-7xl mx-auto"
@@ -139,6 +143,7 @@ let ExploreSection (props: WelcomeProps) =
                                 Section     = WebAppView.AppView.ResumeAppView
                                 Description = "Resume: Professional experience, technical strengths, and selected accomplishments."
                                 Dispatch    = props.dispatch
+                                ButtonLabel = "View Resume"
                             }
 
                             ExploreTile {
@@ -146,6 +151,7 @@ let ExploreSection (props: WelcomeProps) =
                                 Section     = WebAppView.AppView.PortfolioAppCodeView
                                 Description = "Code: Engineering-focused portfolio work, experiments, and implementation details."
                                 Dispatch    = props.dispatch
+                                ButtonLabel = "Explore Code"
                             }
 
                             ExploreTile {
@@ -153,6 +159,7 @@ let ExploreSection (props: WelcomeProps) =
                                 Section     = WebAppView.AppView.AboutAppView
                                 Description = "About: Who I am, what I build, and the kind of work I enjoy doing."
                                 Dispatch    = props.dispatch
+                                ButtonLabel = "Learn More"
                             }
 
                             ExploreTile {
@@ -160,6 +167,7 @@ let ExploreSection (props: WelcomeProps) =
                                 Section     = WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.SkillsLanding
                                 Description = "Skills: Engineering strengths across frontend, backend, workflow systems, and delivery."
                                 Dispatch    = props.dispatch
+                                ButtonLabel = "Review Skills"
                             }
 
                             ExploreTile {
@@ -167,6 +175,7 @@ let ExploreSection (props: WelcomeProps) =
                                 Section     = WebAppView.AppView.PortfolioAppDesignView
                                 Description = "Designs: UI explorations, visual work, and selected creative projects."
                                 Dispatch    = props.dispatch
+                                ButtonLabel = "Browse Designs"
                             }
 
                             ExploreTile {
@@ -174,6 +183,7 @@ let ExploreSection (props: WelcomeProps) =
                                 Section     = WebAppView.AppView.ShopAppView
                                 Description = "Shop: Creative products, prints, and apparel connected to my projects."
                                 Dispatch    = props.dispatch
+                                ButtonLabel = "Shop Now"
                             }
 
 

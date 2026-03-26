@@ -52,6 +52,7 @@ type Step =
       AfterOutputDelayMs: int }
 
 
+// turn this into something cooler like a parser or something of use...good excersize example that can showcase some creativity / useful tool.
 let steps : Step array =
     [|
         { Command = "dotnet tool restore"
@@ -260,12 +261,12 @@ let GithubProfileCard () =
                     ]
 
                     Html.p [
-                        prop.className "text-xs opacity-60 mb-6 leading-relaxed"
+                        prop.className "text-md opacity-60 mb-6 leading-relaxed"
                         prop.text "Senior software engineer focused on F#, TypeScript, React, Python, and C#. Interested in workflow-heavy systems, backend APIs, typed frontend architecture, and practical product development."
                     ]
 
                     Html.ul [
-                        prop.className "space-y-2 text-xs opacity-60 mb-8"
+                        prop.className "space-y-2 text-sm opacity-60 mb-8"
                         prop.children [
                             Html.li [ prop.text "• Healthcare and regulated systems" ]
                             Html.li [ prop.text "• Full-stack applications and internal tools" ]
@@ -301,22 +302,22 @@ let private FocusTile
         prop.children [
             // Tag row
             Html.div [
-                prop.className "flex items-center gap-3 text-[0.7rem] tracking-[0.22em] uppercase text-base-content/60"
+                prop.className "flex font-bold items-center gap-3 text-md cormorant-font tracking-[0.22em] uppercase text-base-content/60"
                 prop.children [
-                    Html.span [ prop.className "text-sm"; prop.children [ icon ] ]
+                    Html.span [ prop.children [ icon ] ]
                     Html.span tag
                 ]
             ]
 
             // Main body text (the big serif paragraph)
             Html.p [
-                prop.className "font-serif font-bold leading-relaxed text-base-content/90"
+                prop.className "leading-relaxed text-base-content/90"
                 prop.text body
             ]
 
             // Small link at the bottom
             Html.button [
-                prop.className "text-xs md:text-sm text-base-content/60 hover:text-base-content/90 transition-colors"
+                prop.className "text-sm md:text-sm text-base-content/60 hover:text-base-content/90 transition-colors"
                 prop.text linkText
             ]
         ]
@@ -335,11 +336,11 @@ let BrowseByFocusSection (dispatch) =
                         prop.className "max-w-2xl space-y-3"
                         prop.children [
                             Html.h2 [
-                                prop.className "font-serif text-3xl md:text-4xl text-base-content"
+                                prop.className "cormorant-font text-3xl md:text-4xl text-base-content"
                                 prop.text "Browse by focus"
                             ]
                             Html.p [
-                                prop.className "text-sm md:text-[0.9rem] text-base-content/60"
+                                prop.className "text-md text-base-content/60"
                                 prop.text "Choose a portfolio area to explore implementation-focused code work or visual/design projects."
                             ]
                         ]

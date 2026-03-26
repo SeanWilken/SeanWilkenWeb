@@ -1,6 +1,4 @@
-/* @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;700&display=swap'); */
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=Inter:wght@300;400;500&display=swap");
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Manrope:wght@200..800&display=swap');
 @import "tailwindcss";
 @plugin "daisyui" {
     themes: light --default, dark --prefersdark, cupcake, bumblebee, emerald,
@@ -423,26 +421,14 @@
     animation-timing-function: ease-out;
 }
 
-.manrope-font {
-    font-family: "Manrope", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
-}
-
-.clash-font {
-    font-family: "Clash Display", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
-}
-
-.satoshi-font {
-    font-family: "Satoshi", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
-}
-
 .cormorant-font {
     font-family: "Cormorant Garamond", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+}
+
+.inter-font {
+    font-family: "Inter", sans-serif;
     font-optical-sizing: auto;
     font-style: normal;
 }
@@ -983,6 +969,7 @@
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     font-weight: 600;
     position: relative;
+    cursor: pointer;
     overflow: hidden;
 }
 
@@ -1022,6 +1009,7 @@
     border: none;
     transition: all 0.3s ease;
     font-weight: 600;
+    cursor: pointer;
 }
 
 .card-btn:hover {

@@ -95,18 +95,9 @@ let AboutHero selectedIndex setSelectedIndex =
                 prop.className "max-w-6xl mx-auto"
                 prop.children [
 
-                    Html.div [
-                        prop.className "flex justify-center mb-12 md:mb-16"
-                        prop.children [
-                            Html.div [
-                                prop.className "about-badge text-[0.65rem] tracking-[0.2em]"
-                                prop.children [
-                                    LucideIcon.UserCircle "w-4 h-4 opacity-60"
-                                    Html.span "ABOUT"
-                                ]
-                            ]
-                        ]
-                    ]
+                    Client.Components.Shop.Common.Ui.Section.headerTagArea
+                        (LucideIcon.UserCircle "w-4 h-4 opacity-60")
+                        "About"
 
                     // Main heading
                     Html.h1 [
@@ -119,7 +110,7 @@ let AboutHero selectedIndex setSelectedIndex =
                     ]
 
                     Html.p [
-                        prop.className "text-center text-sm opacity-60 mb-16 max-w-3xl mx-auto leading-loose"
+                        prop.className "text-center text-md opacity-60 mb-16 max-w-3xl mx-auto leading-loose"
                         prop.text "This site brings together my professional experience, technical interests, and ongoing experiments. It is a place to see how I think about software, the kinds of systems I like building, and some of the work behind that."
                     ]
 
@@ -133,7 +124,7 @@ let AboutHero selectedIndex setSelectedIndex =
                                 prop.children [
                                     LucideIcon.Code2 "w-5 h-5 opacity-60"
                                     Html.span [
-                                        prop.className "opacity-80 text-xs sm:text-sm"
+                                        prop.className "opacity-80 text-xs sm:text-md"
                                         prop.text "10+ years building software"
                                     ]
                                 ]
@@ -144,7 +135,7 @@ let AboutHero selectedIndex setSelectedIndex =
                                 prop.children [
                                     LucideIcon.Cloud "w-5 h-5 opacity-60"
                                     Html.span [
-                                        prop.className "opacity-80 text-xs sm:text-sm"
+                                        prop.className "opacity-80 text-md"
                                         prop.text "F#, TypeScript, React, Python, C#"
                                     ]
                                 ]
@@ -155,7 +146,7 @@ let AboutHero selectedIndex setSelectedIndex =
                                 prop.children [
                                     LucideIcon.Compass "w-5 h-5 opacity-60"
                                     Html.span [
-                                        prop.className "opacity-80 text-xs sm:text-sm"
+                                        prop.className "opacity-80 text-md"
                                         prop.text "Healthcare, e-commerce, workflows, and tooling"
                                     ]
                                 ]
@@ -190,7 +181,7 @@ let AboutHero selectedIndex setSelectedIndex =
                                                 prop.text tile.Title
                                             ]
                                             Html.p [
-                                                prop.className "text-[0.76rem] sm:text-xs opacity-50 leading-relaxed"
+                                                prop.className "text-md opacity-50 leading-relaxed"
                                                 prop.text (tile.Summary)
                                             ]
                                         ]
@@ -242,7 +233,7 @@ let AboutPersonalSection (tileContent: TileContent) =
                                     ]
 
                                     Html.p [
-                                        prop.className "text-sm opacity-70 leading-loose whitespace-pre-line"
+                                        prop.className "text-md opacity-70 leading-loose whitespace-pre-line"
                                         prop.text tileContent.Details
                                     ]
                                 ]
@@ -323,7 +314,7 @@ let AboutWorkAndTech () =
                                             LucideIcon.Sparkles "w-5 h-5 opacity-60"
                                             Html.h3 [
                                                 prop.className "cormorant-font text-2xl font-light"
-                                                prop.text "Tech & topics I gravitate toward"
+                                                prop.text "Tech & topics"
                                             ]
                                         ]
                                     ]
@@ -356,7 +347,7 @@ let AboutCta (dispatch: Msg -> unit) =
                 prop.className "max-w-4xl mx-auto text-center"
                 prop.children [
                     Html.p [
-                        prop.className "text-sm opacity-60 mb-8 md:mb-10 leading-loose"
+                        prop.className "text-md opacity-60 mb-8 md:mb-10 leading-loose"
                         prop.text "If you want to see how this shows up in practice, take a look at my portfolio work, resume, or skills breakdown."
                     ]
                     Html.div [

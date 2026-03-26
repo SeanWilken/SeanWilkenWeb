@@ -32,7 +32,7 @@ module Ui =
                 prop.className "flex justify-center mb-12 md:mb-16"
                 prop.children [
                     Html.div [
-                        prop.className "about-badge text-[0.65rem] tracking-[0.2em]"
+                        prop.className "cormorant-font flex flex-row gap-4 items-center text-base sm:text-lg lg:text-xl tracking-[0.18em] uppercase mb-5 md:mb-6"
                         prop.children [
                             tagIcon
                             Html.span areaName
@@ -506,16 +506,22 @@ module Ui =
         /// Simple scroll fade/translate; no useScroll bindings required
         [<ReactComponent>]
         let ProgressiveReveal (props: ProgressiveRevealProps) =
-            MotionDiv [
-                prop.custom ("initial", box {| opacity = 0.; y = 80 |})
-                prop.custom ("whileInView", box {| opacity = 1.; y = 0 |})
-                prop.custom ("viewport", box {| amount = 0.4; once = false |})
-                prop.custom (
-                    "transition",
-                    box {| duration = 0.9; ease = "easeOut" |}
-                )
-                prop.children [ props.Children ]
-            ]
+            // MotionDiv [
+            //     prop.custom ("initial", box {| opacity = 0.; y = 80 |})
+            //     prop.custom ("whileInView", box {| opacity = 1.0; y = 0 |})
+            //     prop.custom ("viewport", box {| amount = 0.4; once = false |})
+            //     prop.custom (
+            //         "transition",
+            //         box {| duration = 0.9; ease = "easeOut" |}
+            //     )
+            //     prop.children [ props.Children ]
+            // ]
+            ScrollReveal {|
+                Variant = ScaleUp
+                Delay = 0.1
+                Threshold = 0.3
+                Children = props.Children
+            |}
 
 
 

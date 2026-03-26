@@ -83,7 +83,7 @@ let SectionGrid (props: SectionGridProps) =
                     for item in props.Items do
                         Html.div [
                             prop.className
-                                "service-card cursor-pointer text-left flex flex-col h-full"
+                                "service-card cursor-pointer text-center justify-center flex flex-col h-full"
                             prop.onClick (fun _ -> item.NavigateTo())
                             prop.children [
                                 Html.div [
@@ -237,7 +237,7 @@ let SectionCarousel (props: SectionCarouselProps) =
 
                                 Html.div [
                                     prop.className
-                                        "flex-shrink-0 coming-soon-card text-center \
+                                        "shrink-0 coming-soon-card text-center \
                                          flex flex-col items-center justify-center transition-all duration-500 ease-in-out"
                                     prop.style [
                                         style.transform (transform.scale scale)
@@ -255,7 +255,7 @@ let SectionCarousel (props: SectionCarouselProps) =
                                             prop.text item.Title
                                         ]
                                         Html.p [
-                                            prop.className "text-xs sm:text-sm opacity-70 text-center"
+                                            prop.className "inter-font text-xs sm:text-sm opacity-70 text-center"
                                             prop.text item.Description
                                         ]
                                     ]

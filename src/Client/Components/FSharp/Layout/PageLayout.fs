@@ -58,7 +58,7 @@ let PageLayout (props: PageLayoutProps) =
         | _ -> ()
 
     Html.div [
-        prop.className "flex flex-col min-h-screen bg-base-100 text-base-content cormorant-font"
+        prop.className "flex flex-col min-h-screen bg-base-100 text-base-content"
         prop.children [
 
             // Theme picker modal
