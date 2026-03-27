@@ -249,7 +249,7 @@ let GithubProfileCard () =
                             ]
                             Html.div [
                                 Html.h3 [
-                                    prop.className "serif text-xl font-medium"
+                                    prop.className "cormorant-font text-xl font-medium"
                                     prop.text "Sean Wilken"
                                 ]
                                 Html.p [
@@ -309,7 +309,7 @@ let private FocusTile
                 ]
             ]
 
-            // Main body text (the big serif paragraph)
+            // Main body text (the big cormorant-font paragraph)
             Html.p [
                 prop.className "leading-relaxed text-base-content/90"
                 prop.text body
@@ -402,15 +402,15 @@ let View (model: Model) dispatch =
                                     Html.div [
                                         prop.children [
                                             Html.h1 [
-                                                prop.className "serif text-5xl lg:text-6xl font-light mb-8 leading-tight"
+                                                prop.className "cormorant-font text-5xl lg:text-6xl font-light mb-8 leading-tight"
                                                 prop.text "Engineering work"
                                             ]
                                             Html.h1 [
-                                                prop.className "serif text-5xl lg:text-6xl font-light mb-8 leading-tight"
+                                                prop.className "cormorant-font text-5xl lg:text-6xl font-light mb-8 leading-tight"
                                                 prop.text "Code experiments"
                                             ]
                                             Html.h1 [
-                                                prop.className "serif text-5xl lg:text-6xl font-light mb-12 leading-tight"
+                                                prop.className "cormorant-font text-5xl lg:text-6xl font-light mb-12 leading-tight"
                                                 prop.text "Design explorations"
                                             ]
 

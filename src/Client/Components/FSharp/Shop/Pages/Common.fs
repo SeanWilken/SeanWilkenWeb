@@ -439,65 +439,76 @@ module Ui =
 
         [<ReactComponent>]
         let ScrollReveal (props: ScrollRevealProps) =
+            let hasEntered, setHasEntered = React.useState(false)
+
+            let threshold =
+                if props.Threshold > 0. then props.Threshold else 0.1
+
             let variants : obj =
                 match props.Variant with
                 | FadeUp ->
                     box {|
-                        hidden  = {| opacity = 0.; y = 60 |}
-                        visible = {| 
-                            opacity = 1.; y = 0
-                            transition = {| duration = 0.8; delay = props.Delay; ease = "easeOut" |}
+                        hidden = {| opacity = 0.; y = 16 |}
+                        visible = {|
+                            opacity = 1.
+                            y = 0
+                            transition = {| duration = 0.45; delay = props.Delay; ease = "easeOut" |}
                         |}
                     |}
                 | FadeIn ->
                     box {|
-                        hidden  = {| opacity = 0. |}
-                        visible = {| 
+                        hidden = {| opacity = 0. |}
+                        visible = {|
                             opacity = 1.
-                            transition = {| duration = 1.0; delay = props.Delay; ease = "easeOut" |}
+                            transition = {| duration = 0.4; delay = props.Delay; ease = "easeOut" |}
                         |}
                     |}
                 | ScaleUp ->
                     box {|
-                        hidden  = {| opacity = 0.; scale = 0.9 |}
-                        visible = {| 
-                            opacity = 1.; scale = 1.
-                            transition = {| duration = 0.7; delay = props.Delay; ease = "easeOut" |}
+                        hidden = {| opacity = 0.; scale = 0.985 |}
+                        visible = {|
+                            opacity = 1.
+                            scale = 1.
+                            transition = {| duration = 0.4; delay = props.Delay; ease = "easeOut" |}
                         |}
                     |}
                 | SlideRight ->
                     box {|
-                        hidden  = {| opacity = 0.; x = -60 |}
-                        visible = {| 
-                            opacity = 1.; x = 0
-                            transition = {| duration = 0.8; delay = props.Delay; ease = "easeOut" |}
+                        hidden = {| opacity = 0.; x = -16 |}
+                        visible = {|
+                            opacity = 1.
+                            x = 0
+                            transition = {| duration = 0.45; delay = props.Delay; ease = "easeOut" |}
                         |}
                     |}
                 | SlideLeft ->
                     box {|
-                        hidden  = {| opacity = 0.; x = 60 |}
-                        visible = {| 
-                            opacity = 1.; x = 0
-                            transition = {| duration = 0.8; delay = props.Delay; ease = "easeOut" |}
+                        hidden = {| opacity = 0.; x = 16 |}
+                        visible = {|
+                            opacity = 1.
+                            x = 0
+                            transition = {| duration = 0.45; delay = props.Delay; ease = "easeOut" |}
                         |}
                     |}
                 | Snap ->
                     box {|
-                        hidden  = {| opacity = 0.; y = 40; scale = 0.95 |}
-                        visible = {| 
-                            opacity = 1.; y = 0; scale = 1.
-                            transition = {| duration = 0.45; delay = props.Delay; ease = "easeOut" |}
+                        hidden = {| opacity = 0.; y = 10 |}
+                        visible = {|
+                            opacity = 1.
+                            y = 0
+                            transition = {| duration = 0.3; delay = props.Delay; ease = "easeOut" |}
                         |}
                     |}
 
             MotionDiv [
                 prop.custom ("initial", "hidden")
-                prop.custom ("whileInView", "visible")
-                prop.custom ("viewport", box {| once = true; amount = props.Threshold |})
+                prop.custom ("animate", if hasEntered then "visible" else "hidden")
                 prop.custom ("variants", variants)
+                prop.custom ("viewport", box {| once = true; amount = threshold; margin = "0px 0px -10% 0px" |})
+                prop.custom ("onViewportEnter", fun _ -> if not hasEntered then setHasEntered true)
+                prop.custom ("style", box {| willChange = "transform, opacity" |})
                 prop.children [ props.Children ]
             ]
-
 
         type ProgressiveRevealProps = {
             Children : ReactElement
@@ -506,22 +517,16 @@ module Ui =
         /// Simple scroll fade/translate; no useScroll bindings required
         [<ReactComponent>]
         let ProgressiveReveal (props: ProgressiveRevealProps) =
-            // MotionDiv [
-            //     prop.custom ("initial", box {| opacity = 0.; y = 80 |})
-            //     prop.custom ("whileInView", box {| opacity = 1.0; y = 0 |})
-            //     prop.custom ("viewport", box {| amount = 0.4; once = false |})
-            //     prop.custom (
-            //         "transition",
-            //         box {| duration = 0.9; ease = "easeOut" |}
-            //     )
-            //     prop.children [ props.Children ]
-            // ]
-            ScrollReveal {|
-                Variant = ScaleUp
-                Delay = 0.1
-                Threshold = 0.3
-                Children = props.Children
-            |}
+            MotionDiv [
+                prop.custom ("initial", box {| opacity = 0.0; y = 80 |})
+                prop.custom ("whileInView", box {| opacity = 1.0; y = 0 |})
+                prop.custom ("viewport", box {| amount = 0.4; once = false |})
+                prop.custom (
+                    "transition",
+                    box {| duration = 0.9; ease = "easeOut" |}
+                )
+                prop.children [ props.Children ]
+            ]
 
 
 

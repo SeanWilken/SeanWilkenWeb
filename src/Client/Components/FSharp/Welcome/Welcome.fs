@@ -26,10 +26,10 @@ let ExploreTile (props: ExploreTileProps) =
     let title = WebAppView.appSectionStringTitle props.Section
 
     Html.div [
-        prop.className "explore-card scroll-fade"
+        prop.className "explore-card"
         prop.children [
             Html.div [
-                prop.className "aspect-[4/3] overflow-hidden bg-neutral-100"
+                prop.className "aspect-4/3 overflow-hidden bg-neutral-100"
                 prop.children [
                     Html.img [
                         prop.src props.ImgSrc
@@ -119,7 +119,7 @@ let ExploreSection (props: WelcomeProps) =
         prop.className "inter-font py-16 sm:py-20 lg:py-32 px-4 sm:px-6 lg:px-8 bg-base-200 w-full"
         prop.children [
             Html.div [
-                prop.className "max-w-7xl mx-auto"
+                prop.className "max-w-5xl mx-auto"
                 prop.children [
 
                     // Section title
@@ -138,54 +138,89 @@ let ExploreSection (props: WelcomeProps) =
                         prop.className "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8"
                         prop.children [
 
-                            ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/joao-ferrao-resume-unsplash.jpg"
-                                Section     = WebAppView.AppView.ResumeAppView
-                                Description = "Resume: Professional experience, technical strengths, and selected accomplishments."
-                                Dispatch    = props.dispatch
-                                ButtonLabel = "View Resume"
-                            }
+                            ScrollReveal {|
+                                Variant   = FadeIn
+                                Delay     = 0.08
+                                Threshold = 0.3
+                                Children = 
+                                    ExploreTile {
+                                        ImgSrc      = "https://seanwilken.com/img/joao-ferrao-resume-unsplash.jpg"
+                                        Section     = WebAppView.AppView.ResumeAppView
+                                        Description = "Resume: Professional experience, technical strengths, and selected accomplishments."
+                                        Dispatch    = props.dispatch
+                                        ButtonLabel = "View Resume"
+                                    }
+                            |}
 
-                            ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/walkator-unsplash-code.jpg"
-                                Section     = WebAppView.AppView.PortfolioAppCodeView
-                                Description = "Code: Engineering-focused portfolio work, experiments, and implementation details."
-                                Dispatch    = props.dispatch
-                                ButtonLabel = "Explore Code"
-                            }
+                            ScrollReveal {|
+                                Variant   = FadeIn
+                                Delay     = 0.08
+                                Threshold = 0.3
+                                Children = 
+                                    ExploreTile {
+                                        ImgSrc      = "https://seanwilken.com/img/walkator-unsplash-code.jpg"
+                                        Section     = WebAppView.AppView.PortfolioAppCodeView
+                                        Description = "Code: Engineering-focused portfolio work, experiments, and implementation details."
+                                        Dispatch    = props.dispatch
+                                        ButtonLabel = "Explore Code"
+                                    }
+                            |}
 
-                            ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/ales-nesetril-unsplash-dev.jpg"
-                                Section     = WebAppView.AppView.AboutAppView
-                                Description = "About: Who I am, what I build, and the kind of work I enjoy doing."
-                                Dispatch    = props.dispatch
-                                ButtonLabel = "Learn More"
-                            }
+                            ScrollReveal {|
+                                Variant   = FadeIn
+                                Delay     = 0.08
+                                Threshold = 0.3
+                                Children = 
+                                    ExploreTile {
+                                        ImgSrc      = "https://seanwilken.com/img/ales-nesetril-unsplash-dev.jpg"
+                                        Section     = WebAppView.AppView.AboutAppView
+                                        Description = "About: Who I am, what I build, and the kind of work I enjoy doing."
+                                        Dispatch    = props.dispatch
+                                        ButtonLabel = "Learn More"
+                                    }
+                            |}
 
-                            ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/ian-schneider-services-unsplash.jpg"
-                                Section     = WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.SkillsLanding
-                                Description = "Skills: Engineering strengths across frontend, backend, workflow systems, and delivery."
-                                Dispatch    = props.dispatch
-                                ButtonLabel = "Review Skills"
-                            }
+                            ScrollReveal {|
+                                Variant   = FadeIn
+                                Delay     = 0.08
+                                Threshold = 0.3
+                                Children = 
+                                    ExploreTile {
+                                        ImgSrc      = "https://seanwilken.com/img/ian-schneider-services-unsplash.jpg"
+                                        Section     = WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.SkillsLanding
+                                        Description = "Skills: Engineering strengths across frontend, backend, workflow systems, and delivery."
+                                        Dispatch    = props.dispatch
+                                        ButtonLabel = "Review Skills"
+                                    }
+                            |}
 
-                            ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/ann-artroom-unsplash.jpg"
-                                Section     = WebAppView.AppView.PortfolioAppDesignView
-                                Description = "Designs: UI explorations, visual work, and selected creative projects."
-                                Dispatch    = props.dispatch
-                                ButtonLabel = "Browse Designs"
-                            }
+                            ScrollReveal {|
+                                Variant   = FadeIn
+                                Delay     = 0.08
+                                Threshold = 0.3
+                                Children = 
+                                    ExploreTile {
+                                        ImgSrc      = "https://seanwilken.com/img/ann-artroom-unsplash.jpg"
+                                        Section     = WebAppView.AppView.PortfolioAppDesignView
+                                        Description = "Designs: UI explorations, visual work, and selected creative projects."
+                                        Dispatch    = props.dispatch
+                                        ButtonLabel = "Browse Designs"
+                                    }
+                            |}
 
-                            ExploreTile {
-                                ImgSrc      = "https://seanwilken.com/img/nikola-duza-unsplash-shop.jpg"
-                                Section     = WebAppView.AppView.ShopAppView
-                                Description = "Shop: Creative products, prints, and apparel connected to my projects."
-                                Dispatch    = props.dispatch
-                                ButtonLabel = "Shop Now"
-                            }
-
+                            ScrollReveal {|
+                                Variant   = FadeIn
+                                Delay     = 0.08
+                                Threshold = 0.3
+                                Children = 
+                                    ExploreTile {
+                                        ImgSrc      = "https://seanwilken.com/img/nikola-duza-unsplash-shop.jpg"
+                                        Section     = WebAppView.AppView.ShopAppView
+                                        Description = "Shop: Creative products, prints, and apparel connected to my projects."
+                                        Dispatch    = props.dispatch
+                                        ButtonLabel = "Shop Now"
+                                    }
+                            |}
 
                         ]
                     ]
@@ -296,21 +331,18 @@ let FocusAreaSection (_: WelcomeProps) =
 // ---------- Root Welcome View ----------
 [<ReactComponent>]
 let Welcome (props: WelcomeProps) =
-    Html.div [
-        prop.className "flex flex-col w-full"
+    Html.main [
+        prop.className "w-full"
         prop.children [
+
             WelcomeHero props
             
-            ScrollReveal {|
-                Variant   = FadeIn
-                Delay     = 0.08
-                Threshold = 0.45
-                Children = ExploreSection props
-            |}
+            ExploreSection props
+            
             ScrollReveal {|
                 Variant   = ScaleUp
                 Delay     = 0.08
-                Threshold = 0.45
+                Threshold = 0.3
                 Children = SkillsSection props
             |}
             
