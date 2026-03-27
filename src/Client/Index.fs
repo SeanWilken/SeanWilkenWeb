@@ -59,6 +59,7 @@ let update ( msg: WebAppMsg ) ( model: WebAppModel ): WebAppModel * Cmd<WebAppMs
 
     // PORTFOLIO PAGE
     | PortfolioMsg msg, Model.Portfolio pm ->
+        Browser.Dom.console.log ("MSG AT INDEX: ", msg)
 
         match msg with
         | PortfolioLanding.Msg.LoadSection PortfolioAppLandingView ->
@@ -67,18 +68,18 @@ let update ( msg: WebAppMsg ) ( model: WebAppModel ): WebAppModel * Cmd<WebAppMs
             { model with CurrentAreaModel = Model.Portfolio pm }, Cmd.ofMsg ( NavigatePage ( Portfolio PortfolioLanding ) )
         | PortfolioLanding.Msg.CodeGalleryMsg Portfolio.CodeGallery.Msg.BackToPortfolio -> 
             { model with CurrentAreaModel = Model.Portfolio pm }, Cmd.ofMsg ( NavigatePage ( Portfolio PortfolioLanding ) )
-            
         | PortfolioLanding.Msg.LoadSection PortfolioAppCodeView ->
             { model with CurrentAreaModel = Model.Portfolio pm }, Cmd.ofMsg ( NavigatePage ( Portfolio ( Code CodeLanding ) ) )
         | PortfolioLanding.Msg.CodeGalleryMsg (Portfolio.CodeGallery.Msg.LoadSection demo) ->
             { model with CurrentAreaModel = Model.Portfolio pm }, Cmd.ofMsg ( NavigatePage ( Portfolio ( Code demo ) ) )
         | PortfolioLanding.Msg.LoadSection PortfolioAppDesignView ->
            { model with CurrentAreaModel = Model.Portfolio pm }, Cmd.ofMsg ( NavigatePage ( Portfolio (Design DesignGallery ) ) )
+        | PortfolioLanding.Msg.LoadSection appView ->
+            { model with CurrentAreaModel = Model.Portfolio pm }, Cmd.ofMsg (SwitchToOtherApp appView)
         | msg ->
             let portfolioModel, com = 
                 match model.CurrentAreaModel with
-                | Model.Portfolio pm ->
-                    PortfolioLanding.update msg pm
+                | Model.Portfolio pm -> PortfolioLanding.update msg pm
                 | _ -> PortfolioLanding.init ()
             { model with CurrentAreaModel = Model.Portfolio portfolioModel }, Cmd.map PortfolioMsg com
     

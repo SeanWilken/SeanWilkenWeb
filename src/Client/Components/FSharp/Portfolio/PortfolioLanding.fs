@@ -8,7 +8,7 @@ open Fable.React
 open Browser.Dom
 open SharedViewModule.WebAppView
 open Client.Components.Shop.Common.Ui.Animations
-
+open TerminalBrowserBindings
 type Msg =
     | LoadSection of AppView
     | ArtGalleryMsg of ArtGallery.Msg
@@ -23,6 +23,27 @@ let getInitialModel = PortfolioGallery
 
 let init (): Model * Cmd<Msg> =
     PortfolioGallery, Cmd.none
+
+let mapTerminalAppViewToAppView (termAppView: string) =
+    match termAppView with
+    | "About" -> AboutAppView
+    | "Welcome" -> WelcomeAppView
+    | "Skills" -> ProfessionalSkillsAppView SkillsLanding
+    | "Resume" -> ResumeAppView
+    | "Portfolio" -> PortfolioAppLandingView
+    | "Code" 
+    | "Code_Animation" 
+    | "Code_GoalRoll"
+    | "Code_PivotPoints"
+    | "Code_SynthNeverSets"
+    | "Code_TerminalBrowser"
+    | "Code_TileTap"
+    | "Code_TileSort" -> PortfolioAppCodeView
+    | "Design" -> PortfolioAppDesignView
+    | "Contact" -> ContactAppView
+    | "Shop" -> ShopAppView
+    | _ -> PortfolioAppLandingView 
+
 
 let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
     match msg, model with
@@ -45,190 +66,14 @@ let update (msg: Msg) (model: Model): Model * Cmd<Msg> =
 
     | _ -> PortfolioGallery, Cmd.none
 
-
-type Step =
-    { Command: string
-      Output: string
-      AfterOutputDelayMs: int }
-
-
-// turn this into something cooler like a parser or something of use...good excersize example that can showcase some creativity / useful tool.
-let steps : Step array =
-    [|
-        { Command = "dotnet tool restore"
-          Output = "restored 4 tools"
-          AfterOutputDelayMs = 2000 }
-
-        { Command = "pnpm install"
-          Output = "packages installed successfully"
-          AfterOutputDelayMs = 2000 }
-
-        { Command = "Starting API and client"
-          Output = "OK ✅"
-          AfterOutputDelayMs = 2000 }
-
-        { Command = "Loading portfolio modules"
-          Output = "Finished loading all modules"
-          AfterOutputDelayMs = 2000 }
-
-        { Command = ""
-          Output = "Full-stack systems ready!"
-          AfterOutputDelayMs = 0 }
-    |]
-
 [<ReactComponent>]
-let TerminalTypingAnimation () =
-    let stepIndex, setStepIndex = React.useStateWithUpdater(0)
-    let charIndex, setCharIndex = React.useStateWithUpdater(0)
-    let outputShown, setOutputShown = React.useStateWithUpdater(false)
-
-    // Typing effect
-    React.useEffect(
-        (fun () ->
-            if stepIndex >= steps.Length then
-                React.createDisposable ignore
-            else
-                let step = steps[stepIndex]
-                let cmdLen = step.Command.Length
-                let hasCommand =
-                    not (SharedViewModule.Helpers.iNoWS step.Command)
-
-                let timeoutId =
-                    if not outputShown && hasCommand && charIndex < cmdLen then
-                        window.setTimeout(
-                            (fun _ -> setCharIndex (fun i -> i + 1)),
-                            60
-                        )
-                    else
-                        window.setTimeout(
-                            (fun _ -> setOutputShown (fun _ -> true)),
-                            0
-                        )
-
-                React.createDisposable(fun () -> window.clearTimeout(timeoutId))
-        ),
-        [| box stepIndex; box charIndex |]
-    )
-
-    // Advance through steps after output delay
-    React.useEffect(
-        (fun () ->
-            if stepIndex >= steps.Length || not outputShown then
-                React.createDisposable ignore
-            else
-                let step = steps[stepIndex]
-                let timeoutId =
-                    window.setTimeout(
-                        (fun _ ->
-                            setCharIndex (fun _ -> 0)
-                            setOutputShown (fun _ -> false)
-                            setStepIndex (fun i -> i + 1)
-                        ),
-                        step.AfterOutputDelayMs
-                    )
-
-                React.createDisposable(fun () -> window.clearTimeout(timeoutId))
-        ),
-        [| box outputShown |]
-    )
-
-    // Completed steps
-    let completedSteps =
-        [
-            for i in 0 .. stepIndex - 1 do
-                let step = steps[i]
-
-                if not (SharedViewModule.Helpers.iNoWS step.Command) then
-                    Html.div [
-                        prop.key (sprintf "cmd-%d" i)
-                        prop.className "terminal-line"
-                        prop.children [
-                            Html.span [
-                                prop.className "terminal-prompt"
-                                prop.text "root@sean"
-                            ]
-                            Html.span [
-                                prop.className "terminal-command"
-                                prop.text (" > " + step.Command)
-                            ]
-                        ]
-                    ]
-
-                Html.div [
-                    prop.key (sprintf "out-%d" i)
-                    prop.className "terminal-line opacity-60"
-                    prop.text step.Output
-                ]
-        ]
-
-    // Current step
-    let currentStepView =
-        if stepIndex < steps.Length then
-            let step = steps[stepIndex]
-            let cmdLen = step.Command.Length
-            let hasCommand =
-                not (SharedViewModule.Helpers.iNoWS step.Command)
-
-            let typed =
-                if hasCommand && charIndex <= cmdLen then
-                    step.Command.Substring(0, charIndex)
-                else
-                    step.Command
-
-            React.fragment [
-                if hasCommand then
-                    Html.div [
-                        prop.key "current-cmd"
-                        prop.className "terminal-line"
-                        prop.children [
-                            Html.span [
-                                prop.className "terminal-prompt"
-                                prop.text "root@sean"
-                            ]
-                            Html.span [
-                                prop.className "terminal-command"
-                                prop.text (" > " + typed)
-                            ]
-                        ]
-                    ]
-
-                if outputShown then
-                    Html.div [
-                        prop.key "current-out"
-                        prop.className "terminal-line"
-                        prop.text step.Output
-                    ]
-
-                if not hasCommand && not outputShown then
-                    Html.div [
-                        prop.key "current-wait"
-                        prop.className "terminal-line"
-                        prop.children [
-                            Html.span [
-                                prop.className "terminal-prompt"
-                                prop.text "> "
-                            ]
-                        ]
-                    ]
-            ]
-        else
-            Html.div [
-                prop.key "final-prompt"
-                prop.className "terminal-line"
-                prop.children [
-                    Html.span [
-                        prop.className "terminal-prompt"
-                        prop.text "> "
-                    ]
-                ]
-            ]
-
-    Html.div [
-        // `.terminal` is styled in your CSS; add some rounding + shadow
-        prop.className "terminal w-full text-sm leading-relaxed text-left"
-        prop.children (completedSteps @ [ currentStepView ])
-    ]
-
+let TerminalBrowser dispatch =
+    TerminalBrowser {|
+        onNavigate = ( fun x -> mapTerminalAppViewToAppView x |> LoadSection |> dispatch )
+        onOpenViewer = (fun str -> console.log str; ())
+        onOpenAsset = (fun asst -> console.log asst; ())
+        className = Some "test"
+    |}
 
 [<ReactComponent>]
 let GithubProfileCard () =
@@ -451,7 +296,7 @@ let View (model: Model) dispatch =
                     Html.div [
                         prop.className "max-w-4xl mx-auto"
                         prop.children [
-                            TerminalTypingAnimation()
+                            TerminalBrowser dispatch
                         ]
                     ]
                 ]

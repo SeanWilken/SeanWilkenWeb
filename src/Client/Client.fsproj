@@ -18,6 +18,7 @@
         <Compile Include="Components\Typescript\Bindings\Demos.fs" />
         <Compile Include="Components\Typescript\Bindings\Stripe.fs" />
         <Compile Include="Components\Typescript\Bindings\Resume.fs" />
+        <Compile Include="Components\Typescript\Bindings\TerminalBrowser.fs" />
         <Compile Include="Components\Typescript\Bindings\ThemePicker.fs" />
         <!-- TSX => F# Binding Pages -->
         <Compile Include="Components\FSharp\Interop\Resume.fs" />
