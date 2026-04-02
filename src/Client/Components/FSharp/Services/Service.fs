@@ -35,7 +35,7 @@ type SkillOutcome = {
 
 type RelatedSkillLink = {
     Name: string
-    Route: string
+    Route: SharedViewModule.WebAppView.ProfessionalSkillsView
     Description: string option
 }
 
@@ -259,10 +259,10 @@ let RelatedPagesSection (title: string) (subtitle: string option) (pages: Relate
                             prop.className "grid grid-cols-1 md:grid-cols-2 gap-6"
                             prop.children [
                                 for page in pages do
-                                    Html.a [
+                                    Html.div [
                                         prop.key page.Name
-                                        prop.onClick (fun _ -> Browser.Dom.window.location.href <- page.Route)
-                                        prop.className "group block rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-6 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                                        prop.onClick (fun _ -> relatedPageCallback page.Route)
+                                        prop.className "group block cursor-pointer rounded-2xl bg-base-100 border border-base-300/70 shadow-sm p-6 transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md"
                                         prop.children [
                                             Html.div [
                                                 prop.className "flex items-start justify-between gap-4"
@@ -503,7 +503,7 @@ let commonDomains: SkillDomain list = [
         Description = "Built systems that support intake, processing, review, reporting, and day-to-day operational workflows."
     }
     {
-        Name = "Real-Time & Interactive Applications"
+        Name = "Real-Time & Interactive Systems"
         Description = "Developed systems with live updates, status tracking, and responsive client interactions backed by state-aware backend processing."
     }
 ]
@@ -511,32 +511,37 @@ let commonDomains: SkillDomain list = [
 let relatedSkillLinks: RelatedSkillLink list = [
     {
         Name = "Full-Stack Engineering"
-        Route = "/skills/full-stack-engineering"
+        Route = SharedViewModule.WebAppView.ProfessionalSkillsView.FullStack
         Description = Some "Application architecture across frontend, backend, and delivery."
     }
     {
         Name = "Backend APIs & Systems"
-        Route = "/skills/backend-apis-systems"
+        Route = SharedViewModule.WebAppView.ProfessionalSkillsView.Backend
         Description = Some "Custom servers, APIs, processing pipelines, and integrations."
     }
     {
         Name = "Frontend Development"
-        Route = "/skills/frontend-development"
+        Route = SharedViewModule.WebAppView.ProfessionalSkillsView.Frontend
         Description = Some "Responsive application UIs, component systems, and client-side architecture."
     }
     {
         Name = "Workflow Automation"
-        Route = "/skills/workflow-automation"
+        Route = SharedViewModule.WebAppView.ProfessionalSkillsView.Automation
         Description = Some "Stateful workflows, validation, notifications, and operational tooling."
     }
     {
         Name = "AI & LLM Integrations"
-        Route = "/skills/ai-llm-integrations"
+        Route = SharedViewModule.WebAppView.ProfessionalSkillsView.AI
         Description = Some "AI-assisted features, retrieval workflows, and document processing."
     }
     {
+        Name = "Leadership & Mentorship"
+        Route = SharedViewModule.WebAppView.ProfessionalSkillsView.Leadership
+        Description = Some "Hands-on technical leadership, mentorship, and implementation guidance."
+    }
+    {
         Name = "Cloud & Platform Delivery"
-        Route = "/skills/cloud-platform-delivery"
+        Route = SharedViewModule.WebAppView.ProfessionalSkillsView.PlatformDelivery
         Description = Some "Deployment, containers, CI/CD, infrastructure, and platform reliability."
     }
 ]
@@ -548,7 +553,7 @@ let backendCoreAreas: SkillFeature list = [
         Icon = None
     }
     {
-        Title = "API Design"
+        Title = "API Design & Contracts"
         Description = "Building backend endpoints and contracts that support validation, processing, submission, and frontend integration."
         Icon = None
     }
@@ -609,14 +614,14 @@ let backendOutcomes: SkillOutcome list = [
         Context = Some "Through automation and backend processing pipelines."
     }
     {
-        Label = "Data Processing Improvement"
-        Value = "79%"
-        Context = Some "Through performance optimization and workflow refinement."
+        Label = "Search & Workflow Performance"
+        Value = "Seconds, not minutes"
+        Context = Some "Introduced indexing, caching, background jobs, paging, and filtering to make large healthcare datasets practical for daily use."
     }
     {
-        Label = "Submission Accuracy"
-        Value = "High"
-        Context = Some "Validation and discrepancy reporting across registry workflows."
+        Label = "Submission Reliability"
+        Value = "Improved"
+        Context = Some "Validation and discrepancy-reporting workflows across trauma registry and healthcare reporting systems."
     }
 ]
 
@@ -682,7 +687,7 @@ let frontendFocusAreas: SkillCapability list = [
         Description = "Structuring UI behavior and view state in a way that remains maintainable as applications grow."
     }
     {
-        Title = "Design-to-Code Implementation"
+        Title = "UI Implementation & Design Systems"
         Description = "Translating rough concepts, mocks, or evolving design direction into polished and usable interfaces."
     }
     {
@@ -712,14 +717,14 @@ let frontendTechnologies: SkillTechnologyGroup list = [
 
 let frontendOutcomes: SkillOutcome list = [
     {
-        Label = "Telehealth & Form Systems"
+        Label = "Regulated Frontend Workflows"
         Value = "Multi-State"
-        Context = Some "Built dynamic frontend workflows with state-specific regulatory logic."
+        Context = Some "Built dynamic frontend systems with state-specific regulatory logic and form behavior."
     }
     {
         Label = "Interactive Systems"
-        Value = "50K+ Users"
-        Context = Some "Frontend work supporting real-time product interactions."
+        Value = "60K+ Users"
+        Context = Some "Frontend work supporting real-time and highly interactive user experiences."
     }
 ]
 
@@ -815,18 +820,13 @@ let fullStackTechnologies: SkillTechnologyGroup list = [
 let fullStackOutcomes: SkillOutcome list = [
     {
         Label = "Patient Records Processed"
-        Value = "2M+"
+        Value = "16M+"
         Context = Some "Diagnostic automation and healthcare workflow systems."
     }
     {
         Label = "Medical Facilities Supported"
-        Value = "50+"
+        Value = "20+"
         Context = Some "Platform delivery across regulated healthcare environments."
-    }
-    {
-        Label = "Concurrent Users Supported"
-        Value = "50K+"
-        Context = Some "Real-time and interactive application work."
     }
 ]
 
@@ -834,7 +834,7 @@ let fullStackModel: SkillPageModel = {|
     Id = "full-stack-engineering"
     Name = "Full-Stack Engineering"
     HeroTitle = "Full-stack engineering across product, platform, and workflow-heavy systems"
-    HeroSubtitle = "Experience building production web applications across healthcare, e-commerce, and internal platforms, with strength across frontend, backend, APIs, and delivery."
+    HeroSubtitle = "Experience building production web applications across healthcare, e-commerce, and internal tools and platforms, with strength across frontend, backend, APIs, and delivery."
     HeroBadge = Some "Full-Stack Engineering"
     HeroGradientClass = "from-secondary to-accent"
 
@@ -924,9 +924,9 @@ let automationOutcomes: SkillOutcome list = [
         Context = Some "Workflow automation in healthcare processing systems."
     }
     {
-        Label = "Trial Workflow Automation"
-        Value = "80%"
-        Context = Some "Automated conversion and messaging workflow work."
+        Label = "Registry Preparation Time"
+        Value = "Reduced"
+        Context = Some "Automated validation and XML generation pipelines replaced a largely manual submission process."
     }
 ]
 
@@ -1003,28 +1003,28 @@ let aiFocusAreas: SkillCapability list = [
 let aiTechnologies: SkillTechnologyGroup list = [
     {
         GroupName = "AI"
-        Items = [ "OpenAI API"; "RAG Systems"; "LangChain"; "Prompt Design" ]
+        Items = [ "OpenAI API"; "Claude"; "RAG Systems"; "Prompt Engineering" ]
     }
     {
         GroupName = "Application Stack"
-        Items = [ "F#"; "TypeScript"; "Python"; ".NET"; "Node.js" ]
+        Items = [ "F#"; "C#"; "TypeScript"; "Python"; ".NET"; "Node.js"; "FastAPI" ]
     }
     {
         GroupName = "Data & Workflow"
-        Items = [ "REST APIs"; "Document Processing"; "Validation Pipelines"; "Operational Tooling" ]
+        Items = [ "REST APIs"; "Document Processing"; "Validation Pipelines"; "Operational Tooling"; "pgvector"; "Pinecone" ]
     }
 ]
 
 let aiOutcomes: SkillOutcome list = [
     {
-        Label = "Document Processing Support"
+        Label = "Document-Centric AI Work"
         Value = "Production"
-        Context = Some "Applied in healthcare and operational workflows."
+        Context = Some "Applied in healthcare and operational workflows, including analysis, extraction, and support tooling."
     }
     {
-        Label = "Trial Conversion Lift"
-        Value = "35%"
-        Context = Some "From LLM-assisted personalization in messaging workflows."
+        Label = "Retrieval-Based Systems"
+        Value = "Multi-Tenant"
+        Context = Some "Built RAG-enabled workflows with indexed documents, citation-backed responses, and auditable decision paths."
     }
 ]
 
@@ -1105,8 +1105,8 @@ let leadershipDomains: SkillDomain list = [
         Description = "Led engineering work across regulated systems where reliability, workflow clarity, and operational correctness mattered."
     }
     {
-        Name = "Client & Consulting Environments"
-        Description = "Worked across multiple client contexts, helping teams make progress quickly while adapting to different technical and organizational constraints."
+        Name = "Consulting & Product Teams"
+        Description = "Worked across client engagements and product environments, helping teams make progress quickly while adapting to different technical and organizational constraints."
     }
     {
         Name = "Product & Platform Development"
@@ -1137,13 +1137,13 @@ let leadershipOutcomes: SkillOutcome list = [
     }
     {
         Label = "Patient Records Processed"
-        Value = "2M+"
+        Value = "16M+"
         Context = Some "Built and guided systems supporting large-scale healthcare workflows."
     }
     {
-        Label = "Deployment Reliability Improvement"
-        Value = "60%"
-        Context = Some "Improved engineering delivery and operational reliability across client work."
+        Label = "Delivery Confidence"
+        Value = "Improved"
+        Context = Some "Helped teams ship more reliably through stronger technical structure, deployment practices, and implementation guidance."
     }
 ]
 
@@ -1174,7 +1174,6 @@ let leadershipModel: SkillPageModel = {|
     RelatedPages = relatedSkillLinks
 |}
 
-[<ReactComponent>]
 let LeadershipPage (backButtonComponent: ReactElement) = ServicePage leadershipModel
 
 let cloudCoreAreas: SkillFeature list = [
@@ -1236,14 +1235,14 @@ let cloudTechnologies: SkillTechnologyGroup list = [
 
 let cloudOutcomes: SkillOutcome list = [
     {
-        Label = "Deployment Failure Reduction"
-        Value = "60%"
-        Context = Some "Improved CI/CD reliability across client platforms."
+        Label = "Deployment Reliability"
+        Value = "Improved"
+        Context = Some "Introduced Docker, CI/CD, and repeatable deployment workflows across multiple teams and platforms."
     }
     {
-        Label = "Downtime Reduction"
-        Value = "95%"
-        Context = Some "Platform modernization and operational improvement work."
+        Label = "Operational Stability"
+        Value = "90%+"
+        Context = Some "Reduced downtime and maintenance burden through platform modernization and improved release workflows."
     }
 ]
 

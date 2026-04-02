@@ -103,9 +103,7 @@ let AboutHero selectedIndex setSelectedIndex =
                     Html.h1 [
                         prop.className "cormorant-font text-4xl sm:text-5xl lg:text-6xl font-light text-center mb-8 leading-tight"
                         prop.children [
-                            Html.span "Full-stack engineer with a focus on:"
-                            Html.br [ prop.className "hidden sm:block" ]
-                            Html.span "systems, workflows, and maintainable software"
+                            Html.span "Full-stack engineer focused on systems, workflows, and maintainable software."
                         ]
                     ]
 
@@ -124,7 +122,7 @@ let AboutHero selectedIndex setSelectedIndex =
                                 prop.children [
                                     LucideIcon.Code2 "w-5 h-5 opacity-60"
                                     Html.span [
-                                        prop.className "opacity-80 text-xs sm:text-md"
+                                        prop.className "opacity-80 text-md"
                                         prop.text "10+ years building software"
                                     ]
                                 ]
@@ -272,11 +270,11 @@ let AboutWorkAndTech () =
                                         ]
                                     ]
                                     Html.p [
-                                        prop.className "text-[0.78rem] sm:text-xs opacity-60 mb-4 md:mb-6 leading-relaxed"
+                                        prop.className "text-sm md:text-base leading-7 text-base-content/70"
                                         prop.text "I work best when I am close to the problem, collaborating with thoughtful people, and building things that actually get used. I care about clarity, maintainability, and making practical progress without overcomplicating the solution."
                                     ]
                                     Html.ul [
-                                        prop.className "space-y-3 text-[0.78rem] sm:text-xs opacity-70"
+                                        prop.className "text-sm md:text-base leading-7 text-base-content/75 opacity-70"
                                         prop.children [
                                             Html.li [
                                                 prop.className "flex items-start gap-2"
@@ -314,7 +312,7 @@ let AboutWorkAndTech () =
                                             LucideIcon.Sparkles "w-5 h-5 opacity-60"
                                             Html.h3 [
                                                 prop.className "cormorant-font text-2xl font-light"
-                                                prop.text "Tech & topics"
+                                                prop.text "Technologies & interests"
                                             ]
                                         ]
                                     ]
@@ -347,7 +345,7 @@ let AboutCta (dispatch: Msg -> unit) =
                 prop.className "max-w-4xl mx-auto text-center"
                 prop.children [
                     Html.p [
-                        prop.className "text-md opacity-60 mb-8 md:mb-10 leading-loose"
+                        prop.className "text-base md:text-lg text-base-content/65 leading-8"
                         prop.text "If you want to see how this shows up in practice, take a look at my portfolio work, resume, or skills breakdown."
                     ]
                     Html.div [
@@ -355,7 +353,7 @@ let AboutCta (dispatch: Msg -> unit) =
                         prop.children [
                             Html.button [
                                 prop.className "cta-btn"
-                                prop.text "Explore projects & Demos"
+                                prop.text "Explore Projects & Demos"
                                 prop.onClick (fun _ ->
                                     dispatch (SwitchSection PortfolioAppLandingView)
                                 )
@@ -392,13 +390,13 @@ let View (model: Model) (dispatch: Msg -> unit) =
             ScrollReveal {|
                 Variant   = FadeIn
                 Delay     = 0.08
-                Threshold = 0.45
+                Threshold = 0.15
                 Children = AboutWorkAndTech()
             |}
             ScrollReveal {|
                 Variant   = SlideLeft
                 Delay     = 0.08
-                Threshold = 0.45
+                Threshold = 0.15
                 Children = AboutCta dispatch
             |}
         ]

@@ -78,7 +78,7 @@ let WelcomeHero (props: WelcomeProps) =
                     ]
                     Html.p [
                         prop.className "text-base sm:text-lg sm:mb-12 lg:text-lg opacity-80 mb-8 max-w-2xl mx-auto leading-relaxed px-4"
-                        prop.text "I build full-stack applications, backend APIs, and workflow-heavy systems across industries including healthcare, e-commerce, and AI-enabled products."
+                        prop.text "I build full-stack applications, backend services, and workflow-driven systems that support real products and operational teams."
                     ]
                     Html.div [
                         prop.className "flex flex-col sm:flex-row gap-4 justify-center px-4"
@@ -244,7 +244,7 @@ let SkillsSection (props: WelcomeProps) =
                             {
                                 Heading = "Full-Stack Engineering"
                                 Icon = "🧩"
-                                Description = "Building production applications across frontend, backend, APIs, and delivery."
+                                Description = "Building production applications across frontend, backend, APIs, and deployment."
                                 NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.FullStack) |> props.dispatch
                             }
                             {
@@ -268,7 +268,7 @@ let SkillsSection (props: WelcomeProps) =
                             {
                                 Heading = "AI & LLM Integrations"
                                 Icon = "🤖"
-                                Description = "Document analysis, retrieval-driven workflows, and AI-assisted product features."
+                                Description = "Document analysis, retrieval-based workflows, and AI-assisted product features."
                                 NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.AI) |> props.dispatch
                             }
                             {
@@ -280,7 +280,7 @@ let SkillsSection (props: WelcomeProps) =
                             {
                                 Heading = "Cloud & Platform Delivery"
                                 Icon = "☁️"
-                                Description = "Containers, CI/CD, cloud deployment, and operational reliability."
+                                Description = "Containers, CI/CD, cloud infrastructure, and operational reliability."
                                 NavigateTo = fun _ -> SwitchSection(WebAppView.AppView.ProfessionalSkillsAppView WebAppView.ProfessionalSkillsView.PlatformDelivery) |> props.dispatch
                             }
                         ]

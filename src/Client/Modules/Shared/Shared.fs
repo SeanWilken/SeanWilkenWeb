@@ -33,7 +33,7 @@ module WebAppView =
         | Leadership
         | PlatformDelivery
 
-            member x.toUrlString  =
+            member x.toUrlString =
                 match x with
                 | SkillsLanding -> "/skills/"
                 | AI -> "/skills/ai-skills"
@@ -124,10 +124,10 @@ module GamePieceIcons =
 
     let directionArrowImage direction =
         match direction with
-        | MovementDirection.Up -> upArrow
-        | MovementDirection.Down -> downArrow
-        | MovementDirection.Left -> leftArrow
-        | MovementDirection.Right -> rightArrow
+        | Up -> upArrow
+        | Down -> downArrow
+        | Left -> leftArrow
+        | Right -> rightArrow
 
 let stopGameLoop (loopId: float) = window.clearInterval loopId
 

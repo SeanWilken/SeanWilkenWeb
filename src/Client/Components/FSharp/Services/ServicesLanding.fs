@@ -25,19 +25,21 @@ let update msg model =
     | SkillMsg msg ->
         match msg with
         | Components.FSharp.Service.Msg.NavigateTo view -> model, Cmd.ofMsg (GoToSection view)
-    | GoToSection section -> { model with CurrentSection = section }, Cmd.none
+    | GoToSection section -> 
+        Browser.Dom.console.log("Navigating to section:", section)
+        { model with CurrentSection = section }, Cmd.none
 
 
 let stackCard (title: string) (items: string list) =
     Html.div [
-        prop.className "approach-card text-center"
+        prop.className "text-center"
         prop.children [
-            Html.h4 [
+            Html.div [
                 prop.className "cormorant-font text-lg font-light mb-3 opacity-80"
                 prop.text title
             ]
             Html.div [
-                prop.className "space-y-2 text-xs opacity-60"
+                prop.className "space-y-2 text-sm opacity-60"
                 prop.children [
                     for i in items do Html.p i
                 ]
@@ -94,7 +96,7 @@ let FeaturedSkillCard (props: SkillCardContent) =
 let SkillsLandingSection (dispatch: Msg -> unit) =
     // Html.div [
     Html.section [
-        prop.className "pt-28 pb-20 px-6 md:px-8 lg:px-12"
+        prop.className "py-16 md:py-20 px-6 md:px-8 lg:px-12 mb-16 md:mb-24"
         prop.children [
             Html.div [
                 prop.className "max-w-6xl mx-auto"
@@ -104,7 +106,6 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                     Client.Components.Shop.Common.Ui.Section.headerTagArea
                         (LucideIcon.Palette "w-4 h-4 opacity-60")
                         "SKILLS"
-
 
                     Html.div [
                         prop.className "hero-image mb-16 md:mb-24 rounded-2xl overflow-hidden"
@@ -117,21 +118,9 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                         ]
                     ]
 
-                    
-                    Html.section [
-                        prop.className "pt-28 pb-20 px-6 md:px-8 lg:px-12"
-                        prop.children [
-                            Html.div [
-                                prop.className "max-w-6xl mx-auto text-center"
-                                prop.children [
-                                    Html.p [
-                                        prop.className "text-sm opacity-60 max-w-3xl mx-auto leading-loose"
-                                        prop.text
-                                            "My background spans full-stack application development, backend APIs, workflow-heavy systems, cloud delivery, and AI-enabled product features. Strongest in F#, React, TypeScript, Python, and C#."
-                                    ]
-                                ]
-                            ]
-                        ]
+                    Html.p [
+                        prop.className "text-base md:text-lg text-base-content/70 max-w-3xl mx-auto leading-8 text-center"
+                        prop.text "My background spans full-stack application development, backend APIs, workflow-heavy systems, cloud delivery, and AI-enabled product features. Strongest in F#, React, TypeScript, Python, and C#."
                     ]
 
                     Html.section [
@@ -142,7 +131,7 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                 prop.children [
                                     Html.p [
                                         prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
-                                        prop.text "CORE AREAS"
+                                        prop.text "Core Areas"
                                     ]
 
                                     Html.div [
@@ -169,7 +158,7 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                             FeaturedSkillCard {|
                                                 GoToSection = (fun () -> GoToSection Backend |> dispatch)
                                                 Icon = LucideIcon.Zap "text-4xl mb-6 opacity-60"
-                                                Title = "Backend Engineering"
+                                                Title = "Backend APIs & Systems"
                                                 Body = "Designing custom servers, backend APIs, validation pipelines, and document-processing workflows that support real operational needs. Strong focus on reliability, state handling, and clear system boundaries."
                                                 Tags = [ "Custom Servers"; "REST APIs"; "WebSockets"; "Validation"; "Document Pipelines" ]
                                             |}
@@ -179,7 +168,7 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                                 Icon = LucideIcon.HandPlatter "text-4xl mb-6 opacity-60"
                                                 Title = "Frontend Development"
                                                 Body = "Building responsive application interfaces with strong client architecture, predictable state management, and maintainable component systems. Focused on product UIs that are both polished and practical."
-                                                Tags = [ "React"; "Typescript"; "Fable"; "Elmish"; "Responsive Design"; "Tailwind CSS" ]
+                                                Tags = [ "React"; "TypeScript"; "Fable"; "Elmish"; "Responsive Design"; "Tailwind CSS" ]
                                             |}
 
                                             FeaturedSkillCard {|
@@ -187,7 +176,7 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                                 Icon = LucideIcon.Cpu "text-4xl mb-6 opacity-60"
                                                 Title = "Full-Stack Engineering"
                                                 Body = "Building production applications across frontend, backend, APIs, and deployment. This includes shaping architecture, implementing features end to end, and keeping systems maintainable as they grow."
-                                                Tags = [ "F#"; "Typescript"; "React"; ".NET"; "PostgresSQL"; "Node"; "Python" ]
+                                                Tags = [ "F#"; "TypeScript"; "React"; ".NET"; "PostgreSQL"; "Node.js"; "Python" ]
                                             |}
 
                                             FeaturedSkillCard {|
@@ -195,7 +184,7 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                                 Icon = LucideIcon.Compass "text-4xl mb-6 opacity-60"
                                                 Title = "Leadership & Mentorship"
                                                 Body = "Leading through hands-on implementation, architecture guidance, code review, and helping other engineers build confidence and clarity across unfamiliar or complex parts of the stack."
-                                                Tags = [ "Architecture"; "Code Review"; "System Design"; "Technical Guidance"; "Team Management" ]
+                                                Tags = [ "Architecture"; "Code Review"; "System Design"; "Technical Guidance"; "Mentorship" ]
                                             |}
 
                                             FeaturedSkillCard {|
@@ -226,23 +215,17 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                     Html.div [
                                         prop.className "grid lg:grid-cols-3 gap-8"
                                         prop.children [
-                                            let approachCard (title: string) (body: string) bullets =
+                                            let approachCard (title: string) (body: string) =
                                                 Html.div [
                                                     prop.className "approach-card"
                                                     prop.children [
                                                         Html.h4 [
-                                                            prop.className "cormorant-font text-2xl font-light mb-4"
+                                                            prop.className "cormorant-font text-2xl md:text-3xl font-light mb-4"
                                                             prop.text title
                                                         ]
                                                         Html.p [
-                                                            prop.className "text-xs opacity-60 mb-4 leading-relaxed"
+                                                            prop.className "text-sm text-base-content/70 leading-7"
                                                             prop.text body
-                                                        ]
-                                                        Html.ul [
-                                                            prop.className "space-y-2 text-xs opacity-50"
-                                                            prop.children [
-                                                                for b in bullets do Html.li ("• " + b)
-                                                            ]
                                                         ]
                                                     ]
                                                 ]
@@ -250,35 +233,31 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                             approachCard
                                                 "Typed systems"
                                                 "I gravitate toward strongly typed systems and predictable application structure because they make complex behavior easier to reason about, maintain, and extend over time."
-                                                [ ]
 
                                             approachCard
                                                 "APIs and integrations"
                                                 "A lot of my work involves connecting systems cleanly through APIs, custom endpoints, validation flows, and integration layers that support real product and operational workflows."
-                                                [ ]
 
                                             approachCard
                                                 "Workflow automation"
                                                 "I enjoy building systems that move work forward through intake, validation, processing, review, and completion without losing transparency or control along the way."
-                                                [ ]
                                             
                                             approachCard
                                                 "Responsive applications"
                                                 "On the frontend, I focus on responsive application interfaces that remain clear and usable even when the underlying workflow or state model is complex."
-                                                [ ]
                                             
                                             approachCard
                                                 "Deployment and infrastructure"
                                                 "I care about how software gets shipped, configured, and supported in practice, not just how it looks in development. Deployment and reliability are part of the product."
-                                                [ ]
+
                                             approachCard
                                                 "Maintainability & Refactoring"
                                                 "I value codebases that stay understandable as they grow. That usually means tightening naming, boundaries, duplication, and structure before complexity becomes expensive."
-                                                [ ]
+
                                             approachCard
                                                 "Technical Leadership"
                                                 "I tend to contribute by bringing structure to ambiguous work, unblocking implementation, and helping teams move forward with cleaner technical direction."
-                                                [ ]
+
                                         ]
                                     ]
                                 ]
@@ -290,7 +269,7 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                     ScrollReveal {|
                         Variant   = SlideLeft
                         Delay     = 0.08
-                        Threshold = 0.45
+                        Threshold = 0.15
                         Children = 
                             Html.section [
                                 prop.className "py-16 md:py-20 px-4 sm:px-6 lg:px-12"
@@ -300,10 +279,10 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                         prop.children [
                                             Html.h2 [
                                                 prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
-                                                prop.text "Languages, Frameworks, & Tools"
+                                                prop.text "Languages, Skills & Tools"
                                             ]
                                             Html.p [
-                                                prop.className "text-sm opacity-60 text-center max-w-3xl mx-auto mb-16 leading-loose"
+                                                prop.className "text-md opacity-60 text-center max-w-3xl mx-auto mb-16 leading-loose"
                                                 prop.text
                                                     "A broader view of the languages, frameworks, platforms, and tools I've worked with across full-stack, backend, frontend, and platform-focused engineering work."
                                             ]
@@ -335,7 +314,7 @@ let SkillsLandingSection (dispatch: Msg -> unit) =
                                         prop.className "max-w-4xl mx-auto text-center"
                                         prop.children [
                                             Html.h2 [
-                                                prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light mb-8"
+                                                prop.className "cormorant-font text-3xl md:text-4xl lg:text-5xl font-light text-center mb-12"
                                                 prop.text "Interested in my experience?"
                                             ]
                                             Html.div [

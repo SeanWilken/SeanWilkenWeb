@@ -56,6 +56,9 @@ let update ( msg: WebAppMsg ) ( model: WebAppModel ): WebAppModel * Cmd<WebAppMs
             let updatedModel, _ = Skills.Landing.update msg serviceModel
             { model with CurrentAreaModel = Model.Skills updatedModel },
             Cmd.ofMsg (NavigatePage ( Skills section ))
+        | skillsMsg ->
+             let updatedModel, com = Skills.Landing.update skillsMsg serviceModel
+             { model with CurrentAreaModel = Model.Skills updatedModel }, Cmd.map SkillsMsg com
 
     // PORTFOLIO PAGE
     | PortfolioMsg msg, Model.Portfolio pm ->

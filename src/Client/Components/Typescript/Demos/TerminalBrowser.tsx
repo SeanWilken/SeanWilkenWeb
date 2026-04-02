@@ -267,9 +267,9 @@ function buildTerminalTree(): TerminalNode {
     dir("public", "/public", [
       dir("resume", "/public/resume", [
         asset(
-          "Sean-Wilken-Resume.pdf",
-          "/public/resume/Sean-Wilken-Resume.pdf",
-          "/resume/Sean-Wilken-Resume.pdf",
+          "SeanWilken_SPR_2026.pdf",
+          "/public/docs/SeanWilken_SPR_2026.pdf",
+          "/docs/SeanWilken_SPR_2026.pdf",
           "Downloadable PDF resume"
         ),
       ]),

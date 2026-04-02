@@ -265,7 +265,7 @@ export type ResumeSection =
   | { label: string; kind: "timeline"; items: TimelineItem[] }
   | { label: string; kind: "tagcloud"; items: string[] };
 
-const RESUME_PDF_PATH = "./docs/Resume.pdf";
+const RESUME_PDF_PATH = "./docs/SeanWilken_SPR_2026.pdf";
 
 interface ResumePageProps {
   sections: ResumeSection[];
@@ -376,7 +376,7 @@ const ResumePage: React.FC<ResumePageProps> = ({ sections }) => {
                 target="_blank"
                 rel="noreferrer"
                 className="relative z-10"
-                download="SeanWilkenResume.pdf">
+                download="SeanWilken_SPR_2026.pdf">
                 Download PDF
               </a>
               <svg className="w-4 h-4 relative z-10 transition-transform duration-300 
